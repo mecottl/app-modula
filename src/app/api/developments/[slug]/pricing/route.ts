@@ -1,0 +1,56 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { calculateQuotePrice, PricingError } from "@/lib/pricing";
+
+const bodySchema = z.object({
+  modelId: z.string().min(1),
+  finishLevelId: z.string().min(1).optional(),
+  extraIds: z.array(z.string().min(1)).default([]),
+});
+
+/**
+ * Motor de cálculo de precio (README.md sección 5 y issue "API del motor
+ * de cálculo de precio"). Consumido tanto por el Plan A (página hospedada)
+ * como por el Plan B (widget) — el `slug` en la ruta acota toda la
+ * consulta a un único desarrollo, nunca se confía en un `developmentId`
+ * enviado directamente por el cliente (sección 9.1).
+ */
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> },
+) {
+  const { slug } = await params;
+
+  const development = await prisma.development.findUnique({
+    where: { slug },
+    select: { id: true, status: true },
+  });
+  if (!development) {
+    return NextResponse.json({ error: "Desarrollo no encontrado" }, { status: 404 });
+  }
+
+  const json = await request.json().catch(() => null);
+  const parsed = bodySchema.safeParse(json);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Solicitud inválida", details: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const breakdown = await calculateQuotePrice({
+      developmentId: development.id,
+      modelId: parsed.data.modelId,
+      finishLevelId: parsed.data.finishLevelId,
+      extraIds: parsed.data.extraIds,
+    });
+    return NextResponse.json(breakdown);
+  } catch (error) {
+    if (error instanceof PricingError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: 422 });
+    }
+    throw error;
+  }
+}

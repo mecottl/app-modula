@@ -1,0 +1,251 @@
+// Modelo de datos base — Fase 0 (ver README.md sección 8)
+// Nombres de modelo en PascalCase, tablas mapeadas a snake_case tal como
+// están documentadas en la especificación.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountPlan {
+  BASICO
+  PROFESIONAL
+}
+
+enum BillingStatus {
+  TRIAL
+  ACTIVO
+  MOROSO
+  CANCELADO
+}
+
+enum MemberRole {
+  ADMINISTRADOR
+  EDITOR_CATALOGO
+  SOLO_LECTURA
+}
+
+enum DevelopmentStatus {
+  BORRADOR
+  PUBLICADO
+}
+
+enum PromotionType {
+  PORCENTAJE
+  FIJO
+}
+
+enum IntegrationMode {
+  HOSPEDADA
+  WIDGET
+}
+
+enum IntegrationEnv {
+  VISTA_PREVIA
+  PRODUCCION
+}
+
+enum QuoteStatus {
+  NUEVA
+  CONTACTADA
+  CERRADA
+}
+
+enum QuoteOrigin {
+  A
+  B
+}
+
+/// Cuenta de una desarrolladora inmobiliaria (tenant raíz).
+model Account {
+  id            String        @id @default(cuid())
+  name          String
+  plan          AccountPlan   @default(BASICO)
+  billingStatus BillingStatus @default(TRIAL)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  developments Development[]
+  members      Member[]
+
+  @@map("accounts")
+}
+
+/// Usuario del dashboard, miembro del equipo de una desarrolladora.
+/// Es también la entidad de autenticación (credenciales locales).
+model Member {
+  id           String     @id @default(cuid())
+  accountId    String
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         MemberRole @default(SOLO_LECTURA)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@map("members")
+}
+
+/// Un desarrollo inmobiliario dentro de una cuenta (1 cuenta -> N desarrollos).
+model Development {
+  id             String            @id @default(cuid())
+  accountId      String
+  name           String
+  slug           String            @unique
+  description    String?
+  status         DevelopmentStatus @default(BORRADOR)
+  currency       String            @default("MXN")
+  logoUrl        String?
+  primaryColor   String?
+  accentColor    String?
+  ctaText        String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  account             Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  models              Model[]
+  finishLevels        FinishLevel[]
+  extras              Extra[]
+  promotions          Promotion[]
+  integrationSettings IntegrationSettings?
+  quotes              Quote[]
+
+  @@index([accountId])
+  @@map("developments")
+}
+
+/// Modelo de vivienda dentro de un desarrollo.
+model Model {
+  id            String   @id @default(cuid())
+  developmentId String
+  name          String
+  description   String?
+  areaM2        Decimal  @db.Decimal(10, 2)
+  bedrooms      Int
+  basePrice     Decimal  @db.Decimal(14, 2)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  development Development  @relation(fields: [developmentId], references: [id], onDelete: Cascade)
+  extraLinks  ExtraModel[]
+  quotes      Quote[]
+
+  @@index([developmentId])
+  @@map("models")
+}
+
+/// Nivel de acabado disponible para un desarrollo, con delta de precio.
+model FinishLevel {
+  id            String   @id @default(cuid())
+  developmentId String
+  name          String
+  description   String?
+  priceDelta    Decimal  @db.Decimal(14, 2) @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  development Development @relation(fields: [developmentId], references: [id], onDelete: Cascade)
+  quotes      Quote[]
+
+  @@index([developmentId])
+  @@map("finish_levels")
+}
+
+/// Extra opcional, con delta de precio y modelos a los que aplica (N a N).
+model Extra {
+  id            String   @id @default(cuid())
+  developmentId String
+  name          String
+  description   String?
+  priceDelta    Decimal  @db.Decimal(14, 2) @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  development Development  @relation(fields: [developmentId], references: [id], onDelete: Cascade)
+  modelLinks  ExtraModel[]
+
+  @@index([developmentId])
+  @@map("extras")
+}
+
+/// Tabla puente N a N entre Extra y Model.
+model ExtraModel {
+  extraId String
+  modelId String
+
+  extra Extra @relation(fields: [extraId], references: [id], onDelete: Cascade)
+  model Model @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@id([extraId, modelId])
+  @@map("extra_model")
+}
+
+/// Promoción/regla de precio con vigencia.
+model Promotion {
+  id            String        @id @default(cuid())
+  developmentId String
+  name          String
+  type          PromotionType
+  value         Decimal       @db.Decimal(14, 2)
+  startDate     DateTime
+  endDate       DateTime
+  active        Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  development Development @relation(fields: [developmentId], references: [id], onDelete: Cascade)
+
+  @@index([developmentId])
+  @@index([developmentId, active, startDate, endDate])
+  @@map("promotions")
+}
+
+/// Configuración de integración (Plan B): snippet, entorno, dominios, token.
+/// 1 a 1 con Development.
+model IntegrationSettings {
+  id                 String          @id @default(cuid())
+  developmentId      String          @unique
+  mode               IntegrationMode @default(HOSPEDADA)
+  environment        IntegrationEnv  @default(VISTA_PREVIA)
+  token              String          @unique
+  authorizedDomains  String[]        @default([])
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  development Development @relation(fields: [developmentId], references: [id], onDelete: Cascade)
+
+  @@map("integration_settings")
+}
+
+/// Cotización (lead) generada por un comprador final.
+model Quote {
+  id              String      @id @default(cuid())
+  developmentId   String
+  modelId         String
+  finishLevelId   String?
+  extraIds        String[]    @default([])
+  total           Decimal     @db.Decimal(14, 2)
+  customerName    String
+  customerEmail   String
+  customerPhone   String?
+  status          QuoteStatus @default(NUEVA)
+  originPlan      QuoteOrigin
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  development Development @relation(fields: [developmentId], references: [id], onDelete: Cascade)
+  model       Model       @relation(fields: [modelId], references: [id])
+  finishLevel FinishLevel? @relation(fields: [finishLevelId], references: [id])
+
+  @@index([developmentId])
+  @@index([developmentId, status])
+  @@map("quotes")
+}

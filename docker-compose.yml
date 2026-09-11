@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: configurador
+      POSTGRES_PASSWORD: configurador
+      POSTGRES_DB: configurador
+    ports:
+      - "5432:5432"
+    volumes:
+      - configurador_db_data:/var/lib/postgresql/data
+
+volumes:
+  configurador_db_data:
