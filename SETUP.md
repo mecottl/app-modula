@@ -11,7 +11,7 @@ multi-tenant). El detalle funcional completo está en [README.md](README.md).
 
 ## 2. Base de datos
 
-El proyecto ya vive en Supabase: **`configurador-cotizacion`**
+El proyecto ya vive en Supabase: **`MODULA`**
 (ref `huqailndoltfygxjczkv`, https://huqailndoltfygxjczkv.supabase.co).
 
 El esquema completo (`prisma/migrations/20260911000000_init`) y RLS
