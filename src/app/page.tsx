@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { FAQ } from "@/components/ui/faq-tabs";
+import { Footer } from "@/components/ui/footer-section";
 
 const planAFeatures = [
   "Página propia: nosotros.com/tu-desarrollo",
@@ -59,6 +61,78 @@ const steps = [
     description: "Cada lead llega con su configuración exacta y notificación inmediata.",
   },
 ];
+
+const faqCategories = {
+  general: "General",
+  "plan-a": "Plan Básico",
+  "plan-b": "Plan Profesional",
+  seguridad: "Seguridad y datos",
+};
+
+const faqData = {
+  general: [
+    {
+      question: "¿Qué es MODULA?",
+      answer:
+        "Un configurador de vivienda con cotización en tiempo real para desarrolladoras inmobiliarias, con dos formas de entrega — página propia o widget embebido — sobre el mismo motor de precio.",
+    },
+    {
+      question: "¿Necesito saber programar para configurar mi catálogo?",
+      answer:
+        "No. Modelos, niveles de acabado, extras y promociones se configuran desde el dashboard, sin tocar código.",
+    },
+    {
+      question: "¿MODULA procesa pagos de mis compradores?",
+      answer:
+        "No. El alcance del producto es generación de cotizaciones y captura de leads calificados, no procesamiento de pagos.",
+    },
+  ],
+  "plan-a": [
+    {
+      question: "¿Cómo entrego el configurador a mis compradores?",
+      answer: "Como página propia bajo nosotros.com/tu-desarrollo, publicada por nosotros.",
+    },
+    {
+      question: "¿Puedo personalizar la marca?",
+      answer: "Sí: logo, colores y el texto del botón de cotizar.",
+    },
+    {
+      question: "¿Qué necesito para empezar?",
+      answer: "Nada — el Plan Básico no requiere sitio propio ni equipo técnico.",
+    },
+  ],
+  "plan-b": [
+    {
+      question: "¿Cómo se instala el widget en mi sitio?",
+      answer:
+        "Copiando un snippet (iframe + script) desde el dashboard. Hay instructivo paso a paso para WordPress, Wix, Webflow y HTML a la medida.",
+    },
+    {
+      question: "¿Qué pasa si alguien copia mi snippet a otro sitio?",
+      answer:
+        "En modo producción el widget valida el dominio de origen contra tu lista autorizada y lo bloquea si no coincide.",
+    },
+    {
+      question: "¿Puedo probar cambios antes de publicarlos?",
+      answer: "Sí, el modo vista previa omite esa validación para que pruebes libremente.",
+    },
+  ],
+  seguridad: [
+    {
+      question: "¿Mis datos se mezclan con los de otras desarrolladoras?",
+      answer: "No. Cada cuenta ve únicamente sus propios datos — el aislamiento se aplica en cada consulta.",
+    },
+    {
+      question: "¿Puedo eliminar los datos de un lead si me lo piden?",
+      answer:
+        "Sí, desde la bandeja de cotizaciones puedes borrar los datos personales de un lead a solicitud del titular.",
+    },
+    {
+      question: "¿Los datos viajan cifrados?",
+      answer: "Sí, toda la comunicación de la plataforma es HTTPS.",
+    },
+  ],
+};
 
 function Nav() {
   return (
@@ -227,6 +301,17 @@ export default function Home() {
           </div>
         </section>
 
+        {/* FAQ */}
+        <section id="faq" className="border-t border-border">
+          <FAQ
+            title="Preguntas frecuentes"
+            subtitle="¿Tienes dudas?"
+            categories={faqCategories}
+            faqData={faqData}
+            className="mx-auto max-w-5xl py-20"
+          />
+        </section>
+
         {/* CTA final */}
         <section className="border-t border-border">
           <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-6 px-6 py-20 sm:flex-row sm:items-center">
@@ -248,19 +333,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-muted-foreground sm:flex-row">
-          <span>MODULA</span>
-          <a
-            href="https://github.com/mecottl/app-modula"
-            target="_blank"
-            rel="noreferrer"
-            className="transition-colors hover:text-foreground"
-          >
-            GitHub
-          </a>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

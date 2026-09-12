@@ -17,12 +17,16 @@
   "dependencies": {
     "@prisma/client": "6.19.3",
     "bcryptjs": "^3.0.3",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.45.0",
+    "motion": "^13.2.0",
     "next": "^16.3.5",
     "next-auth": "^5.0.0-beta.32",
     "prisma": "6.19.3",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "resend": "^6.28.0",
+    "tailwind-merge": "^3.6.0",
     "zod": "^4.6.2"
   },
   "devDependencies": {

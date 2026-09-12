@@ -16,6 +16,8 @@
   --color-muted-foreground: #a3a3a3;
   --color-border: #333333; /* el color principal pedido, como línea/borde */
   --color-destructive: #f87171;
+  --color-card: #141414;
+  --color-card-foreground: #fafaf7;
 }
 
 @theme inline {
@@ -27,6 +29,8 @@
   --color-muted-foreground: var(--color-muted-foreground);
   --color-border: var(--color-border);
   --color-destructive: var(--color-destructive);
+  --color-card: var(--color-card);
+  --color-card-foreground: var(--color-card-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
