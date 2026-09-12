@@ -60,6 +60,12 @@ enum QuoteOrigin {
   B
 }
 
+enum AnalyticsEventType {
+  VISITA
+  CONFIGURACION_COMPLETADA
+  COTIZACION_ENVIADA
+}
+
 /// Cuenta de una desarrolladora inmobiliaria (tenant raíz).
 model Account {
   id            String        @id @default(cuid())
@@ -106,6 +112,7 @@ model Development {
   primaryColor   String?
   accentColor    String?
   ctaText        String?
+  webhookUrl     String?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
@@ -116,6 +123,7 @@ model Development {
   promotions          Promotion[]
   integrationSettings IntegrationSettings?
   quotes              Quote[]
+  analyticsEvents     AnalyticsEvent[]
 
   @@index([accountId])
   @@map("developments")
@@ -248,4 +256,20 @@ model Quote {
   @@index([developmentId])
   @@index([developmentId, status])
   @@map("quotes")
+}
+
+/// Evento de analítica propio (README.md sección 6.1 y 10): visitas al
+/// configurador, configuraciones completadas y cotizaciones enviadas.
+model AnalyticsEvent {
+  id            String             @id @default(cuid())
+  developmentId String
+  type          AnalyticsEventType
+  originPlan    QuoteOrigin
+  modelId       String?
+  createdAt     DateTime           @default(now())
+
+  development Development @relation(fields: [developmentId], references: [id], onDelete: Cascade)
+
+  @@index([developmentId, type])
+  @@map("analytics_events")
 }

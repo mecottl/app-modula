@@ -62,6 +62,7 @@ const generalSchema = z.object({
   primaryColor: z.string().max(20).optional().or(z.literal("")),
   accentColor: z.string().max(20).optional().or(z.literal("")),
   logoUrl: z.string().url().max(500).optional().or(z.literal("")),
+  webhookUrl: z.string().url().max(500).optional().or(z.literal("")),
 });
 
 export async function updateDevelopmentGeneral(developmentId: string, formData: FormData) {
@@ -75,6 +76,7 @@ export async function updateDevelopmentGeneral(developmentId: string, formData: 
     primaryColor: formData.get("primaryColor"),
     accentColor: formData.get("accentColor"),
     logoUrl: formData.get("logoUrl"),
+    webhookUrl: formData.get("webhookUrl"),
   });
   if (!parsed.success) {
     redirect(
@@ -94,6 +96,7 @@ export async function updateDevelopmentGeneral(developmentId: string, formData: 
       primaryColor: parsed.data.primaryColor || null,
       accentColor: parsed.data.accentColor || null,
       logoUrl: parsed.data.logoUrl || null,
+      webhookUrl: parsed.data.webhookUrl || null,
     },
   });
 

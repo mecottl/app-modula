@@ -56,6 +56,7 @@ export default async function CotizacionClientePage({
       <ConfiguratorWizard
         slug={slug}
         preview={isPreview}
+        originPlan="A"
         currency={development.currency}
         ctaText={development.ctaText ?? "Cotiza tu casa"}
         accentColor={development.accentColor}

@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { calculateQuotePrice, PricingError } from "@/lib/pricing";
 import { resolvePublicDevelopment } from "@/lib/publicAccess";
 import { notifyNewQuote } from "@/lib/notifications";
+import { logAnalyticsEvent } from "@/lib/analytics";
+import { sendQuoteWebhook } from "@/lib/webhooks";
 
 const bodySchema = z.object({
   modelId: z.string().min(1),
@@ -12,12 +14,14 @@ const bodySchema = z.object({
   customerName: z.string().min(2).max(160),
   customerEmail: z.string().email(),
   customerPhone: z.string().max(40).optional(),
+  originPlan: z.enum(["A", "B"]).default("A"),
 });
 
 /**
- * Recibe una cotización enviada desde el configurador público (Plan A).
- * El total SIEMPRE se recalcula en el servidor (calculateQuotePrice) —
- * nunca se confía en un total enviado por el cliente.
+ * Recibe una cotización enviada desde el configurador público (Plan A o
+ * el widget embebido, Plan B — ambos comparten este endpoint). El total
+ * SIEMPRE se recalcula en el servidor (calculateQuotePrice) — nunca se
+ * confía en un total enviado por el cliente.
  */
 export async function POST(
   request: NextRequest,
@@ -75,8 +79,15 @@ export async function POST(
       customerName: parsed.data.customerName,
       customerEmail: parsed.data.customerEmail,
       customerPhone: parsed.data.customerPhone,
-      originPlan: "A",
+      originPlan: parsed.data.originPlan,
     },
+  });
+
+  await logAnalyticsEvent({
+    developmentId: development.id,
+    type: "COTIZACION_ENVIADA",
+    originPlan: parsed.data.originPlan,
+    modelId: parsed.data.modelId,
   });
 
   await notifyNewQuote({
@@ -90,6 +101,10 @@ export async function POST(
     customerEmail: parsed.data.customerEmail,
     customerPhone: parsed.data.customerPhone,
   });
+
+  if (development.webhookUrl) {
+    await sendQuoteWebhook(development.webhookUrl, quote);
+  }
 
   return NextResponse.json({ id: quote.id, total: breakdown.total }, { status: 201 });
 }

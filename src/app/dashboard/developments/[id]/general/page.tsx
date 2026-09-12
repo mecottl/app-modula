@@ -94,6 +94,19 @@ export default async function GeneralPage({
             className="rounded border px-3 py-2"
           />
         </label>
+        <label className="flex flex-col gap-1 text-sm">
+          Webhook de cotizaciones (opcional)
+          <input
+            name="webhookUrl"
+            type="url"
+            defaultValue={development.webhookUrl ?? ""}
+            placeholder="https://tu-crm.com/webhooks/modula"
+            className="rounded border px-3 py-2"
+          />
+          <span className="text-xs text-gray-500">
+            Cada cotización nueva se enviará también como POST a esta URL.
+          </span>
+        </label>
         <button type="submit" className="self-start rounded bg-black px-4 py-2 text-sm text-white">
           Guardar
         </button>

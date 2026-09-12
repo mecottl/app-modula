@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type ModelDTO = {
   id: string;
@@ -45,6 +45,7 @@ const STEPS = ["modelo", "acabado", "extras", "contacto", "confirmacion"] as con
 export function ConfiguratorWizard({
   slug,
   preview,
+  originPlan,
   currency,
   ctaText,
   accentColor,
@@ -54,6 +55,7 @@ export function ConfiguratorWizard({
 }: {
   slug: string;
   preview: boolean;
+  originPlan: "A" | "B";
   currency: string;
   ctaText: string;
   accentColor: string | null;
@@ -82,6 +84,31 @@ export function ConfiguratorWizard({
   );
 
   const previewQs = preview ? "?preview=1" : "";
+
+  function trackEvent(type: "VISITA" | "CONFIGURACION_COMPLETADA") {
+    fetch(`/api/developments/${slug}/events${previewQs}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, originPlan, modelId: modelId || undefined }),
+      keepalive: true,
+    }).catch(() => {});
+  }
+
+  const trackedVisit = useRef(false);
+  useEffect(() => {
+    if (trackedVisit.current) return;
+    trackedVisit.current = true;
+    trackEvent("VISITA");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const trackedConfigCompleted = useRef(false);
+  useEffect(() => {
+    if (step !== 3 || trackedConfigCompleted.current) return;
+    trackedConfigCompleted.current = true;
+    trackEvent("CONFIGURACION_COMPLETADA");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   useEffect(() => {
     if (!modelId) return;
@@ -128,6 +155,7 @@ export function ConfiguratorWizard({
           customerName,
           customerEmail,
           customerPhone: customerPhone || undefined,
+          originPlan,
         }),
       });
       if (!res.ok) {

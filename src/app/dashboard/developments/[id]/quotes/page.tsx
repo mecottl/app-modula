@@ -34,11 +34,15 @@ export default async function QuotesPage({
     orderBy: { createdAt: "desc" },
   });
 
+  const exportHref = `/api/dashboard/developments/${id}/quotes/export${
+    validStatus ? `?status=${validStatus}` : ""
+  }`;
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-medium">Cotizaciones recibidas</h2>
-        <nav className="flex gap-2 text-sm" aria-label="Filtrar por estado">
+        <nav className="flex flex-wrap items-center gap-2 text-sm" aria-label="Filtrar por estado">
           <a href={`/dashboard/developments/${id}/quotes`} className="underline">
             Todas
           </a>
@@ -51,6 +55,9 @@ export default async function QuotesPage({
               {label}
             </a>
           ))}
+          <a href={exportHref} className="rounded border px-2 py-1">
+            Exportar CSV
+          </a>
         </nav>
       </div>
 

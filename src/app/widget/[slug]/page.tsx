@@ -61,6 +61,7 @@ export default async function WidgetPage({ params }: { params: Promise<{ slug: s
       <ConfiguratorWizard
         slug={slug}
         preview={isPreview}
+        originPlan="B"
         currency={development.currency}
         ctaText={development.ctaText ?? "Cotiza tu casa"}
         accentColor={development.accentColor}
