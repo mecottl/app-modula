@@ -151,12 +151,20 @@ function Nav() {
             Planes
           </a>
         </nav>
-        <Link
-          href="/login"
-          className="rounded-full border border-border px-4 py-1.5 text-sm transition-colors hover:border-foreground"
-        >
-          Entrar
-        </Link>
+        <div className="flex items-center gap-5">
+          <Link
+            href="/login"
+            className="hidden text-sm font-medium text-foreground transition-colors hover:text-muted-foreground sm:block"
+          >
+            Iniciar sesión
+          </Link>
+          <a
+            href="#planes"
+            className="rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Comenzar
+          </a>
+        </div>
       </div>
     </header>
   );
