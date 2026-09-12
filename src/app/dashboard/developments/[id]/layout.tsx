@@ -9,6 +9,7 @@ const tabs = [
   { href: "finishes", label: "Acabados y extras" },
   { href: "promotions", label: "Reglas de precio" },
   { href: "quotes", label: "Cotizaciones" },
+  { href: "integration", label: "Integración" },
 ];
 
 export default async function DevelopmentLayout({
