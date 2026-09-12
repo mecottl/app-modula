@@ -2,18 +2,20 @@
 
 /*
  * Sistema de diseño MODULA — Swiss/Minimalism monocromático, estilo
- * Vercel: tipografía Geist, alto contraste, sin gradientes ni sombras
- * decorativas, un solo color de acento (el propio primario).
+ * Vercel: modo oscuro por defecto, tipografía Geist, alto contraste,
+ * sin gradientes ni sombras decorativas, un solo color de acento (el
+ * propio primario, invertido sobre el fondo oscuro).
  */
 :root {
-  --background: #faf9f6; /* blanco hueso */
-  --foreground: #262626; /* ~#333, texto principal */
-  --color-primary: #262626;
-  --color-primary-foreground: #faf9f6;
-  --color-muted: #f0efe9;
-  --color-muted-foreground: #6b6b6b;
-  --color-border: #e3e1da;
-  --color-destructive: #b3261e;
+  color-scheme: dark;
+  --background: #0a0a0a; /* casi negro, estilo Vercel */
+  --foreground: #fafaf7; /* blanco hueso */
+  --color-primary: #fafaf7; /* botón invertido: claro sobre fondo oscuro */
+  --color-primary-foreground: #0a0a0a;
+  --color-muted: #1a1a1a; /* superficies (tarjetas) */
+  --color-muted-foreground: #a3a3a3;
+  --color-border: #333333; /* el color principal pedido, como línea/borde */
+  --color-destructive: #f87171;
 }
 
 @theme inline {

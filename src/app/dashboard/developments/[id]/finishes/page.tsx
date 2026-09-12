@@ -34,7 +34,7 @@ export default async function FinishesPage({
 
   return (
     <div className="flex flex-col gap-10">
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-400">{error}</p>}
 
       <section className="flex flex-col gap-4">
         <h2 className="font-medium">Niveles de acabado</h2>
@@ -85,7 +85,7 @@ export default async function FinishesPage({
                   </button>
                 </form>
                 <form action={deleteFinishLevel.bind(null, id, fl.id)} className="mt-2">
-                  <button type="submit" className="text-sm text-red-600 underline">
+                  <button type="submit" className="text-sm text-red-400 underline">
                     Eliminar
                   </button>
                 </form>
@@ -194,7 +194,7 @@ export default async function FinishesPage({
                     </button>
                   </form>
                   <form action={deleteExtra.bind(null, id, extra.id)} className="mt-2">
-                    <button type="submit" className="text-sm text-red-600 underline">
+                    <button type="submit" className="text-sm text-red-400 underline">
                       Eliminar
                     </button>
                   </form>

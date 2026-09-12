@@ -21,7 +21,7 @@ export default async function DevelopmentsPage({
     <div className="flex flex-col gap-8">
       <section>
         <h1 className="text-xl font-semibold">Tus desarrollos</h1>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
         <ul className="mt-4 flex flex-col gap-2">
           {developments.map((d) => (
             <li key={d.id} className="rounded border p-3">

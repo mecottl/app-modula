@@ -44,7 +44,7 @@ export default async function IntegrationPage({
           Copia este snippet en el sitio de la desarrolladora para embeber el configurador vía{" "}
           <code>iframe</code>.
         </p>
-        {ok && <p className="mt-2 text-sm text-green-700">{ok}</p>}
+        {ok && <p className="mt-2 text-sm text-green-400">{ok}</p>}
       </div>
 
       <section>
@@ -93,7 +93,7 @@ export default async function IntegrationPage({
             Regenerar token
           </button>
         </form>
-        <p className="mt-1 text-xs text-amber-700">
+        <p className="mt-1 text-xs text-amber-400">
           Regenerar invalida el token anterior de inmediato — hazlo solo si se filtró.
         </p>
       </section>

@@ -27,8 +27,8 @@ export default async function PromotionsPage({
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="font-medium">Reglas de precio (promociones)</h2>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-        {warning && <p className="mt-2 text-sm text-amber-700">{warning}</p>}
+        {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+        {warning && <p className="mt-2 text-sm text-amber-400">{warning}</p>}
       </div>
 
       <ul className="flex flex-col gap-3">
@@ -103,7 +103,7 @@ export default async function PromotionsPage({
                 </button>
               </form>
               <form action={deletePromotion.bind(null, id, promo.id)} className="mt-2">
-                <button type="submit" className="text-sm text-red-600 underline">
+                <button type="submit" className="text-sm text-red-400 underline">
                   Eliminar
                 </button>
               </form>

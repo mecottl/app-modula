@@ -174,7 +174,7 @@ export function ConfiguratorWizard({
     }
   }
 
-  const accent = accentColor || "#262626";
+  const accent = accentColor || "#3d3d3d";
 
   return (
     <div className="flex flex-col gap-6">
@@ -357,7 +357,7 @@ export function ConfiguratorWizard({
             />
           </label>
           {submitError && (
-            <p role="alert" className="text-sm text-red-600">
+            <p role="alert" className="text-sm text-red-400">
               {submitError}
             </p>
           )}
@@ -378,14 +378,14 @@ export function ConfiguratorWizard({
       )}
 
       {step === 4 && (
-        <div role="status" className="rounded border border-green-500 bg-green-50 p-4">
-          <p className="font-medium text-green-800">¡Listo! Recibimos tu cotización.</p>
+        <div role="status" className="rounded border border-green-700 bg-green-950 p-4">
+          <p className="font-medium text-green-400">¡Listo! Recibimos tu cotización.</p>
           {confirmedTotal && (
-            <p className="mt-1 text-sm text-green-700">
+            <p className="mt-1 text-sm text-green-400">
               Total cotizado: {formatMoney(confirmedTotal, currency)}
             </p>
           )}
-          <p className="mt-2 text-sm text-green-700">Nos pondremos en contacto contigo pronto.</p>
+          <p className="mt-2 text-sm text-green-400">Nos pondremos en contacto contigo pronto.</p>
         </div>
       )}
 
@@ -393,7 +393,7 @@ export function ConfiguratorWizard({
         <aside aria-live="polite" className="rounded border bg-muted p-4">
           <h3 className="text-sm font-medium text-muted-foreground">Precio estimado</h3>
           {loadingPrice && <p className="text-sm text-muted-foreground">Calculando…</p>}
-          {priceError && <p className="text-sm text-red-600">{priceError}</p>}
+          {priceError && <p className="text-sm text-red-400">{priceError}</p>}
           {breakdown && !loadingPrice && !priceError && (
             <div className="mt-1">
               <p className="text-2xl font-semibold">{formatMoney(breakdown.total, currency)}</p>

@@ -23,7 +23,7 @@ export default async function ModelsPage({
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="font-medium">Catálogo de modelos</h2>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
       </div>
 
       <ul className="flex flex-col gap-3">
@@ -105,7 +105,7 @@ export default async function ModelsPage({
                   </div>
                 </form>
                 <form action={deleteAction} className="mt-2">
-                  <button type="submit" className="text-sm text-red-600 underline">
+                  <button type="submit" className="text-sm text-red-400 underline">
                     Eliminar modelo
                   </button>
                 </form>

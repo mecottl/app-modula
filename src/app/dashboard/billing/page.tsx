@@ -25,8 +25,8 @@ export default async function BillingPage({
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-xl font-semibold">Facturación</h1>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-        {ok && <p className="mt-2 text-sm text-green-700">{ok}</p>}
+        {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+        {ok && <p className="mt-2 text-sm text-green-400">{ok}</p>}
       </div>
 
       <section className="rounded border p-4">

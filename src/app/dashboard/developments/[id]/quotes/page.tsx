@@ -100,7 +100,7 @@ export default async function QuotesPage({
               </form>
             </div>
             <form action={deleteQuoteData.bind(null, id, quote.id)} className="mt-2">
-              <button type="submit" className="text-xs text-red-600 underline">
+              <button type="submit" className="text-xs text-red-400 underline">
                 Eliminar datos del lead (solicitud del titular)
               </button>
             </form>

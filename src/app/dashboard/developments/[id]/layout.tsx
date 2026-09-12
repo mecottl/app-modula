@@ -40,7 +40,7 @@ export default async function DevelopmentLayout({
           <h1 className="text-lg font-semibold">{development.name}</h1>
           <p className="text-sm text-muted-foreground">
             /{development.slug} —{" "}
-            <span className={development.status === "PUBLICADO" ? "text-green-700" : "text-amber-700"}>
+            <span className={development.status === "PUBLICADO" ? "text-green-400" : "text-amber-400"}>
               {development.status === "PUBLICADO" ? "Publicado" : "Borrador"}
             </span>
           </p>

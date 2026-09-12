@@ -26,8 +26,8 @@ export default async function MembersPage({
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-xl font-semibold">Miembros del equipo</h1>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-        {ok && <p className="mt-2 text-sm text-green-700">{ok}</p>}
+        {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+        {ok && <p className="mt-2 text-sm text-green-400">{ok}</p>}
       </div>
 
       <ul className="flex flex-col gap-2">
@@ -43,7 +43,7 @@ export default async function MembersPage({
             </div>
             {m.id !== memberId && (
               <form action={removeMember.bind(null, m.id)}>
-                <button type="submit" className="text-xs text-red-600 underline">
+                <button type="submit" className="text-xs text-red-400 underline">
                   Quitar
                 </button>
               </form>
