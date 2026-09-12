@@ -69,7 +69,7 @@ export default async function GeneralPage({
               name="primaryColor"
               type="text"
               defaultValue={development.primaryColor ?? ""}
-              placeholder="#111111"
+              placeholder="#262626"
               className="rounded border px-3 py-2"
             />
           </label>
@@ -103,11 +103,11 @@ export default async function GeneralPage({
             placeholder="https://tu-crm.com/webhooks/modula"
             className="rounded border px-3 py-2"
           />
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-muted-foreground">
             Cada cotización nueva se enviará también como POST a esta URL.
           </span>
         </label>
-        <button type="submit" className="self-start rounded bg-black px-4 py-2 text-sm text-white">
+        <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
           Guardar
         </button>
       </form>

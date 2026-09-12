@@ -40,7 +40,7 @@ export default async function IntegrationPage({
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="font-medium">Integración (Plan Profesional — widget embebible)</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Copia este snippet en el sitio de la desarrolladora para embeber el configurador vía{" "}
           <code>iframe</code>.
         </p>
@@ -49,7 +49,7 @@ export default async function IntegrationPage({
 
       <section>
         <h3 className="font-medium">Snippet de instalación</h3>
-        <pre className="mt-2 overflow-x-auto rounded border bg-gray-50 p-3 text-xs">{snippet}</pre>
+        <pre className="mt-2 overflow-x-auto rounded border bg-muted p-3 text-xs">{snippet}</pre>
       </section>
 
       <section className="rounded border p-4">
@@ -79,7 +79,7 @@ export default async function IntegrationPage({
               className="rounded border px-3 py-2 font-mono text-xs"
             />
           </label>
-          <button type="submit" className="self-start rounded bg-black px-4 py-2 text-sm text-white">
+          <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
             Guardar
           </button>
         </form>
@@ -87,7 +87,7 @@ export default async function IntegrationPage({
 
       <section className="rounded border p-4">
         <h3 className="font-medium">Token del proyecto</h3>
-        <p className="mt-1 break-all font-mono text-xs text-gray-500">{settings.token}</p>
+        <p className="mt-1 break-all font-mono text-xs text-muted-foreground">{settings.token}</p>
         <form action={regenerateIntegrationToken.bind(null, id)} className="mt-3">
           <button type="submit" className="rounded border px-4 py-2 text-sm">
             Regenerar token

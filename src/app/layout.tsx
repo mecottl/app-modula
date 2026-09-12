@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Configurador de cotización inmobiliaria",
+  title: "MODULA — Configurador de cotización inmobiliaria",
   description:
-    "Configurador de vivienda con cotización en tiempo real para desarrolladoras inmobiliarias.",
+    "Configurador de vivienda con cotización en tiempo real para desarrolladoras inmobiliarias. Página propia o widget embebido en tu sitio.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

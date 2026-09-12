@@ -26,13 +26,13 @@ export default function GlobalError({
       <body className="flex min-h-screen items-center justify-center p-6">
         <div className="text-center">
           <h1 className="text-lg font-semibold">Algo salió mal</h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-muted-foreground">
             Ya quedó registrado. Intenta de nuevo en un momento.
           </p>
           <button
             type="button"
             onClick={reset}
-            className="mt-4 rounded bg-black px-4 py-2 text-sm text-white"
+            className="mt-4 rounded bg-primary px-4 py-2 text-sm text-primary-foreground"
           >
             Reintentar
           </button>

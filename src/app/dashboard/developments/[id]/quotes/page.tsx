@@ -70,11 +70,11 @@ export default async function QuotesPage({
                   {quote.model.name}
                   {quote.finishLevel ? ` — ${quote.finishLevel.name}` : ""} — ${quote.total.toString()}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   {quote.customerName} · {quote.customerEmail}
                   {quote.customerPhone ? ` · ${quote.customerPhone}` : ""}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   {quote.createdAt.toLocaleString("es-MX")} · Plan {quote.originPlan}
                 </p>
               </div>
@@ -106,7 +106,7 @@ export default async function QuotesPage({
             </form>
           </li>
         ))}
-        {quotes.length === 0 && <li className="text-sm text-gray-500">Sin cotizaciones aún.</li>}
+        {quotes.length === 0 && <li className="text-sm text-muted-foreground">Sin cotizaciones aún.</li>}
       </ul>
     </div>
   );

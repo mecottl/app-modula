@@ -49,7 +49,7 @@ export default async function CotizacionClientePage({
         )}
         <h1 className="text-2xl font-semibold">{development.name}</h1>
         {development.description && (
-          <p className="mt-1 text-sm text-gray-600">{development.description}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{development.description}</p>
         )}
       </header>
 

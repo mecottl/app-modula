@@ -174,16 +174,16 @@ export function ConfiguratorWizard({
     }
   }
 
-  const accent = accentColor || "#111111";
+  const accent = accentColor || "#262626";
 
   return (
     <div className="flex flex-col gap-6">
-      <ol className="flex flex-wrap gap-2 text-xs text-gray-500" aria-label="Progreso">
+      <ol className="flex flex-wrap gap-2 text-xs text-muted-foreground" aria-label="Progreso">
         {STEPS.map((label, i) => (
           <li
             key={label}
             aria-current={i === step ? "step" : undefined}
-            className={i === step ? "font-semibold text-black" : ""}
+            className={i === step ? "font-semibold text-foreground" : ""}
           >
             {i + 1}. {label}
           </li>
@@ -196,7 +196,7 @@ export function ConfiguratorWizard({
           {models.map((model) => (
             <label
               key={model.id}
-              className="flex cursor-pointer flex-col gap-1 rounded border p-3 has-[:checked]:border-black"
+              className="flex cursor-pointer flex-col gap-1 rounded border p-3 has-[:checked]:border-foreground"
             >
               <span className="flex items-center gap-2">
                 <input
@@ -211,13 +211,13 @@ export function ConfiguratorWizard({
                 />
                 <span className="font-medium">{model.name}</span>
               </span>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted-foreground">
                 {model.areaM2} m² · {model.bedrooms} recámaras · desde{" "}
                 {formatMoney(model.basePrice, currency)}
               </span>
             </label>
           ))}
-          {models.length === 0 && <p className="text-sm text-gray-500">Aún no hay modelos disponibles.</p>}
+          {models.length === 0 && <p className="text-sm text-muted-foreground">Aún no hay modelos disponibles.</p>}
           <button
             type="button"
             disabled={!modelId}
@@ -287,7 +287,7 @@ export function ConfiguratorWizard({
             </label>
           ))}
           {applicableExtras.length === 0 && (
-            <p className="text-sm text-gray-500">Sin extras disponibles para este modelo.</p>
+            <p className="text-sm text-muted-foreground">Sin extras disponibles para este modelo.</p>
           )}
           <div className="mt-2 flex gap-3">
             <button type="button" onClick={() => setStep(1)} className="rounded border px-4 py-2 text-sm">
@@ -390,14 +390,14 @@ export function ConfiguratorWizard({
       )}
 
       {step < 4 && (
-        <aside aria-live="polite" className="rounded border bg-gray-50 p-4">
-          <h3 className="text-sm font-medium text-gray-600">Precio estimado</h3>
-          {loadingPrice && <p className="text-sm text-gray-500">Calculando…</p>}
+        <aside aria-live="polite" className="rounded border bg-muted p-4">
+          <h3 className="text-sm font-medium text-muted-foreground">Precio estimado</h3>
+          {loadingPrice && <p className="text-sm text-muted-foreground">Calculando…</p>}
           {priceError && <p className="text-sm text-red-600">{priceError}</p>}
           {breakdown && !loadingPrice && !priceError && (
             <div className="mt-1">
               <p className="text-2xl font-semibold">{formatMoney(breakdown.total, currency)}</p>
-              <ul className="mt-1 text-xs text-gray-500">
+              <ul className="mt-1 text-xs text-muted-foreground">
                 <li>Base: {formatMoney(breakdown.basePrice, currency)}</li>
                 {Number(breakdown.finishLevelDelta) !== 0 && (
                   <li>Acabado: +{formatMoney(breakdown.finishLevelDelta, currency)}</li>

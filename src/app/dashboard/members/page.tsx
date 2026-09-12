@@ -37,7 +37,7 @@ export default async function MembersPage({
               <p className="font-medium">
                 {m.name} {m.id === memberId && "(tú)"}
               </p>
-              <p className="text-gray-500">
+              <p className="text-muted-foreground">
                 {m.email} — {roleLabels[m.role] ?? m.role}
               </p>
             </div>
@@ -54,7 +54,7 @@ export default async function MembersPage({
 
       <section className="rounded border p-4">
         <h2 className="font-medium">Invitar miembro</h2>
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-muted-foreground">
           Solo un administrador puede invitar o quitar miembros.
         </p>
         <form action={inviteMember} className="mt-3 flex flex-col gap-3 sm:max-w-sm">
@@ -74,7 +74,7 @@ export default async function MembersPage({
               <option value="SOLO_LECTURA">Solo lectura</option>
             </select>
           </label>
-          <button type="submit" className="self-start rounded bg-black px-4 py-2 text-sm text-white">
+          <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
             Invitar
           </button>
         </form>

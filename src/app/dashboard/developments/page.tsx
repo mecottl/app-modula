@@ -28,13 +28,13 @@ export default async function DevelopmentsPage({
               <Link href={`/dashboard/developments/${d.id}/general`} className="font-medium underline">
                 {d.name}
               </Link>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-muted-foreground">
                 /{d.slug} — {d.status === "PUBLICADO" ? "Publicado" : "Borrador"}
               </div>
             </li>
           ))}
           {developments.length === 0 && (
-            <li className="text-sm text-gray-500">Aún no tienes desarrollos.</li>
+            <li className="text-sm text-muted-foreground">Aún no tienes desarrollos.</li>
           )}
         </ul>
       </section>
@@ -59,7 +59,7 @@ export default async function DevelopmentsPage({
               className="rounded border px-3 py-2"
             />
           </label>
-          <button type="submit" className="rounded bg-black px-3 py-2 text-white">
+          <button type="submit" className="rounded bg-primary px-3 py-2 text-primary-foreground">
             Crear
           </button>
         </form>

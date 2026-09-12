@@ -98,7 +98,7 @@ export default async function PromotionsPage({
                   <input name="active" type="checkbox" defaultChecked={promo.active} />
                   Activa
                 </label>
-                <button type="submit" className="self-start rounded bg-black px-4 py-2 text-sm text-white">
+                <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
                   Guardar
                 </button>
               </form>
@@ -110,7 +110,7 @@ export default async function PromotionsPage({
             </details>
           </li>
         ))}
-        {promotions.length === 0 && <li className="text-sm text-gray-500">Sin promociones aún.</li>}
+        {promotions.length === 0 && <li className="text-sm text-muted-foreground">Sin promociones aún.</li>}
       </ul>
 
       <section className="rounded border p-4">
@@ -145,7 +145,7 @@ export default async function PromotionsPage({
             <input name="active" type="checkbox" defaultChecked />
             Activa
           </label>
-          <button type="submit" className="self-start rounded bg-black px-4 py-2 text-sm text-white">
+          <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
             Crear
           </button>
         </form>

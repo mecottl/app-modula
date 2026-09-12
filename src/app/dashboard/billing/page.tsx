@@ -34,7 +34,7 @@ export default async function BillingPage({
         <p className="mt-1 text-sm">
           Plan actual: <strong>{planLabels[account.plan] ?? account.plan}</strong>
         </p>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           Estado: {billingStatusLabels[account.billingStatus] ?? account.billingStatus}
         </p>
 
@@ -44,18 +44,18 @@ export default async function BillingPage({
               <option value="BASICO">Básico</option>
               <option value="PROFESIONAL">Profesional</option>
             </select>
-            <button type="submit" className="rounded bg-black px-3 py-2 text-sm text-white">
+            <button type="submit" className="rounded bg-primary px-3 py-2 text-sm text-primary-foreground">
               Cambiar plan
             </button>
           </form>
         ) : (
-          <p className="mt-2 text-xs text-gray-500">Solo un administrador puede cambiar el plan.</p>
+          <p className="mt-2 text-xs text-muted-foreground">Solo un administrador puede cambiar el plan.</p>
         )}
       </section>
 
       <section className="rounded border p-4">
         <h2 className="font-medium">Historial de facturas</h2>
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-muted-foreground">
           Aún no hay un procesador de pagos integrado (ver README.md sección 10). Esta cuenta se
           gestiona manualmente por ahora — el historial de facturas se activará cuando se integre
           un proveedor real (ej. Stripe).

@@ -1,13 +1,30 @@
 @import "tailwindcss";
 
+/*
+ * Sistema de diseño MODULA — Swiss/Minimalism monocromático, estilo
+ * Vercel: tipografía Geist, alto contraste, sin gradientes ni sombras
+ * decorativas, un solo color de acento (el propio primario).
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf9f6; /* blanco hueso */
+  --foreground: #262626; /* ~#333, texto principal */
+  --color-primary: #262626;
+  --color-primary-foreground: #faf9f6;
+  --color-muted: #f0efe9;
+  --color-muted-foreground: #6b6b6b;
+  --color-border: #e3e1da;
+  --color-destructive: #b3261e;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--color-primary);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-muted: var(--color-muted);
+  --color-muted-foreground: var(--color-muted-foreground);
+  --color-border: var(--color-border);
+  --color-destructive: var(--color-destructive);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -15,5 +32,14 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+::selection {
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
 }

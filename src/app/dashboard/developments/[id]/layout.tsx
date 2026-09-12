@@ -34,11 +34,11 @@ export default async function DevelopmentLayout({
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <Link href="/dashboard/developments" className="text-sm text-gray-500 underline">
+          <Link href="/dashboard/developments" className="text-sm text-muted-foreground underline">
             ← Todos los desarrollos
           </Link>
           <h1 className="text-lg font-semibold">{development.name}</h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             /{development.slug} —{" "}
             <span className={development.status === "PUBLICADO" ? "text-green-700" : "text-amber-700"}>
               {development.status === "PUBLICADO" ? "Publicado" : "Borrador"}
@@ -62,7 +62,7 @@ export default async function DevelopmentLayout({
             </form>
           ) : (
             <form action={publishDevelopment.bind(null, development.id)}>
-              <button type="submit" className="rounded bg-black px-3 py-1.5 text-sm text-white">
+              <button type="submit" className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground">
                 Publicar
               </button>
             </form>
@@ -75,7 +75,7 @@ export default async function DevelopmentLayout({
           <Link
             key={tab.href}
             href={`/dashboard/developments/${development.id}/${tab.href}`}
-            className="rounded px-3 py-1.5 hover:bg-gray-100"
+            className="rounded px-3 py-1.5 hover:bg-muted"
           >
             {tab.label}
           </Link>

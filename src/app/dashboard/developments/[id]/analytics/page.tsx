@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded border p-4">
-      <p className="text-xs text-gray-500">{label}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 text-2xl font-semibold">{value.toLocaleString("es-MX")}</p>
     </div>
   );
@@ -46,7 +46,7 @@ export default async function AnalyticsPage({ params }: { params: Promise<{ id: 
         <StatCard label="Cotizaciones enviadas" value={quotesSubmitted} />
       </div>
 
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-muted-foreground">
         Tasa de conversión (visita → cotización): <strong>{visitToQuoteRate}%</strong>
       </p>
 
@@ -56,11 +56,11 @@ export default async function AnalyticsPage({ params }: { params: Promise<{ id: 
           {byModel.map((row) => (
             <li key={row.modelId} className="flex items-center justify-between rounded border p-3 text-sm">
               <span>{modelNameById.get(row.modelId) ?? row.modelId}</span>
-              <span className="text-gray-500">{row._count.modelId} cotizaciones</span>
+              <span className="text-muted-foreground">{row._count.modelId} cotizaciones</span>
             </li>
           ))}
           {byModel.length === 0 && (
-            <li className="text-sm text-gray-500">Aún no hay cotizaciones para rankear modelos.</li>
+            <li className="text-sm text-muted-foreground">Aún no hay cotizaciones para rankear modelos.</li>
           )}
         </ol>
       </section>

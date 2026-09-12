@@ -80,7 +80,7 @@ export default async function FinishesPage({
                       className="rounded border px-3 py-2"
                     />
                   </label>
-                  <button type="submit" className="self-start rounded bg-black px-4 py-2 text-sm text-white">
+                  <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
                     Guardar
                   </button>
                 </form>
@@ -93,7 +93,7 @@ export default async function FinishesPage({
             </li>
           ))}
           {finishLevels.length === 0 && (
-            <li className="text-sm text-gray-500">Sin niveles de acabado aún.</li>
+            <li className="text-sm text-muted-foreground">Sin niveles de acabado aún.</li>
           )}
         </ul>
 
@@ -119,7 +119,7 @@ export default async function FinishesPage({
                 className="rounded border px-3 py-2"
               />
             </label>
-            <button type="submit" className="self-start rounded bg-black px-4 py-2 text-sm text-white">
+            <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
               Crear
             </button>
           </form>
@@ -186,10 +186,10 @@ export default async function FinishesPage({
                         </label>
                       ))}
                       {models.length === 0 && (
-                        <p className="text-gray-500">Crea primero un modelo en Catálogo.</p>
+                        <p className="text-muted-foreground">Crea primero un modelo en Catálogo.</p>
                       )}
                     </fieldset>
-                    <button type="submit" className="self-start rounded bg-black px-4 py-2 text-sm text-white">
+                    <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
                       Guardar
                     </button>
                   </form>
@@ -202,7 +202,7 @@ export default async function FinishesPage({
               </li>
             );
           })}
-          {extras.length === 0 && <li className="text-sm text-gray-500">Sin extras aún.</li>}
+          {extras.length === 0 && <li className="text-sm text-muted-foreground">Sin extras aún.</li>}
         </ul>
 
         <div className="rounded border p-4">
@@ -236,10 +236,10 @@ export default async function FinishesPage({
                 </label>
               ))}
               {models.length === 0 && (
-                <p className="text-gray-500">Crea primero un modelo en Catálogo.</p>
+                <p className="text-muted-foreground">Crea primero un modelo en Catálogo.</p>
               )}
             </fieldset>
-            <button type="submit" className="self-start rounded bg-black px-4 py-2 text-sm text-white">
+            <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
               Crear
             </button>
           </form>

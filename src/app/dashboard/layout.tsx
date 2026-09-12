@@ -4,19 +4,19 @@ import { signOut } from "@/auth";
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
-      <header className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="font-semibold">
+      <header className="flex items-center justify-between border-b border-border bg-background px-4 py-3 sm:px-6">
+        <div className="flex items-center gap-6">
+          <Link href="/dashboard" className="text-sm font-semibold tracking-tight">
             MODULA
           </Link>
-          <nav className="flex gap-3 text-sm text-gray-600">
-            <Link href="/dashboard/developments" className="hover:underline">
+          <nav className="flex gap-4 text-sm text-muted-foreground">
+            <Link href="/dashboard/developments" className="transition-colors hover:text-foreground">
               Desarrollos
             </Link>
-            <Link href="/dashboard/members" className="hover:underline">
+            <Link href="/dashboard/members" className="transition-colors hover:text-foreground">
               Miembros
             </Link>
-            <Link href="/dashboard/billing" className="hover:underline">
+            <Link href="/dashboard/billing" className="transition-colors hover:text-foreground">
               Facturación
             </Link>
           </nav>
@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             await signOut({ redirectTo: "/login" });
           }}
         >
-          <button type="submit" className="text-sm underline">
+          <button type="submit" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
             Cerrar sesión
           </button>
         </form>

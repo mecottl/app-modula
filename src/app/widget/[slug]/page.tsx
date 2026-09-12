@@ -30,7 +30,7 @@ export default async function WidgetPage({ params }: { params: Promise<{ slug: s
     const hostname = referer ? extractHostname(referer) : null;
     if (!hostname || !isDomainAuthorized(hostname, authorizedDomains)) {
       return (
-        <main className="flex min-h-[200px] items-center justify-center p-6 text-center text-sm text-gray-500">
+        <main className="flex min-h-[200px] items-center justify-center p-6 text-center text-sm text-muted-foreground">
           Este widget no está autorizado para instalarse en este dominio.
         </main>
       );
@@ -87,7 +87,7 @@ export default async function WidgetPage({ params }: { params: Promise<{ slug: s
           modelIds: e.modelLinks.map((l) => l.modelId),
         }))}
       />
-      <p className="mt-4 text-center text-xs text-gray-400">
+      <p className="mt-4 text-center text-xs text-muted-foreground">
         Cotizador creado con{" "}
         <a href="https://github.com/mecottl/app-modula" target="_blank" rel="noreferrer" className="underline">
           MODULA

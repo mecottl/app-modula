@@ -99,7 +99,7 @@ export default async function ModelsPage({
                     Activo (visible en el configurador)
                   </label>
                   <div className="flex gap-3">
-                    <button type="submit" className="rounded bg-black px-4 py-2 text-sm text-white">
+                    <button type="submit" className="rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
                       Guardar
                     </button>
                   </div>
@@ -113,7 +113,7 @@ export default async function ModelsPage({
             </li>
           );
         })}
-        {models.length === 0 && <li className="text-sm text-gray-500">Sin modelos aún.</li>}
+        {models.length === 0 && <li className="text-sm text-muted-foreground">Sin modelos aún.</li>}
       </ul>
 
       <section className="rounded border p-4">
@@ -159,7 +159,7 @@ export default async function ModelsPage({
             <input name="active" type="checkbox" defaultChecked />
             Activo (visible en el configurador)
           </label>
-          <button type="submit" className="self-start rounded bg-black px-4 py-2 text-sm text-white">
+          <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
             Crear
           </button>
         </form>
