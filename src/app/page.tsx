@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FAQ } from "@/components/ui/faq-tabs";
 import { Footer } from "@/components/ui/footer-section";
+import { Starfield } from "@/components/ui/starfield-1";
 
 const planAFeatures = [
   "Página propia: nosotros.com/tu-desarrollo",
@@ -195,33 +196,36 @@ export default function Home() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="mx-auto max-w-5xl px-6 pb-20 pt-20 sm:pt-28">
-          <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_1fr]">
-            <div>
-              <h1 className="text-4xl font-semibold leading-[1.1] tracking-tight sm:text-6xl">
-                Cotización en tiempo real para preventa inmobiliaria
-              </h1>
-              <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-                Tu comprador elige modelo, acabados y extras, y ve el precio actualizarse al
-                instante — sin depender de un asesor disponible. Página propia o widget en tu
-                sitio, un solo motor detrás de los dos.
-              </p>
-              <div className="mt-8 flex flex-wrap items-center gap-4">
-                <Link
-                  href="/login"
-                  className="rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-                >
-                  Entrar al dashboard
-                </Link>
-                <a
-                  href="#como-funciona"
-                  className="text-sm font-medium text-foreground underline underline-offset-4"
-                >
-                  Ver cómo funciona
-                </a>
-              </div>
+        <section className="relative overflow-hidden border-b border-border">
+          <Starfield quantity={400} speed={0.3} opacity={0.15} />
+          <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-6 pb-24 pt-20 text-center sm:pt-28">
+            <span className="mb-6 rounded-full border border-border bg-muted/60 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
+              Página propia o widget embebido — un solo motor
+            </span>
+            <h1 className="max-w-3xl text-4xl font-semibold leading-[1.1] tracking-tight sm:text-6xl">
+              Cotización en tiempo real para preventa inmobiliaria
+            </h1>
+            <p className="mt-6 max-w-xl text-lg text-muted-foreground">
+              Tu comprador elige modelo, acabados y extras, y ve el precio actualizarse al
+              instante — sin depender de un asesor disponible.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+              <Link
+                href="/login"
+                className="rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                Entrar al dashboard
+              </Link>
+              <a
+                href="#como-funciona"
+                className="text-sm font-medium text-foreground underline underline-offset-4"
+              >
+                Ver cómo funciona
+              </a>
             </div>
-            <div className="flex justify-center lg:justify-end">
+
+            <div className="relative mt-20 flex justify-center">
+              <div className="absolute inset-x-0 bottom-0 z-0 h-40 bg-[radial-gradient(50%_100%_at_50%_100%,theme(colors.white/12%),transparent)]" />
               <ConfiguratorPreview />
             </div>
           </div>
