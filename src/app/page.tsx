@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FAQ } from "@/components/ui/faq-tabs";
 import { Footer } from "@/components/ui/footer-section";
+import { SiteHeader } from "@/components/site-header";
 import { Starfield } from "@/components/ui/starfield-1";
 
 const planAFeatures = [
@@ -135,41 +136,6 @@ const faqData = {
   ],
 };
 
-function Nav() {
-  return (
-    <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-        <span className="text-sm font-semibold tracking-tight">MODULA</span>
-        <nav className="hidden items-center gap-6 text-sm text-muted-foreground sm:flex">
-          <a href="#producto" className="transition-colors hover:text-foreground">
-            Producto
-          </a>
-          <a href="#como-funciona" className="transition-colors hover:text-foreground">
-            Cómo funciona
-          </a>
-          <a href="#planes" className="transition-colors hover:text-foreground">
-            Planes
-          </a>
-        </nav>
-        <div className="flex items-center gap-5">
-          <Link
-            href="/login"
-            className="hidden text-sm font-medium text-foreground transition-colors hover:text-muted-foreground sm:block"
-          >
-            Iniciar sesión
-          </Link>
-          <a
-            href="#planes"
-            className="rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            Comenzar
-          </a>
-        </div>
-      </div>
-    </header>
-  );
-}
-
 function ConfiguratorPreview() {
   return (
     <div className="w-full max-w-sm rounded-xl border border-border bg-background p-5 shadow-[0_1px_0_0_rgba(0,0,0,0.04)]">
@@ -200,7 +166,7 @@ function ConfiguratorPreview() {
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
-      <Nav />
+      <SiteHeader />
 
       <main className="flex-1">
         {/* Hero */}
