@@ -1,6 +1,8 @@
 import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
 import type { PriceBreakdown } from "@/lib/pricing";
+import { logger } from "@/lib/logger";
+import { captureException } from "@/lib/errorReporting";
 
 /**
  * Notifica por correo a los administradores de la cuenta cuando llega una
@@ -38,12 +40,17 @@ export async function notifyNewQuote(params: {
   const text = lines.join("\n");
 
   if (!recipients.length) {
-    console.warn(`[notifyNewQuote] Sin administradores a quién notificar para ${params.developmentId}`);
+    logger.warn("notifyNewQuote: sin administradores a quién notificar", {
+      developmentId: params.developmentId,
+    });
     return;
   }
 
   if (!process.env.RESEND_API_KEY) {
-    console.warn("[notifyNewQuote] RESEND_API_KEY no configurado, se omite el envío:", subject, text);
+    logger.warn("notifyNewQuote: RESEND_API_KEY no configurado, se omite el envío", {
+      developmentId: params.developmentId,
+      subject,
+    });
     return;
   }
 
@@ -56,6 +63,6 @@ export async function notifyNewQuote(params: {
       text,
     });
   } catch (error) {
-    console.error("[notifyNewQuote] Falló el envío de la notificación:", error);
+    captureException(error, { where: "notifyNewQuote", developmentId: params.developmentId });
   }
 }

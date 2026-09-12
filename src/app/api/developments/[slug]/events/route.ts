@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { resolvePublicDevelopment } from "@/lib/publicAccess";
 import { logAnalyticsEvent } from "@/lib/analytics";
+import { checkRateLimit, getClientIp, tooManyRequests } from "@/lib/rateLimit";
 
 const bodySchema = z.object({
   type: z.enum(["VISITA", "CONFIGURACION_COMPLETADA"]),
@@ -20,6 +21,9 @@ export async function POST(
 ) {
   const { slug } = await params;
   const preview = request.nextUrl.searchParams.get("preview") === "1";
+
+  const rate = checkRateLimit(`events:${getClientIp(request)}:${slug}`, 60, 60_000);
+  if (!rate.allowed) return tooManyRequests(rate.retryAfterSeconds);
 
   const development = await resolvePublicDevelopment(slug, preview);
   if (!development) {

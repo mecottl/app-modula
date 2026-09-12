@@ -6,9 +6,22 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// DATABASE_URL: usado en runtime por la app. En producción (Vercel) debe
+// ser el pooler de Supabase en MODO TRANSACCIÓN (puerto 6543,
+// ?pgbouncer=true) — el recomendado para serverless. En este entorno de
+// desarrollo local específico ese modo se cuelga indefinidamente con
+// Prisma (issue "Resolver estrategia de conexión a Postgres para
+// despliegue serverless") y se usa el pooler en modo sesión (5432) como
+// workaround — probar el modo transacción de nuevo antes de desplegar,
+// ya que el problema parece ser de esta red y no del pooler en sí.
+//
+// DIRECT_URL: conexión directa (o pooler en modo sesión) usada SOLO por
+// `prisma migrate` — pgbouncer en modo transacción no soporta el
+// protocolo que las migraciones necesitan.
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum AccountPlan {

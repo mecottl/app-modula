@@ -8,6 +8,8 @@ import crypto from "node:crypto";
 import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
 import { requireSessionAccount } from "@/lib/tenant";
+import { logger } from "@/lib/logger";
+import { captureException } from "@/lib/errorReporting";
 
 class MembersAccessError extends Error {}
 
@@ -33,7 +35,7 @@ async function sendInviteEmail(email: string, name: string, tempPassword: string
   const text = `Hola ${name},\n\nYa tienes acceso al dashboard de MODULA.\n\nCorreo: ${email}\nContraseña temporal: ${tempPassword}\n\nInicia sesión y cámbiala en cuanto puedas.`;
 
   if (!process.env.RESEND_API_KEY) {
-    console.warn(`[sendInviteEmail] RESEND_API_KEY no configurado, se omite el envío a ${email}: ${text}`);
+    logger.warn("sendInviteEmail: RESEND_API_KEY no configurado, se omite el envío", { email });
     return;
   }
   try {
@@ -45,7 +47,7 @@ async function sendInviteEmail(email: string, name: string, tempPassword: string
       text,
     });
   } catch (error) {
-    console.error("[sendInviteEmail] falló el envío:", error);
+    captureException(error, { where: "sendInviteEmail", email });
   }
 }
 

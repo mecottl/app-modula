@@ -23,9 +23,16 @@ para empezar a probar.
 Para conectar tu entorno local necesitas la cadena de conexión real:
 
 1. Entra a https://supabase.com/dashboard/project/huqailndoltfygxjczkv/settings/database
-2. Copia la "Connection string" (modo *Session* o *Direct connection* para
-   desarrollo local; *Transaction pooling* si vas a desplegar en serverless).
-3. Pégala en tu `.env.local` como `DATABASE_URL`.
+2. Copia la "Connection string" en modo *Session* (puerto 5432) y pégala
+   como `DATABASE_URL` **y** como `DIRECT_URL` en tu `.env.local`.
+3. En producción (Vercel u otro serverless), `DATABASE_URL` debería ser el
+   pooler en modo *Transaction* (puerto 6543, `?pgbouncer=true`) — es el
+   recomendado para muchas funciones concurrentes — dejando `DIRECT_URL`
+   en modo *Session* solo para migraciones. En esta máquina de desarrollo
+   el modo transacción se cuelga indefinidamente con Prisma sin dar error
+   (parece un problema de red/ISP, no del pooler); por eso en local se usa
+   modo sesión para ambas variables. Ver issue "Resolver estrategia de
+   conexión a Postgres para despliegue serverless" antes de desplegar.
 
 ```bash
 cp .env.example .env.local
@@ -69,8 +76,15 @@ curl -X POST http://localhost:3000/api/developments/los-encinos/pricing \
   -d '{"modelId":"<id del modelo Roble>","extraIds":[]}'
 ```
 
-## 5. Qué falta después de la Fase 0
+## 5. Estado del proyecto
 
-El dashboard y el configurador público visual (módulos de Catálogo,
-Acabados y extras, Reglas de precio, Cotizaciones, página pública) son
-Fase 1 — ver los issues correspondientes en el repositorio de GitHub.
+Las Fases 0 a 3 de la especificación están implementadas y verificadas
+(dashboard completo, configurador público, widget embebible Plan B,
+analítica, miembros, facturación manual, CSV, webhooks). Ver el backlog
+en GitHub para el detalle fase por fase.
+
+Antes de desplegar a producción con tráfico real, conviene resolver los
+issues de endurecimiento del backend: rate limiting (ya implementado),
+monitoreo de errores (logging estructurado implementado; falta conectar
+un servicio real como Sentry si se quiere alertas activas), y la
+estrategia de conexión a Postgres para serverless (ver sección 2).

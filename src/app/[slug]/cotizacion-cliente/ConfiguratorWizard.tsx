@@ -74,6 +74,7 @@ export function ConfiguratorWizard({
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [website, setWebsite] = useState(""); // honeypot anti-bot, ver route.ts
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [confirmedTotal, setConfirmedTotal] = useState<string | null>(null);
@@ -156,6 +157,7 @@ export function ConfiguratorWizard({
           customerEmail,
           customerPhone: customerPhone || undefined,
           originPlan,
+          website,
         }),
       });
       if (!res.ok) {
@@ -312,6 +314,18 @@ export function ConfiguratorWizard({
           className="flex flex-col gap-3"
         >
           <h2 className="font-medium">Tus datos de contacto</h2>
+          {/* Honeypot: oculto para personas, visible para bots que rellenan todo el formulario */}
+          <label className="absolute -left-[9999px]" aria-hidden="true">
+            No llenar este campo
+            <input
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+            />
+          </label>
           <label className="flex flex-col gap-1 text-sm">
             Nombre
             <input

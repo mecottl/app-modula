@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { QuoteOrigin } from "@prisma/client";
+import { captureException } from "@/lib/errorReporting";
 
 /**
  * Registra un evento propio de analítica (README.md sección 6.1 y 10).
@@ -22,6 +23,6 @@ export async function logAnalyticsEvent(params: {
       },
     });
   } catch (error) {
-    console.error("[logAnalyticsEvent] error:", error);
+    captureException(error, { where: "logAnalyticsEvent", developmentId: params.developmentId });
   }
 }

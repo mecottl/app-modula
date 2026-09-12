@@ -1,4 +1,6 @@
 import type { Quote } from "@prisma/client";
+import { logger } from "@/lib/logger";
+import { captureException } from "@/lib/errorReporting";
 
 /**
  * Envía la cotización a un webhook externo configurado por la
@@ -30,9 +32,20 @@ export async function sendQuoteWebhook(webhookUrl: string, quote: Quote) {
         signal: AbortSignal.timeout(8000),
       });
       if (res.ok) return;
-      console.error(`[sendQuoteWebhook] intento ${attempt} respondió ${res.status}`);
+      logger.warn("sendQuoteWebhook: respuesta no OK", {
+        attempt,
+        status: res.status,
+        quoteId: quote.id,
+      });
     } catch (error) {
-      console.error(`[sendQuoteWebhook] intento ${attempt} falló:`, error);
+      if (attempt === 2) {
+        captureException(error, { where: "sendQuoteWebhook", quoteId: quote.id, webhookUrl });
+      } else {
+        logger.warn("sendQuoteWebhook: intento falló, reintentando", {
+          attempt,
+          quoteId: quote.id,
+        });
+      }
     }
   }
 }

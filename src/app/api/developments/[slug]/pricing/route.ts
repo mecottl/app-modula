@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { calculateQuotePrice, PricingError } from "@/lib/pricing";
 import { resolvePublicDevelopment } from "@/lib/publicAccess";
+import { checkRateLimit, getClientIp, tooManyRequests } from "@/lib/rateLimit";
 
 const bodySchema = z.object({
   modelId: z.string().min(1),
@@ -26,6 +27,9 @@ export async function POST(
 ) {
   const { slug } = await params;
   const preview = request.nextUrl.searchParams.get("preview") === "1";
+
+  const rate = checkRateLimit(`pricing:${getClientIp(request)}:${slug}`, 30, 60_000);
+  if (!rate.allowed) return tooManyRequests(rate.retryAfterSeconds);
 
   const development = await resolvePublicDevelopment(slug, preview);
   if (!development) {
