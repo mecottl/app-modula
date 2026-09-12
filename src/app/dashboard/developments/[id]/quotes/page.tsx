@@ -1,0 +1,106 @@
+import { QuoteStatus } from "@prisma/client";
+import { requireDevelopmentForSession } from "@/lib/tenant";
+import { prisma } from "@/lib/prisma";
+import { updateQuoteStatus, deleteQuoteData } from "@/lib/actions/quotes";
+
+export const dynamic = "force-dynamic";
+
+const statusLabels: Record<QuoteStatus, string> = {
+  NUEVA: "Nueva",
+  CONTACTADA: "Contactada",
+  CERRADA: "Cerrada",
+};
+
+function isQuoteStatus(value: string): value is QuoteStatus {
+  return value in statusLabels;
+}
+
+export default async function QuotesPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const { id } = await params;
+  const { status } = await searchParams;
+  await requireDevelopmentForSession(id);
+
+  const validStatus = status && isQuoteStatus(status) ? status : undefined;
+
+  const quotes = await prisma.quote.findMany({
+    where: { developmentId: id, ...(validStatus ? { status: validStatus } : {}) },
+    include: { model: true, finishLevel: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-medium">Cotizaciones recibidas</h2>
+        <nav className="flex gap-2 text-sm" aria-label="Filtrar por estado">
+          <a href={`/dashboard/developments/${id}/quotes`} className="underline">
+            Todas
+          </a>
+          {Object.entries(statusLabels).map(([value, label]) => (
+            <a
+              key={value}
+              href={`/dashboard/developments/${id}/quotes?status=${value}`}
+              className="underline"
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
+      </div>
+
+      <ul className="flex flex-col gap-3">
+        {quotes.map((quote) => (
+          <li key={quote.id} className="rounded border p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="font-medium">
+                  {quote.model.name}
+                  {quote.finishLevel ? ` — ${quote.finishLevel.name}` : ""} — ${quote.total.toString()}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {quote.customerName} · {quote.customerEmail}
+                  {quote.customerPhone ? ` · ${quote.customerPhone}` : ""}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {quote.createdAt.toLocaleString("es-MX")} · Plan {quote.originPlan}
+                </p>
+              </div>
+              <form action={updateQuoteStatus.bind(null, id, quote.id)} className="flex items-center gap-2">
+                <label className="sr-only" htmlFor={`status-${quote.id}`}>
+                  Estado de la cotización
+                </label>
+                <select
+                  id={`status-${quote.id}`}
+                  name="status"
+                  defaultValue={quote.status}
+                  className="rounded border px-2 py-1 text-sm"
+                >
+                  {Object.entries(statusLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <button type="submit" className="rounded border px-2 py-1 text-sm">
+                  Actualizar
+                </button>
+              </form>
+            </div>
+            <form action={deleteQuoteData.bind(null, id, quote.id)} className="mt-2">
+              <button type="submit" className="text-xs text-red-600 underline">
+                Eliminar datos del lead (solicitud del titular)
+              </button>
+            </form>
+          </li>
+        ))}
+        {quotes.length === 0 && <li className="text-sm text-gray-500">Sin cotizaciones aún.</li>}
+      </ul>
+    </div>
+  );
+}

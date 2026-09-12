@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
 import { calculateQuotePrice, PricingError } from "@/lib/pricing";
+import { resolvePublicDevelopment } from "@/lib/publicAccess";
 
 const bodySchema = z.object({
   modelId: z.string().min(1),
@@ -15,17 +15,19 @@ const bodySchema = z.object({
  * como por el Plan B (widget) — el `slug` en la ruta acota toda la
  * consulta a un único desarrollo, nunca se confía en un `developmentId`
  * enviado directamente por el cliente (sección 9.1).
+ *
+ * Solo responde si el desarrollo está publicado, salvo en modo vista
+ * previa (`?preview=1`) para un usuario autenticado del dashboard de esa
+ * misma cuenta (issue "Modo vista previa por defecto").
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
+  const preview = request.nextUrl.searchParams.get("preview") === "1";
 
-  const development = await prisma.development.findUnique({
-    where: { slug },
-    select: { id: true, status: true },
-  });
+  const development = await resolvePublicDevelopment(slug, preview);
   if (!development) {
     return NextResponse.json({ error: "Desarrollo no encontrado" }, { status: 404 });
   }
