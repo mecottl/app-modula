@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
 import { Starfield } from "@/components/ui/starfield-1";
+import { Typewriter } from "@/components/ui/typewriter";
 import { PasswordField } from "./password-field";
 
 export const dynamic = "force-dynamic";
@@ -74,7 +75,7 @@ export default async function LoginPage({
         <Starfield quantity={300} speed={0.25} opacity={0.15} />
         <div className="relative z-10 flex h-full flex-col items-center justify-center px-12 text-center">
           <p className="max-w-sm text-2xl font-medium leading-snug tracking-tight">
-            Cotización en tiempo real, sin depender de un asesor disponible.
+            “<Typewriter text="Cotización en tiempo real, sin depender de un asesor disponible." speed={35} />”
           </p>
           <span className="mt-4 text-sm text-muted-foreground">— MODULA</span>
         </div>
