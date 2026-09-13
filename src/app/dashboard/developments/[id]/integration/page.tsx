@@ -60,7 +60,7 @@ export default async function IntegrationPage({
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="font-medium">Integración (Plan Profesional — widget embebible)</h2>
+        <h2 className="font-medium">Integración (Plan Profesional widget embebible)</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Copia este snippet en el sitio de la desarrolladora para embeber el configurador vía{" "}
           <code>iframe</code>.

@@ -68,6 +68,13 @@ export default async function LoginPage({
               Entrar
             </button>
           </form>
+
+          <p className="text-center text-sm text-muted-foreground">
+            ¿No tienes cuenta?{" "}
+            <Link href="/register" className="text-foreground underline underline-offset-4">
+              Crea una
+            </Link>
+          </p>
         </div>
       </div>
 

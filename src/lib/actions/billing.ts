@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSessionAccount } from "@/lib/tenant";
-import { stripe, STRIPE_PRICE_IDS } from "@/lib/stripe";
+import { stripe, STRIPE_PRICE_IDS, planFromPriceId } from "@/lib/stripe";
 import { getBaseUrl } from "@/lib/baseUrl";
 
 const planSchema = z.enum(["BASICO", "PROFESIONAL"]);
@@ -38,6 +38,110 @@ export async function createCheckoutSession(formData: FormData) {
   const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
   const baseUrl = await getBaseUrl();
 
+  // Si ya hay una suscripción activa, esto es un cambio de plan
+  // (upgrade o downgrade), no un alta nueva.
+  if (account.stripeSubscriptionId && account.billingStatus === "ACTIVO") {
+    const subscription = await stripe.subscriptions.retrieve(account.stripeSubscriptionId, {
+      expand: ["schedule"],
+    });
+    const currentItem = subscription.items.data[0];
+    const existingSchedule =
+      subscription.schedule && typeof subscription.schedule === "object" ? subscription.schedule : null;
+
+    if (currentItem.price.id === priceId && !existingSchedule) {
+      redirect(`/dashboard/billing?error=${encodeURIComponent("Ya tienes ese plan activo")}`);
+    }
+
+    // Bajar de Profesional a Básico NO debe generar un reembolso del
+    // tiempo no usado: en vez de prorratear/facturar la diferencia de
+    // inmediato (lo que Stripe resolvería como un crédito a favor del
+    // cliente), se agenda el cambio de precio para cuando termine el
+    // periodo de facturación actual, vía una Subscription Schedule con
+    // dos fases (la actual sin tocar, y la nueva a partir de
+    // `current_period_end`). El acceso a Profesional se mantiene hasta
+    // entonces — Account.plan solo se actualiza cuando el webhook
+    // confirma el cambio de precio en la fecha agendada
+    // (customer.subscription.updated).
+    if (parsed.data! === "BASICO") {
+      const targetPhase = { items: [{ price: priceId, quantity: 1 }] };
+
+      if (existingSchedule) {
+        const [currentPhase] = existingSchedule.phases;
+        await stripe.subscriptionSchedules.update(existingSchedule.id, {
+          phases: [
+            {
+              items: currentPhase.items.map((item) => ({
+                price: typeof item.price === "string" ? item.price : item.price!.id,
+                quantity: item.quantity,
+              })),
+              start_date: currentPhase.start_date,
+              end_date: currentPhase.end_date,
+            },
+            targetPhase,
+          ],
+        });
+      } else {
+        const schedule = await stripe.subscriptionSchedules.create({
+          from_subscription: account.stripeSubscriptionId,
+        });
+        const [currentPhase] = schedule.phases;
+        await stripe.subscriptionSchedules.update(schedule.id, {
+          end_behavior: "release",
+          phases: [
+            {
+              items: currentPhase.items.map((item) => ({
+                price: typeof item.price === "string" ? item.price : item.price!.id,
+                quantity: item.quantity,
+              })),
+              start_date: currentPhase.start_date,
+              end_date: currentPhase.end_date,
+            },
+            targetPhase,
+          ],
+        });
+      }
+
+      redirect(
+        `/dashboard/billing?ok=${encodeURIComponent(
+          "Tu plan bajará a Básico al final del periodo actual. Sigues con Profesional hasta entonces, sin cargos ni reembolsos.",
+        )}`,
+      );
+    }
+
+    // Subir de plan (o volver a Profesional cancelando una baja ya
+    // agendada): si había una baja programada, se libera primero para
+    // no dejarla pendiente sobre el precio nuevo.
+    if (existingSchedule) {
+      await stripe.subscriptionSchedules.release(existingSchedule.id);
+    }
+
+    if (currentItem.price.id === priceId) {
+      redirect(
+        `/dashboard/billing?ok=${encodeURIComponent("Se canceló la baja de plan programada. Sigues en Profesional.")}`,
+      );
+    }
+
+    const updated = await stripe.subscriptions.update(account.stripeSubscriptionId, {
+      items: [{ id: currentItem.id, price: priceId }],
+      proration_behavior: "always_invoice",
+    });
+
+    // A diferencia del Checkout (donde el pago se confirma en la página
+    // de Stripe, fuera de nuestro control), aquí somos nosotros quienes
+    // llamamos a la API y Stripe ya nos devuelve el resultado
+    // confirmado — es seguro reflejarlo de inmediato en vez de esperar
+    // a que el webhook llegue (puede tardar o, en desarrollo, depender
+    // de que `stripe listen` esté corriendo).
+    const newPlan = planFromPriceId(updated.items.data[0]?.price.id);
+    await prisma.account.update({
+      where: { id: accountId },
+      data: { plan: newPlan ?? undefined, billingStatus: "ACTIVO" },
+    });
+
+    redirect(`/dashboard/billing?checkout=success`);
+  }
+
+  // Sin suscripción activa todavía: se crea desde cero vía Checkout.
   // Si la cuenta todavía no tiene cliente de Stripe, se le pasa el correo
   // del administrador que hace el checkout para que Stripe cree el
   // cliente con ese correo (y no pida capturarlo de nuevo).
@@ -55,7 +159,7 @@ export async function createCheckoutSession(formData: FormData) {
     customer_email: account.stripeCustomerId ? undefined : customerEmail,
     client_reference_id: accountId,
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${baseUrl}/dashboard/billing?checkout=success`,
+    success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/dashboard/billing?checkout=cancelled`,
     metadata: { accountId },
     subscription_data: { metadata: { accountId } },
@@ -66,6 +170,47 @@ export async function createCheckoutSession(formData: FormData) {
   }
 
   redirect(session.url!);
+}
+
+/**
+ * Confirma una Checkout Session recién completada y sincroniza
+ * `Account.plan`/`billingStatus` de inmediato, en vez de esperar
+ * exclusivamente al webhook. El webhook sigue siendo la fuente de
+ * verdad para el resto del ciclo de vida de la suscripción (renovación,
+ * cancelación, pagos fallidos) — esto solo cubre el instante justo
+ * después de pagar, cuando el webhook puede no haber llegado todavía
+ * (o, en desarrollo con un túnel, no estar corriendo). Es seguro
+ * porque nosotros mismos llamamos a la API de Stripe con el
+ * `session_id` y verificamos que la sesión pertenece a la cuenta
+ * autenticada (`metadata.accountId`) antes de escribir nada — nunca se
+ * confía en datos que el navegador pudiera traer manipulados.
+ */
+export async function syncAccountFromCheckoutSession(sessionId: string, accountId: string) {
+  const session = await stripe.checkout.sessions.retrieve(sessionId, {
+    expand: ["subscription"],
+  });
+
+  if (session.metadata?.accountId !== accountId) return null;
+
+  const subscription = session.subscription;
+  if (!subscription || typeof subscription !== "object") return null;
+
+  const priceId = subscription.items.data[0]?.price.id;
+  const plan = planFromPriceId(priceId);
+  const billingStatus =
+    subscription.status === "active" || subscription.status === "trialing" ? "ACTIVO" : undefined;
+
+  await prisma.account.update({
+    where: { id: accountId },
+    data: {
+      stripeCustomerId: typeof session.customer === "string" ? session.customer : (session.customer?.id ?? undefined),
+      stripeSubscriptionId: subscription.id,
+      plan: plan ?? undefined,
+      billingStatus,
+    },
+  });
+
+  return { plan, billingStatus };
 }
 
 /**

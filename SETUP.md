@@ -142,7 +142,18 @@ Verificado end-to-end: checkout → webhook → plan actualizado → widget
 desbloqueado, y cancelación de suscripción → webhook →
 `billingStatus: CANCELADO` + plan degradado a Básico.
 
-## 7. Estado del proyecto
+## 7. Alta de nuevas cuentas (registro público)
+
+Una desarrolladora nueva se da de alta sola, sin intervención manual,
+desde la landing (`/register?plan=BASICO` o `/register?plan=PROFESIONAL`,
+enlazado desde los botones "Contratar..." de la sección Planes y el
+botón "Comenzar" del header): el formulario crea la `Account` y el
+primer `Member` (`ADMINISTRADOR`), inicia sesión, y manda directo a
+Stripe Checkout para el plan elegido (`src/lib/actions/register.ts`).
+Igual que en Facturación, el plan solo se marca como pagado cuando el
+webhook confirma el pago — nunca de forma optimista en el registro.
+
+## 8. Estado del proyecto
 
 Las Fases 0 a 3 de la especificación están implementadas y verificadas
 (dashboard completo, configurador público, widget embebible Plan B,

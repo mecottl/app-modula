@@ -24,9 +24,9 @@ const footerLinks: FooterSectionData[] = [
   {
     label: "Producto",
     links: [
-      { title: "Producto", href: "#producto" },
-      { title: "Cómo funciona", href: "#como-funciona" },
-      { title: "Planes", href: "#planes" },
+      { title: "Producto", href: "/#producto" },
+      { title: "Cómo funciona", href: "/#como-funciona" },
+      { title: "Planes", href: "/#planes" },
     ],
   },
   {
@@ -36,6 +36,7 @@ const footerLinks: FooterSectionData[] = [
   {
     label: "Recursos",
     links: [
+      { title: "Documentación", href: "/docs" },
       { title: "Código en GitHub", href: "https://github.com/mecottl/app-modula" },
       {
         title: "Instalación del widget",

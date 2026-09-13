@@ -39,7 +39,7 @@ export default async function CotizacionClientePage({
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 px-4 py-8 sm:px-6">
       {isPreview && development.status !== "PUBLICADO" && (
         <p className="rounded border border-amber-700 bg-amber-950 px-3 py-2 text-sm text-amber-400">
-          Vista previa — este desarrollo aún está en borrador y no es visible públicamente.
+          Vista previa: este desarrollo aún está en borrador y no es visible públicamente.
         </p>
       )}
       <header>

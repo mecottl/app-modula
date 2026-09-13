@@ -16,9 +16,9 @@ function SectionGlow() {
 }
 
 const planAFeatures = [
-  "Página propia: nosotros.com/tu-desarrollo",
+  "Página propia: modula.com/tu-desarrollo",
   "Marca personalizable: logo, colores, texto del CTA",
-  "Publicación con un clic",
+  "Publicación con un click",
 ];
 
 const planBFeatures = [
@@ -36,7 +36,7 @@ const features = [
   {
     title: "Precio en tiempo real",
     description:
-      "El comprador ve el total actualizarse en cada selección — el mismo principio que usa Tesla para vender autos.",
+      "El comprador ve el total actualizarse en cada selección.",
   },
   {
     title: "Reglas de precio",
@@ -45,7 +45,7 @@ const features = [
   {
     title: "Cotizaciones calificadas",
     description:
-      "Cada envío queda registrado con el detalle exacto de la configuración — nada de hojas de cálculo.",
+      "Cada envío queda registrado con el detalle exacto de la configuración nada de hojas de cálculo.",
   },
   {
     title: "Analítica de conversión",
@@ -87,7 +87,7 @@ const faqData = {
     {
       question: "¿Qué es MODULA?",
       answer:
-        "Un configurador de vivienda con cotización en tiempo real para desarrolladoras inmobiliarias, con dos formas de entrega — página propia o widget embebido — sobre el mismo motor de precio.",
+        "Un configurador de vivienda con cotización en tiempo real para desarrolladoras inmobiliarias, con dos formas de entrega: página propia o widget embebido sobre el mismo motor de precio.",
     },
     {
       question: "¿Necesito saber programar para configurar mi catálogo?",
@@ -103,7 +103,7 @@ const faqData = {
   "plan-a": [
     {
       question: "¿Cómo entrego el configurador a mis compradores?",
-      answer: "Como página propia bajo nosotros.com/tu-desarrollo, publicada por nosotros.",
+      answer: "Como página propia bajo modula.com/tu-desarrollo, publicada por nosotros.",
     },
     {
       question: "¿Puedo personalizar la marca?",
@@ -111,7 +111,7 @@ const faqData = {
     },
     {
       question: "¿Qué necesito para empezar?",
-      answer: "Nada — el Plan Básico no requiere sitio propio ni equipo técnico.",
+      answer: "Nada. El Plan Básico no requiere sitio propio ni equipo técnico.",
     },
   ],
   "plan-b": [
@@ -133,7 +133,7 @@ const faqData = {
   seguridad: [
     {
       question: "¿Mis datos se mezclan con los de otras desarrolladoras?",
-      answer: "No. Cada cuenta ve únicamente sus propios datos — el aislamiento se aplica en cada consulta.",
+      answer: "No. Cada cuenta ve únicamente sus propios datos, el aislamiento se aplica en cada consulta.",
     },
     {
       question: "¿Puedo eliminar los datos de un lead si me lo piden?",
@@ -230,33 +230,49 @@ export default function Home() {
               El mismo motor, dos modalidades de entrega.
             </p>
             <div className="mt-12 grid gap-6 sm:grid-cols-2">
-              <div className="rounded-xl border border-border p-8">
+              <div className="flex flex-col rounded-xl border border-border p-8">
                 <h3 className="font-medium">Plan Básico</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Para desarrolladoras sin sitio propio o sin equipo técnico.
                 </p>
-                <ul className="mt-6 flex flex-col gap-3 text-sm">
+                <p className="mt-6 text-3xl font-semibold tracking-tight">
+                  $499 <span className="text-base font-normal text-muted-foreground">MXN/mes</span>
+                </p>
+                <ul className="mt-6 flex flex-1 flex-col gap-3 text-sm">
                   {planAFeatures.map((item) => (
                     <li key={item} className="flex gap-2">
-                      <span aria-hidden="true">—</span>
                       <span className="text-muted-foreground">{item}</span>
                     </li>
                   ))}
                 </ul>
+                <Link
+                  href="/register?plan=BASICO"
+                  className="mt-8 rounded-full border border-foreground px-6 py-3 text-center text-sm font-medium transition-colors hover:bg-foreground hover:text-background"
+                >
+                  Contratar Plan Básico
+                </Link>
               </div>
-              <div className="rounded-xl border border-foreground p-8">
+              <div className="flex flex-col rounded-xl border border-foreground p-8">
                 <h3 className="font-medium">Plan Profesional</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Para desarrolladoras con tráfico propio que no quieren perder su marca.
                 </p>
-                <ul className="mt-6 flex flex-col gap-3 text-sm">
+                <p className="mt-6 text-3xl font-semibold tracking-tight">
+                  $999 <span className="text-base font-normal text-muted-foreground">MXN/mes</span>
+                </p>
+                <ul className="mt-6 flex flex-1 flex-col gap-3 text-sm">
                   {planBFeatures.map((item) => (
                     <li key={item} className="flex gap-2">
-                      <span aria-hidden="true">—</span>
                       <span className="text-muted-foreground">{item}</span>
                     </li>
                   ))}
                 </ul>
+                <Link
+                  href="/register?plan=PROFESIONAL"
+                  className="mt-8 rounded-full bg-primary px-6 py-3 text-center text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                >
+                  Contratar Plan Profesional
+                </Link>
               </div>
             </div>
           </div>
@@ -286,10 +302,10 @@ export default function Home() {
               </p>
             </div>
             <Link
-              href="/login"
+              href="/register"
               className="shrink-0 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
             >
-              Entrar al dashboard
+              Crear mi cuenta
             </Link>
           </div>
         </section>

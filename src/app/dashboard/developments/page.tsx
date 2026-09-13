@@ -29,7 +29,7 @@ export default async function DevelopmentsPage({
                 {d.name}
               </Link>
               <div className="text-sm text-muted-foreground">
-                /{d.slug} — {d.status === "PUBLICADO" ? "Publicado" : "Borrador"}
+                /{d.slug} {d.status === "PUBLICADO" ? "Publicado" : "Borrador"}
               </div>
             </li>
           ))}

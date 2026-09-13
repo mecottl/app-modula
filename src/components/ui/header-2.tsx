@@ -13,15 +13,19 @@ export function Header() {
 	const links = [
 		{
 			label: 'Producto',
-			href: '#producto',
+			href: '/#producto',
 		},
 		{
 			label: 'Cómo funciona',
-			href: '#como-funciona',
+			href: '/#como-funciona',
 		},
 		{
 			label: 'Planes',
-			href: '#planes',
+			href: '/#planes',
+		},
+		{
+			label: 'Docs',
+			href: '/docs',
 		},
 	];
 
@@ -64,16 +68,16 @@ export function Header() {
 				</Link>
 				<div className="hidden items-center gap-2 md:flex">
 					{links.map((link, i) => (
-						<a key={i} className={buttonVariants({ variant: 'ghost' })} href={link.href}>
+						<Link key={i} className={buttonVariants({ variant: 'ghost' })} href={link.href}>
 							{link.label}
-						</a>
+						</Link>
 					))}
 					<Link href="/login" className={buttonVariants({ variant: 'outline' })}>
 						Iniciar sesión
 					</Link>
-					<a href="#planes" className={buttonVariants({})}>
+					<Link href="/register" className={buttonVariants({})}>
 						Comenzar
-					</a>
+					</Link>
 				</div>
 				<Button size="icon" variant="outline" onClick={() => setOpen(!open)} className="md:hidden">
 					<MenuToggleIcon open={open} className="size-5" duration={300} />
@@ -95,7 +99,7 @@ export function Header() {
 				>
 					<div className="grid gap-y-2">
 						{links.map((link) => (
-							<a
+							<Link
 								key={link.label}
 								className={buttonVariants({
 									variant: 'ghost',
@@ -105,16 +109,16 @@ export function Header() {
 								onClick={() => setOpen(false)}
 							>
 								{link.label}
-							</a>
+							</Link>
 						))}
 					</div>
 					<div className="flex flex-col gap-2">
 						<Link href="/login" className={buttonVariants({ variant: 'outline', className: 'w-full' })}>
 							Iniciar sesión
 						</Link>
-						<a href="#planes" className={buttonVariants({ className: 'w-full' })} onClick={() => setOpen(false)}>
+						<Link href="/register" className={buttonVariants({ className: 'w-full' })} onClick={() => setOpen(false)}>
 							Comenzar
-						</a>
+						</Link>
 					</div>
 				</div>
 			</div>
