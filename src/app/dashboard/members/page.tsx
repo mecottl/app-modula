@@ -38,7 +38,7 @@ export default async function MembersPage({
                 {m.name} {m.id === memberId && "(tú)"}
               </p>
               <p className="text-muted-foreground">
-                {m.email} — {roleLabels[m.role] ?? m.role}
+                {m.email} · {roleLabels[m.role] ?? m.role}
               </p>
             </div>
             {m.id !== memberId && (

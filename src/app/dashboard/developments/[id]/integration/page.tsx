@@ -115,7 +115,7 @@ export default async function IntegrationPage({
           </button>
         </form>
         <p className="mt-1 text-xs text-amber-400">
-          Regenerar invalida el token anterior de inmediato — hazlo solo si se filtró.
+          Regenerar invalida el token anterior de inmediato. Hazlo solo si se filtró.
         </p>
       </section>
     </div>

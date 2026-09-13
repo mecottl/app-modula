@@ -34,7 +34,7 @@ export default async function ModelsPage({
             <li key={model.id} className="rounded border p-4">
               <details>
                 <summary className="cursor-pointer font-medium">
-                  {model.name} — ${model.basePrice.toString()} {!model.active && "(inactivo)"}
+                  {model.name} · ${model.basePrice.toString()} {!model.active && "(inactivo)"}
                 </summary>
                 <form action={updateAction} className="mt-4 flex flex-col gap-3 sm:max-w-sm">
                   <label className="flex flex-col gap-1 text-sm">

@@ -68,7 +68,7 @@ export default async function QuotesPage({
               <div>
                 <p className="font-medium">
                   {quote.model.name}
-                  {quote.finishLevel ? ` — ${quote.finishLevel.name}` : ""} — ${quote.total.toString()}
+                  {quote.finishLevel ? ` · ${quote.finishLevel.name}` : ""} · ${quote.total.toString()}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {quote.customerName} · {quote.customerEmail}

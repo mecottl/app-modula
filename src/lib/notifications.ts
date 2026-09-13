@@ -27,14 +27,14 @@ export async function notifyNewQuote(params: {
   });
   const recipients = account?.members.map((m) => m.email) ?? [];
 
-  const subject = `Nueva cotización — ${params.developmentName}`;
+  const subject = `Nueva cotización: ${params.developmentName}`;
   const lines = [
     `Modelo: ${params.modelName}`,
     params.finishLevelName ? `Nivel de acabado: ${params.finishLevelName}` : null,
     params.extraNames.length ? `Extras: ${params.extraNames.join(", ")}` : null,
     `Total: ${params.breakdown.total}`,
-    `Cliente: ${params.customerName} — ${params.customerEmail}${
-      params.customerPhone ? ` — ${params.customerPhone}` : ""
+    `Cliente: ${params.customerName} · ${params.customerEmail}${
+      params.customerPhone ? ` · ${params.customerPhone}` : ""
     }`,
   ].filter(Boolean);
   const text = lines.join("\n");

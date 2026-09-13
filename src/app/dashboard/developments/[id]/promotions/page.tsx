@@ -36,7 +36,7 @@ export default async function PromotionsPage({
           <li key={promo.id} className="rounded border p-4">
             <details>
               <summary className="cursor-pointer font-medium">
-                {promo.name} — {promo.type === "PORCENTAJE" ? `${promo.value}%` : `$${promo.value}`}{" "}
+                {promo.name} · {promo.type === "PORCENTAJE" ? `${promo.value}%` : `$${promo.value}`}{" "}
                 {!promo.active && "(inactiva)"}
               </summary>
               <form

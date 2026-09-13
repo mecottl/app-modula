@@ -77,7 +77,7 @@ export default async function LoginPage({
           <p className="max-w-sm text-2xl font-medium leading-snug tracking-tight">
             “<Typewriter text="Cotización en tiempo real, sin depender de un asesor disponible." speed={35} />”
           </p>
-          <span className="mt-4 text-sm text-muted-foreground">— MODULA</span>
+          <span className="mt-4 text-sm text-muted-foreground">MODULA</span>
         </div>
       </div>
     </main>

@@ -37,7 +37,7 @@ async function warnIfOverlapping(
     },
   });
   return overlapping
-    ? `Ojo: esta promoción se traslapa con "${overlapping.name}" en fechas — el motor de precio aplicará ambas.`
+    ? `Ojo: esta promoción se traslapa con "${overlapping.name}" en fechas. El motor de precio aplicará ambas.`
     : undefined;
 }
 

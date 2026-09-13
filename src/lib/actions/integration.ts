@@ -50,5 +50,5 @@ export async function regenerateIntegrationToken(developmentId: string) {
     data: { token: generateProjectToken() },
   });
   revalidatePath(`/dashboard/developments/${developmentId}/integration`);
-  back(developmentId, "Token regenerado — actualiza el snippet donde esté instalado.");
+  back(developmentId, "Token regenerado. Actualiza el snippet donde esté instalado.");
 }
