@@ -76,7 +76,26 @@ curl -X POST http://localhost:3000/api/developments/los-encinos/pricing \
   -d '{"modelId":"<id del modelo Roble>","extraIds":[]}'
 ```
 
-## 5. Estado del proyecto
+## 5. Pruebas automatizadas
+
+```bash
+npm test          # corre una vez
+npm run test:watch  # modo interactivo
+```
+
+Cubren el aislamiento multi-tenant (`tests/tenant.test.ts` y
+`tests/crossTenantActions.test.ts`): crean dos cuentas de prueba reales,
+intentan leer/modificar los datos de una desde la sesión de la otra a
+través de las mismas server actions del dashboard, y verifican que se
+rechaza sin cambiar nada — y se borran solas al terminar (`afterAll`).
+
+Necesitan un `DATABASE_URL` real apuntando a Postgres (usan tu
+`.env.local` igual que `npm run dev`). En CI corren contra un Postgres
+efímero propio del job (ver `.github/workflows/ci.yml`), nunca contra la
+base de datos real de producción — es seguro correrlas también en local
+contra la base de MODULA, ya que limpian sus propios datos.
+
+## 6. Estado del proyecto
 
 Las Fases 0 a 3 de la especificación están implementadas y verificadas
 (dashboard completo, configurador público, widget embebible Plan B,
