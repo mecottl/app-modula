@@ -4,6 +4,17 @@ import { Footer } from "@/components/ui/footer-section";
 import { Header } from "@/components/ui/header-2";
 import { Starfield } from "@/components/ui/starfield-1";
 
+// Mismo glow decorativo que trae el FAQ de 21st.dev, replicado en el
+// resto de secciones planas de la landing para continuidad visual.
+function SectionGlow() {
+  return (
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute -top-40 left-1/2 z-0 h-[500px] w-[600px] -translate-x-1/2 rounded-full bg-gradient-to-r from-primary/10 to-primary/5 blur-3xl"
+    />
+  );
+}
+
 const planAFeatures = [
   "Página propia: nosotros.com/tu-desarrollo",
   "Marca personalizable: logo, colores, texto del CTA",
@@ -175,8 +186,9 @@ export default function Home() {
         </section>
 
         {/* Features */}
-        <section id="producto" className="border-t border-border">
-          <div className="mx-auto max-w-5xl px-6 py-20">
+        <section id="producto" className="relative overflow-hidden border-t border-border">
+          <SectionGlow />
+          <div className="relative z-10 mx-auto max-w-5xl px-6 py-20">
             <h2 className="text-sm font-medium text-muted-foreground">Producto</h2>
             <p className="mt-2 max-w-2xl text-2xl font-semibold tracking-tight sm:text-3xl">
               Un motor. Dos formas de entregarlo.
@@ -193,8 +205,9 @@ export default function Home() {
         </section>
 
         {/* Cómo funciona */}
-        <section id="como-funciona" className="border-t border-border">
-          <div className="mx-auto max-w-5xl px-6 py-20">
+        <section id="como-funciona" className="relative overflow-hidden border-t border-border">
+          <SectionGlow />
+          <div className="relative z-10 mx-auto max-w-5xl px-6 py-20">
             <h2 className="text-sm font-medium text-muted-foreground">Cómo funciona</h2>
             <div className="mt-8 grid gap-10 sm:grid-cols-3">
               {steps.map((step) => (
@@ -209,8 +222,9 @@ export default function Home() {
         </section>
 
         {/* Planes */}
-        <section id="planes" className="border-t border-border">
-          <div className="mx-auto max-w-5xl px-6 py-20">
+        <section id="planes" className="relative overflow-hidden border-t border-border">
+          <SectionGlow />
+          <div className="relative z-10 mx-auto max-w-5xl px-6 py-20">
             <h2 className="text-sm font-medium text-muted-foreground">Planes</h2>
             <p className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
               El mismo motor, dos modalidades de entrega.
@@ -260,8 +274,9 @@ export default function Home() {
         </section>
 
         {/* CTA final */}
-        <section className="border-t border-border">
-          <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-6 px-6 py-20 sm:flex-row sm:items-center">
+        <section className="relative overflow-hidden border-t border-border">
+          <SectionGlow />
+          <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-start justify-between gap-6 px-6 py-20 sm:flex-row sm:items-center">
             <div>
               <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                 Configura tu primer desarrollo hoy.

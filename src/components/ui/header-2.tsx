@@ -8,7 +8,7 @@ import { useScroll } from '@/components/ui/use-scroll';
 
 export function Header() {
 	const [open, setOpen] = React.useState(false);
-	const scrolled = useScroll(10);
+	const scrolled = useScroll(50);
 
 	const links = [
 		{
@@ -43,9 +43,9 @@ export function Header() {
 	return (
 		<header
 			className={cn(
-				'sticky top-0 z-50 mx-auto w-full max-w-5xl border-b !border-transparent md:rounded-md md:border md:transition-all md:ease-out',
+				'sticky top-0 z-50 mx-auto w-full max-w-5xl md:transition-all md:ease-out',
 				{
-					'bg-background/95 supports-[backdrop-filter]:bg-background/50 border-border backdrop-blur-lg md:top-4 md:max-w-4xl md:shadow':
+					'border-b border-border bg-background/95 supports-[backdrop-filter]:bg-background/50 backdrop-blur-lg md:top-4 md:max-w-4xl md:rounded-md md:border md:shadow':
 						scrolled && !open,
 					'bg-background/90': open,
 				},
