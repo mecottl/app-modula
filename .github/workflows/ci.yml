@@ -12,6 +12,9 @@ jobs:
       DATABASE_URL: "postgresql://configurador:configurador@localhost:5432/configurador?schema=public"
       DIRECT_URL: "postgresql://configurador:configurador@localhost:5432/configurador?schema=public"
       AUTH_SECRET: "ci-secret-not-for-production"
+      # Stripe solo necesita una llave no vacía para construirse durante
+      # `next build` (no hace llamadas reales) — nunca es una llave real.
+      STRIPE_SECRET_KEY: "sk_test_ci_dummy_not_a_real_key"
     steps:
       - uses: actions/checkout@v4
 
