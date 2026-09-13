@@ -136,33 +136,6 @@ const faqData = {
   ],
 };
 
-function ConfiguratorPreview() {
-  return (
-    <div className="w-full max-w-sm rounded-xl border border-border bg-background p-5 shadow-[0_1px_0_0_rgba(0,0,0,0.04)]">
-      <p className="text-xs text-muted-foreground">Residencial Los Encinos</p>
-      <p className="mt-1 text-sm font-medium">Modelo Roble — Acabados Premium</p>
-      <div className="mt-4 flex flex-col gap-2 text-xs text-muted-foreground">
-        <div className="flex justify-between">
-          <span>Base</span>
-          <span>$1,850,000.00</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Acabado</span>
-          <span>+$150,000.00</span>
-        </div>
-        <div className="flex justify-between text-foreground">
-          <span>Lanzamiento</span>
-          <span>-$92,500.00</span>
-        </div>
-      </div>
-      <div className="mt-4 flex items-baseline justify-between border-t border-border pt-4">
-        <span className="text-xs text-muted-foreground">Total</span>
-        <span className="text-2xl font-semibold tracking-tight">$1,907,500.00</span>
-      </div>
-    </div>
-  );
-}
-
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
@@ -172,16 +145,13 @@ export default function Home() {
         {/* Hero */}
         <section className="relative overflow-hidden border-b border-border">
           <Starfield quantity={400} speed={0.3} opacity={0.15} />
-          <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-6 pb-24 pt-20 text-center sm:pt-28">
-            <span className="mb-6 rounded-full border border-border bg-muted/60 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
-              Página propia o widget embebido — un solo motor
-            </span>
+          <div className="relative z-10 flex w-full flex-col items-center px-6 pb-24 pt-20 text-center sm:pt-28">
             <h1 className="max-w-3xl text-4xl font-semibold leading-[1.1] tracking-tight sm:text-6xl">
               Cotización en tiempo real para preventa inmobiliaria
             </h1>
             <p className="mt-6 max-w-xl text-lg text-muted-foreground">
               Tu comprador elige modelo, acabados y extras, y ve el precio actualizarse al
-              instante — sin depender de un asesor disponible.
+              instante sin depender de un asesor disponible.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <Link
@@ -200,7 +170,6 @@ export default function Home() {
 
             <div className="relative mt-20 flex justify-center">
               <div className="absolute inset-x-0 bottom-0 z-0 h-40 bg-[radial-gradient(50%_100%_at_50%_100%,theme(colors.white/12%),transparent)]" />
-              <ConfiguratorPreview />
             </div>
           </div>
         </section>
