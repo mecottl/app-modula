@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireDevelopmentForSession } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { getBaseUrl } from "@/lib/baseUrl";
@@ -15,6 +16,26 @@ export default async function IntegrationPage({
   const { id } = await params;
   const { ok } = await searchParams;
   const development = await requireDevelopmentForSession(id);
+
+  const account = await prisma.account.findUniqueOrThrow({ where: { id: development.accountId } });
+  if (account.plan !== "PROFESIONAL") {
+    return (
+      <div className="flex flex-col gap-4 rounded border p-6 text-center">
+        <h2 className="font-medium">Integración es exclusiva del Plan Profesional</h2>
+        <p className="text-sm text-muted-foreground">
+          El widget embebible (Plan B) solo está disponible para cuentas en Plan Profesional.
+          Tu cuenta está en Plan Básico.
+        </p>
+        <Link
+          href="/dashboard/billing"
+          className="mx-auto rounded bg-primary px-4 py-2 text-sm text-primary-foreground"
+        >
+          Subir a Plan Profesional
+        </Link>
+      </div>
+    );
+  }
+
   const settings = await prisma.integrationSettings.findUniqueOrThrow({
     where: { developmentId: id },
   });

@@ -95,11 +95,58 @@ efímero propio del job (ver `.github/workflows/ci.yml`), nunca contra la
 base de datos real de producción — es seguro correrlas también en local
 contra la base de MODULA, ya que limpian sus propios datos.
 
-## 6. Estado del proyecto
+## 6. Stripe (facturación real, probado en modo prueba)
+
+MODULA cobra por plan vía Stripe Checkout + webhooks — `Account.plan`/
+`billingStatus` se actualizan SOLO desde el webhook (nunca de forma
+optimista en el checkout), y el widget/Integración (Plan B) están
+bloqueados en servidor para cuentas en Plan Básico
+(`src/app/widget/[slug]/page.tsx` y `.../integration/page.tsx`).
+
+Se puede probar el flujo completo en desarrollo, sin desplegar nada:
+
+1. Cuenta de Stripe en **modo de prueba** (gratis, sin verificación).
+   Si ya usas Stripe para otro proyecto, crea una cuenta nueva
+   dedicada a MODULA (selector de cuenta, arriba a la izquierda del
+   Dashboard) para no mezclar datos.
+2. Copia `pk_test_...`/`sk_test_...` de Developers → API keys a tu
+   `.env.local`.
+3. Crea los Productos/Precios (una sola vez por cuenta de Stripe):
+
+   ```bash
+   stripe products create --name "MODULA — Plan Básico" --api-key sk_test_...
+   stripe prices create --product <id> --unit-amount 49900 --currency mxn -d "recurring[interval]=month" --api-key sk_test_...
+   # repetir para "MODULA — Plan Profesional" con el monto que corresponda
+   ```
+
+   Guarda los `price_...` resultantes en `STRIPE_PRICE_ID_BASICO` /
+   `STRIPE_PRICE_ID_PROFESIONAL`.
+
+4. Instala el [Stripe CLI](https://stripe.com/docs/stripe-cli) y corre,
+   en una terminal aparte mientras `npm run dev` está activo:
+
+   ```bash
+   stripe listen --forward-to localhost:3000/api/stripe/webhook --api-key sk_test_...
+   ```
+
+   Imprime un `whsec_...` — pégalo en `STRIPE_WEBHOOK_SECRET` y
+   reinicia `npm run dev` para que lo tome.
+
+5. En el dashboard, Facturación → "Subir a Profesional" te lleva a
+   Stripe Checkout real (modo prueba). Usa la tarjeta de prueba
+   `4242 4242 4242 4242`, cualquier fecha futura y CVC — el pago se
+   simula sin mover dinero real. Al confirmar, el webhook actualiza el
+   plan en segundos y desbloquea Integración automáticamente.
+
+Verificado end-to-end: checkout → webhook → plan actualizado → widget
+desbloqueado, y cancelación de suscripción → webhook →
+`billingStatus: CANCELADO` + plan degradado a Básico.
+
+## 7. Estado del proyecto
 
 Las Fases 0 a 3 de la especificación están implementadas y verificadas
 (dashboard completo, configurador público, widget embebible Plan B,
-analítica, miembros, facturación manual, CSV, webhooks). Ver el backlog
+analítica, miembros, facturación real con Stripe, CSV, webhooks). Ver el backlog
 en GitHub para el detalle fase por fase.
 
 Antes de desplegar a producción con tráfico real, conviene resolver los

@@ -18,9 +18,20 @@ export default async function WidgetPage({ params }: { params: Promise<{ slug: s
 
   const development = await prisma.development.findUnique({
     where: { slug },
-    include: { integrationSettings: true },
+    include: { integrationSettings: true, account: true },
   });
   if (!development || !development.integrationSettings) notFound();
+
+  // El widget (Plan B) es exclusivo del Plan Profesional — se valida
+  // aquí, en el servidor, no solo ocultando la pestaña en el dashboard
+  // (mismo principio que la validación de dominio de abajo).
+  if (development.account.plan !== "PROFESIONAL") {
+    return (
+      <main className="flex min-h-[200px] items-center justify-center p-6 text-center text-sm text-muted-foreground">
+        Este widget no está disponible: el desarrollo no pertenece a una cuenta con Plan Profesional.
+      </main>
+    );
+  }
 
   const { environment, authorizedDomains } = development.integrationSettings;
 

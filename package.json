@@ -30,6 +30,7 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "resend": "^6.28.0",
+    "stripe": "^22.6.2",
     "tailwind-merge": "^3.6.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^4.6.2"

@@ -81,12 +81,14 @@ enum AnalyticsEventType {
 
 /// Cuenta de una desarrolladora inmobiliaria (tenant raíz).
 model Account {
-  id            String        @id @default(cuid())
-  name          String
-  plan          AccountPlan   @default(BASICO)
-  billingStatus BillingStatus @default(TRIAL)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id                   String        @id @default(cuid())
+  name                 String
+  plan                 AccountPlan   @default(BASICO)
+  billingStatus        BillingStatus @default(TRIAL)
+  stripeCustomerId     String?       @unique
+  stripeSubscriptionId String?       @unique
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 
   developments Development[]
   members      Member[]
