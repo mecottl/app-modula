@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FAQ } from "@/components/ui/faq-tabs";
 import { Footer } from "@/components/ui/footer-section";
-import { SiteHeader } from "@/components/site-header";
+import { Header } from "@/components/ui/header-2";
 import { Starfield } from "@/components/ui/starfield-1";
 
 const planAFeatures = [
@@ -166,7 +166,7 @@ function ConfiguratorPreview() {
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
+      <Header />
 
       <main className="flex-1">
         {/* Hero */}
