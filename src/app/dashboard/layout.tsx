@@ -1,11 +1,19 @@
 import { LogOut } from "lucide-react";
 import { signOut } from "@/auth";
-import { SidebarProvider } from "@/components/dashboard/sidebar-context";
+import { requireSessionAccount } from "@/lib/tenant";
+import { prisma } from "@/lib/prisma";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { AppToaster } from "@/components/dashboard/app-toaster";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { accountId } = await requireSessionAccount();
+  const developments = await prisma.development.findMany({
+    where: { accountId },
+    select: { id: true, name: true },
+    orderBy: { createdAt: "desc" },
+  });
+
   const sidebarFooter = (
     <div className="flex items-center gap-2">
       <form
@@ -28,14 +36,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   );
 
   return (
-    <SidebarProvider>
+    <>
       <div className="flex min-h-screen">
-        <Sidebar footer={sidebarFooter} />
+        <Sidebar developments={developments} footer={sidebarFooter} />
         <main className="min-w-0 flex-1 px-4 py-8 sm:px-8 lg:px-10">
           <div className="mx-auto max-w-5xl">{children}</div>
         </main>
       </div>
       <AppToaster />
-    </SidebarProvider>
+    </>
   );
 }
