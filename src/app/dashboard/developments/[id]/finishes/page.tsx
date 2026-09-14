@@ -21,8 +21,16 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FormDialog } from "@/components/ui/form-dialog";
 import { Button } from "@/components/ui/button";
 import { ValidatedInput, ValidatedTextarea } from "@/components/ui/validated-input";
+import { Select } from "@/components/ui/select";
+import { MoneyInput } from "@/components/ui/money-input";
 import { ModelChipPicker } from "@/components/dashboard/model-chip-picker";
 import { ImageGallery } from "@/components/dashboard/image-gallery";
+import { formatMoney } from "@/lib/money";
+
+const selectionModeOptions = [
+  { value: "UNICA", label: "Única — el comprador elige como máximo una opción" },
+  { value: "MULTIPLE", label: "Múltiple — el comprador puede elegir varias" },
+];
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +48,7 @@ export default async function FinishesPage({
 }) {
   const { id } = await params;
   const { error } = await searchParams;
-  await requireDevelopmentForSession(id);
+  const development = await requireDevelopmentForSession(id);
 
   const [finishCategories, extras, models] = await Promise.all([
     prisma.finishCategory.findMany({
@@ -53,7 +61,7 @@ export default async function FinishesPage({
       include: { modelLinks: true },
       orderBy: { createdAt: "asc" },
     }),
-    prisma.model.findMany({ where: { developmentId: id }, orderBy: { name: "asc" } }),
+    prisma.model.findMany({ where: { developmentId: id }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
 
   return (
@@ -80,17 +88,7 @@ export default async function FinishesPage({
           >
             <form action={createFinishCategory.bind(null, id)} className="flex flex-col gap-4">
               <ValidatedInput label="Nombre" name="name" required maxLength={120} autoFocus />
-              <label className="flex flex-col gap-1 text-sm">
-                Selección
-                <select
-                  name="selectionMode"
-                  defaultValue="UNICA"
-                  className="rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-foreground"
-                >
-                  <option value="UNICA">Única — el comprador elige como máximo una opción</option>
-                  <option value="MULTIPLE">Múltiple — el comprador puede elegir varias</option>
-                </select>
-              </label>
+              <Select label="Selección" name="selectionMode" defaultValue="UNICA" options={selectionModeOptions} />
               <button
                 type="submit"
                 className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
@@ -128,15 +126,7 @@ export default async function FinishesPage({
                     >
                       <ValidatedInput label="Nombre" name="name" required maxLength={120} autoFocus />
                       <ValidatedTextarea label="Descripción" name="description" maxLength={2000} rows={2} />
-                      <ValidatedInput
-                        label="Delta de precio"
-                        name="priceDelta"
-                        type="number"
-                        step="0.01"
-                        required
-                        defaultValue={0}
-                        errorMessage="Ingresa un número válido"
-                      />
+                      <MoneyInput label="Delta de precio" name="priceDelta" required defaultValue={0} />
                       <button
                         type="submit"
                         className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
@@ -168,17 +158,12 @@ export default async function FinishesPage({
                         maxLength={120}
                         defaultValue={category.name}
                       />
-                      <label className="flex flex-col gap-1 text-sm">
-                        Selección
-                        <select
-                          name="selectionMode"
-                          defaultValue={category.selectionMode}
-                          className="rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-foreground"
-                        >
-                          <option value="UNICA">Única — el comprador elige como máximo una opción</option>
-                          <option value="MULTIPLE">Múltiple — el comprador puede elegir varias</option>
-                        </select>
-                      </label>
+                      <Select
+                        label="Selección"
+                        name="selectionMode"
+                        defaultValue={category.selectionMode}
+                        options={selectionModeOptions}
+                      />
                       <button
                         type="submit"
                         className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
@@ -216,7 +201,7 @@ export default async function FinishesPage({
                       <div>
                         <p className="text-sm font-medium">{option.name}</p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                          +${option.priceDelta.toString()}
+                          +{formatMoney(option.priceDelta.toString(), development.currency)}
                         </p>
                       </div>
                     </div>
@@ -255,14 +240,11 @@ export default async function FinishesPage({
                           defaultValue={option.description ?? ""}
                           rows={2}
                         />
-                        <ValidatedInput
+                        <MoneyInput
                           label="Delta de precio"
                           name="priceDelta"
-                          type="number"
-                          step="0.01"
                           required
                           defaultValue={option.priceDelta.toString()}
-                          errorMessage="Ingresa un número válido"
                         />
                         <button
                           type="submit"
@@ -314,15 +296,7 @@ export default async function FinishesPage({
             <form action={createExtra.bind(null, id)} className="flex flex-col gap-4">
               <ValidatedInput label="Nombre" name="name" required maxLength={120} autoFocus />
               <ValidatedTextarea label="Descripción" name="description" maxLength={2000} rows={2} />
-              <ValidatedInput
-                label="Delta de precio"
-                name="priceDelta"
-                type="number"
-                step="0.01"
-                required
-                defaultValue={0}
-                errorMessage="Ingresa un número válido"
-              />
+              <MoneyInput label="Delta de precio" name="priceDelta" required defaultValue={0} />
               <ModelChipPicker models={models} selectedIds={new Set()} />
               <button
                 type="submit"
@@ -353,7 +327,9 @@ export default async function FinishesPage({
                   </span>
                   <div>
                     <p className="font-medium">{extra.name}</p>
-                    <p className="mt-0.5 text-sm text-muted-foreground">+${extra.priceDelta.toString()}</p>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      +{formatMoney(extra.priceDelta.toString(), development.currency)}
+                    </p>
                   </div>
                 </div>
                 <FormDialog
@@ -389,14 +365,11 @@ export default async function FinishesPage({
                       defaultValue={extra.description ?? ""}
                       rows={2}
                     />
-                    <ValidatedInput
+                    <MoneyInput
                       label="Delta de precio"
                       name="priceDelta"
-                      type="number"
-                      step="0.01"
                       required
                       defaultValue={extra.priceDelta.toString()}
-                      errorMessage="Ingresa un número válido"
                     />
                     <ModelChipPicker models={models} selectedIds={linkedModelIds} />
                     <button

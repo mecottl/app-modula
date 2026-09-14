@@ -5,6 +5,7 @@ import { inviteMember, removeMember } from "@/lib/actions/members";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { FormDialog } from "@/components/ui/form-dialog";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 
 const inputClass =
   "rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground";
@@ -54,14 +55,16 @@ export default async function MembersPage({
               Correo
               <input name="email" type="email" required className={inputClass} />
             </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              Rol
-              <select name="role" defaultValue="SOLO_LECTURA" className={inputClass}>
-                <option value="ADMINISTRADOR">Administrador</option>
-                <option value="EDITOR_CATALOGO">Editor de catálogo</option>
-                <option value="SOLO_LECTURA">Solo lectura</option>
-              </select>
-            </label>
+            <Select
+              label="Rol"
+              name="role"
+              defaultValue="SOLO_LECTURA"
+              options={[
+                { value: "ADMINISTRADOR", label: "Administrador" },
+                { value: "EDITOR_CATALOGO", label: "Editor de catálogo" },
+                { value: "SOLO_LECTURA", label: "Solo lectura" },
+              ]}
+            />
             <button
               type="submit"
               className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"

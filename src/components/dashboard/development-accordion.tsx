@@ -5,12 +5,14 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { ArrowRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatMoney } from "@/lib/money";
 
 type DevelopmentRow = {
   id: string;
   name: string;
   slug: string;
   status: "BORRADOR" | "PUBLICADO";
+  currency: string;
   models: { id: string; name: string; basePrice: string }[];
 };
 
@@ -86,7 +88,9 @@ function DevelopmentAccordionItem({ development }: { development: DevelopmentRow
               {development.models.map((model) => (
                 <li key={model.id} className="flex items-center justify-between text-sm">
                   <span>{model.name}</span>
-                  <span className="text-muted-foreground">${model.basePrice}</span>
+                  <span className="text-muted-foreground">
+                    {formatMoney(model.basePrice, development.currency)}
+                  </span>
                 </li>
               ))}
             </ul>

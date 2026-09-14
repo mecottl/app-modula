@@ -7,7 +7,9 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FormDialog } from "@/components/ui/form-dialog";
 import { Button } from "@/components/ui/button";
 import { ValidatedInput, ValidatedTextarea } from "@/components/ui/validated-input";
+import { MoneyInput } from "@/components/ui/money-input";
 import { ImageGallery } from "@/components/dashboard/image-gallery";
+import { formatMoney } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +22,7 @@ export default async function ModelsPage({
 }) {
   const { id } = await params;
   const { error } = await searchParams;
-  await requireDevelopmentForSession(id);
+  const development = await requireDevelopmentForSession(id);
   const models = await prisma.model.findMany({
     where: { developmentId: id },
     orderBy: { createdAt: "asc" },
@@ -66,15 +68,7 @@ export default async function ModelsPage({
                 errorMessage="Ingresa un número entre 0 y 20"
               />
             </div>
-            <ValidatedInput
-              label="Precio base"
-              name="basePrice"
-              type="number"
-              step="0.01"
-              min="1"
-              required
-              errorMessage="Ingresa un precio mayor a 0"
-            />
+            <MoneyInput label="Precio base" name="basePrice" required />
             <label className="flex items-center gap-2 text-sm">
               <input name="active" type="checkbox" defaultChecked />
               Activo (visible en el configurador)
@@ -110,7 +104,8 @@ export default async function ModelsPage({
                 <div>
                   <p className="font-medium">{model.name}</p>
                   <p className="mt-0.5 text-sm text-muted-foreground">
-                    ${model.basePrice.toString()} {!model.active && "· Inactivo"}
+                    {formatMoney(model.basePrice.toString(), development.currency)}{" "}
+                    {!model.active && "· Inactivo"}
                   </p>
                 </div>
               </div>
@@ -169,15 +164,11 @@ export default async function ModelsPage({
                       errorMessage="Ingresa un número entre 0 y 20"
                     />
                   </div>
-                  <ValidatedInput
+                  <MoneyInput
                     label="Precio base"
                     name="basePrice"
-                    type="number"
-                    step="0.01"
-                    min="1"
                     required
                     defaultValue={model.basePrice.toString()}
-                    errorMessage="Ingresa un precio mayor a 0"
                   />
                   <label className="flex items-center gap-2 text-sm">
                     <input name="active" type="checkbox" defaultChecked={model.active} />

@@ -20,7 +20,12 @@ export default async function DevelopmentsPage({
   const developments = await prisma.development.findMany({
     where: { accountId },
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      status: true,
+      currency: true,
       models: {
         select: { id: true, name: true, basePrice: true },
         orderBy: { createdAt: "asc" },
@@ -79,6 +84,7 @@ export default async function DevelopmentsPage({
             name: d.name,
             slug: d.slug,
             status: d.status,
+            currency: d.currency,
             models: d.models.map((m) => ({
               id: m.id,
               name: m.name,

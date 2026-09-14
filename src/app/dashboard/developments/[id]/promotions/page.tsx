@@ -7,9 +7,12 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FormDialog } from "@/components/ui/form-dialog";
 import { Button } from "@/components/ui/button";
 import { ValidatedInput } from "@/components/ui/validated-input";
+import { Select } from "@/components/ui/select";
 
-const selectClass =
-  "rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground";
+const promotionTypeOptions = [
+  { value: "PORCENTAJE", label: "Porcentaje (%)" },
+  { value: "FIJO", label: "Monto fijo" },
+];
 
 export const dynamic = "force-dynamic";
 
@@ -67,13 +70,7 @@ export default async function PromotionsPage({
               errorMessage="Usa solo letras, números y guiones (mínimo 3 caracteres)"
               className="uppercase placeholder:normal-case"
             />
-            <label className="flex flex-col gap-1 text-sm">
-              Tipo
-              <select name="type" defaultValue="PORCENTAJE" className={selectClass}>
-                <option value="PORCENTAJE">Porcentaje (%)</option>
-                <option value="FIJO">Monto fijo</option>
-              </select>
-            </label>
+            <Select label="Tipo" name="type" defaultValue="PORCENTAJE" options={promotionTypeOptions} />
             <ValidatedInput
               label="Valor"
               name="value"
@@ -149,13 +146,7 @@ export default async function PromotionsPage({
                   errorMessage="Usa solo letras, números y guiones (mínimo 3 caracteres)"
                   className="uppercase placeholder:normal-case"
                 />
-                <label className="flex flex-col gap-1 text-sm">
-                  Tipo
-                  <select name="type" defaultValue={promo.type} className={selectClass}>
-                    <option value="PORCENTAJE">Porcentaje (%)</option>
-                    <option value="FIJO">Monto fijo</option>
-                  </select>
-                </label>
+                <Select label="Tipo" name="type" defaultValue={promo.type} options={promotionTypeOptions} />
                 <ValidatedInput
                   label="Valor"
                   name="value"

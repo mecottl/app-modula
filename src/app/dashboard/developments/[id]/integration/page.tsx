@@ -5,6 +5,7 @@ import { getBaseUrl } from "@/lib/baseUrl";
 import { updateIntegrationSettings, regenerateIntegrationToken } from "@/lib/actions/integration";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { CopyButton } from "@/components/ui/copy-button";
+import { Select } from "@/components/ui/select";
 import { WidgetLivePreview } from "@/components/dashboard/widget-live-preview";
 
 export const dynamic = "force-dynamic";
@@ -106,17 +107,15 @@ export default async function IntegrationPage({
           action={updateIntegrationSettings.bind(null, id)}
           className="mt-3 flex flex-col gap-4 sm:max-w-md"
         >
-          <label className="flex flex-col gap-1 text-sm">
-            Entorno
-            <select
-              name="environment"
-              defaultValue={settings.environment}
-              className="rounded border px-3 py-2"
-            >
-              <option value="VISTA_PREVIA">Vista previa (sin validar dominio)</option>
-              <option value="PRODUCCION">Producción (valida dominio)</option>
-            </select>
-          </label>
+          <Select
+            label="Entorno"
+            name="environment"
+            defaultValue={settings.environment}
+            options={[
+              { value: "VISTA_PREVIA", label: "Vista previa (sin validar dominio)" },
+              { value: "PRODUCCION", label: "Producción (valida dominio)" },
+            ]}
+          />
           <label className="flex flex-col gap-1 text-sm">
             Dominios autorizados (uno por línea)
             <textarea

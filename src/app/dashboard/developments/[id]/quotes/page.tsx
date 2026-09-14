@@ -3,6 +3,8 @@ import { requireDevelopmentForSession } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { updateQuoteStatus, deleteQuoteData } from "@/lib/actions/quotes";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Select } from "@/components/ui/select";
+import { formatMoney } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +27,7 @@ export default async function QuotesPage({
 }) {
   const { id } = await params;
   const { status } = await searchParams;
-  await requireDevelopmentForSession(id);
+  const development = await requireDevelopmentForSession(id);
 
   const validStatus = status && isQuoteStatus(status) ? status : undefined;
 
@@ -76,7 +78,7 @@ export default async function QuotesPage({
                   {quote.finishOptionIds.length
                     ? ` · ${quote.finishOptionIds.map((fid) => finishNameById.get(fid) ?? fid).join(", ")}`
                     : ""}{" "}
-                  · ${quote.total.toString()}
+                  · {formatMoney(quote.total.toString(), development.currency)}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {quote.customerName} · {quote.customerEmail}
@@ -90,18 +92,13 @@ export default async function QuotesPage({
                 <label className="sr-only" htmlFor={`status-${quote.id}`}>
                   Estado de la cotización
                 </label>
-                <select
+                <Select
                   id={`status-${quote.id}`}
                   name="status"
                   defaultValue={quote.status}
-                  className="rounded border px-2 py-1 text-sm"
-                >
-                  {Object.entries(statusLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                  className="py-1"
+                  options={Object.entries(statusLabels).map(([value, label]) => ({ value, label }))}
+                />
                 <button type="submit" className="rounded border px-2 py-1 text-sm">
                   Actualizar
                 </button>
