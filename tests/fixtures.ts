@@ -44,8 +44,17 @@ export async function createTestTenant(label: string) {
     },
   });
 
+  const finishCategory = await prisma.finishCategory.create({
+    data: { developmentId: development.id, name: `[test] Categoría ${label}`, selectionMode: "UNICA" },
+  });
+
   const finishLevel = await prisma.finishLevel.create({
-    data: { developmentId: development.id, name: `[test] Acabado ${label}`, priceDelta: 10_000 },
+    data: {
+      developmentId: development.id,
+      finishCategoryId: finishCategory.id,
+      name: `[test] Acabado ${label}`,
+      priceDelta: 10_000,
+    },
   });
 
   const promotion = await prisma.promotion.create({
@@ -72,7 +81,7 @@ export async function createTestTenant(label: string) {
     },
   });
 
-  return { account, member, development, model, finishLevel, promotion, quote };
+  return { account, member, development, model, finishCategory, finishLevel, promotion, quote };
 }
 
 export async function deleteTestTenant(accountId: string) {

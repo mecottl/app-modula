@@ -29,11 +29,15 @@ export default async function QuotesPage({
 
   const validStatus = status && isQuoteStatus(status) ? status : undefined;
 
-  const quotes = await prisma.quote.findMany({
-    where: { developmentId: id, ...(validStatus ? { status: validStatus } : {}) },
-    include: { model: true, finishLevel: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const [quotes, finishOptions] = await Promise.all([
+    prisma.quote.findMany({
+      where: { developmentId: id, ...(validStatus ? { status: validStatus } : {}) },
+      include: { model: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.finishLevel.findMany({ where: { developmentId: id } }),
+  ]);
+  const finishNameById = new Map(finishOptions.map((f) => [f.id, f.name]));
 
   const exportHref = `/api/dashboard/developments/${id}/quotes/export${
     validStatus ? `?status=${validStatus}` : ""
@@ -69,7 +73,10 @@ export default async function QuotesPage({
               <div>
                 <p className="font-medium">
                   {quote.model.name}
-                  {quote.finishLevel ? ` · ${quote.finishLevel.name}` : ""} · ${quote.total.toString()}
+                  {quote.finishOptionIds.length
+                    ? ` · ${quote.finishOptionIds.map((fid) => finishNameById.get(fid) ?? fid).join(", ")}`
+                    : ""}{" "}
+                  · ${quote.total.toString()}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {quote.customerName} · {quote.customerEmail}

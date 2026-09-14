@@ -6,7 +6,8 @@ export class PricingError extends Error {
     message: string,
     public readonly code:
       | "MODEL_NOT_FOUND"
-      | "FINISH_LEVEL_NOT_FOUND"
+      | "FINISH_OPTION_NOT_FOUND"
+      | "FINISH_CATEGORY_SINGLE_SELECT"
       | "EXTRA_NOT_APPLICABLE"
       | "PROMO_CODE_INVALID",
   ) {
@@ -17,7 +18,7 @@ export class PricingError extends Error {
 
 export interface PriceBreakdown {
   basePrice: string;
-  finishLevelDelta: string;
+  finishesDelta: string;
   extrasDelta: string;
   promotionsDiscount: string;
   total: string;
@@ -25,8 +26,9 @@ export interface PriceBreakdown {
 }
 
 /**
- * Calcula el precio total de una configuración (modelo + acabado + extras)
- * aplicando automáticamente las promociones vigentes del desarrollo.
+ * Calcula el precio total de una configuración (modelo + acabados por
+ * categoría + extras) aplicando automáticamente las promociones vigentes
+ * del desarrollo.
  *
  * Siempre acota la consulta por `developmentId` (aislamiento multi-tenant,
  * ver README.md sección 9.1): un modelo/acabado/extra de otro desarrollo
@@ -35,12 +37,12 @@ export interface PriceBreakdown {
 export async function calculateQuotePrice(params: {
   developmentId: string;
   modelId: string;
-  finishLevelId?: string | null;
+  finishOptionIds?: string[];
   extraIds?: string[];
   promoCode?: string | null;
   at?: Date;
 }): Promise<PriceBreakdown> {
-  const { developmentId, modelId, finishLevelId, extraIds = [], promoCode, at = new Date() } = params;
+  const { developmentId, modelId, finishOptionIds = [], extraIds = [], promoCode, at = new Date() } = params;
 
   const model = await prisma.model.findFirst({
     where: { id: modelId, developmentId, active: true },
@@ -49,15 +51,30 @@ export async function calculateQuotePrice(params: {
     throw new PricingError("Modelo no encontrado en este desarrollo", "MODEL_NOT_FOUND");
   }
 
-  let finishLevel = null;
-  if (finishLevelId) {
-    finishLevel = await prisma.finishLevel.findFirst({
-      where: { id: finishLevelId, developmentId },
-    });
-    if (!finishLevel) {
+  const uniqueFinishOptionIds = [...new Set(finishOptionIds)];
+  const finishOptions = uniqueFinishOptionIds.length
+    ? await prisma.finishLevel.findMany({
+        where: { id: { in: uniqueFinishOptionIds }, developmentId },
+        include: { category: true },
+      })
+    : [];
+  if (finishOptions.length !== uniqueFinishOptionIds.length) {
+    throw new PricingError(
+      "Una o más opciones de acabado no existen en este desarrollo",
+      "FINISH_OPTION_NOT_FOUND",
+    );
+  }
+  const optionsByCategory = new Map<string, typeof finishOptions>();
+  for (const option of finishOptions) {
+    const list = optionsByCategory.get(option.finishCategoryId) ?? [];
+    list.push(option);
+    optionsByCategory.set(option.finishCategoryId, list);
+  }
+  for (const options of optionsByCategory.values()) {
+    if (options[0].category.selectionMode === "UNICA" && options.length > 1) {
       throw new PricingError(
-        "Nivel de acabado no encontrado en este desarrollo",
-        "FINISH_LEVEL_NOT_FOUND",
+        `"${options[0].category.name}" solo permite elegir una opción`,
+        "FINISH_CATEGORY_SINGLE_SELECT",
       );
     }
   }
@@ -80,13 +97,16 @@ export async function calculateQuotePrice(params: {
   }
 
   const basePrice = model.basePrice;
-  const finishLevelDelta = finishLevel?.priceDelta ?? new Prisma.Decimal(0);
+  const finishesDelta = finishOptions.reduce(
+    (sum, option) => sum.add(option.priceDelta),
+    new Prisma.Decimal(0),
+  );
   const extrasDelta = extras.reduce(
     (sum, extra) => sum.add(extra.priceDelta),
     new Prisma.Decimal(0),
   );
 
-  const subtotal = basePrice.add(finishLevelDelta).add(extrasDelta);
+  const subtotal = basePrice.add(finishesDelta).add(extrasDelta);
 
   // Las promociones ya NO se aplican solas por estar vigentes en fecha
   // (issue "promociones con código, no automáticas"): el comprador debe
@@ -117,7 +137,7 @@ export async function calculateQuotePrice(params: {
 
   return {
     basePrice: basePrice.toFixed(2),
-    finishLevelDelta: finishLevelDelta.toFixed(2),
+    finishesDelta: finishesDelta.toFixed(2),
     extrasDelta: extrasDelta.toFixed(2),
     promotionsDiscount: promotionsDiscount.toFixed(2),
     total: total.toFixed(2),

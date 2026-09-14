@@ -20,8 +20,7 @@ export async function generateQuotePdf(params: {
   quoteId: string;
   modelName: string;
   modelPrice: string;
-  finishLevelName?: string | null;
-  finishLevelPrice?: string | null;
+  finishOptions: { name: string; price: string }[];
   extras: { name: string; price: string }[];
   total: string;
   customerName: string;
@@ -80,9 +79,9 @@ export async function generateQuotePdf(params: {
   text(params.modelName, { size: 11, gap: 18 });
   rightText(formatMoney(params.modelPrice, params.currency));
 
-  if (params.finishLevelName) {
-    text(params.finishLevelName, { size: 11, gap: 18 });
-    rightText(`+${formatMoney(params.finishLevelPrice ?? "0", params.currency)}`);
+  for (const option of params.finishOptions) {
+    text(option.name, { size: 11, gap: 18 });
+    rightText(`+${formatMoney(option.price, params.currency)}`);
   }
 
   for (const extra of params.extras) {

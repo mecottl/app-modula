@@ -53,9 +53,18 @@ async function main() {
     },
   });
 
+  const finishCategory = await prisma.finishCategory.create({
+    data: {
+      developmentId: development.id,
+      name: "Acabado general",
+      selectionMode: "UNICA",
+    },
+  });
+
   const finishLevel = await prisma.finishLevel.create({
     data: {
       developmentId: development.id,
+      finishCategoryId: finishCategory.id,
       name: "Acabados Premium",
       priceDelta: 150000,
     },

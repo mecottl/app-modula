@@ -13,24 +13,89 @@ function back(developmentId: string, error?: string) {
   redirect(`/dashboard/developments/${developmentId}/finishes${qs}`);
 }
 
+const finishCategorySchema = z.object({
+  name: z.string().min(1).max(120),
+  selectionMode: z.enum(["UNICA", "MULTIPLE"]),
+});
+
+export async function createFinishCategory(developmentId: string, formData: FormData) {
+  await requireDevelopmentForSession(developmentId);
+  const parsed = finishCategorySchema.safeParse({
+    name: formData.get("name"),
+    selectionMode: formData.get("selectionMode"),
+  });
+  if (!parsed.success) back(developmentId, "Revisa los campos de la categoría");
+
+  const count = await prisma.finishCategory.count({ where: { developmentId } });
+  await prisma.finishCategory.create({
+    data: {
+      developmentId,
+      name: parsed.data!.name,
+      selectionMode: parsed.data!.selectionMode,
+      order: count,
+    },
+  });
+  revalidatePath(`/dashboard/developments/${developmentId}/finishes`);
+  back(developmentId);
+}
+
+export async function updateFinishCategory(
+  developmentId: string,
+  finishCategoryId: string,
+  formData: FormData,
+) {
+  await requireDevelopmentForSession(developmentId);
+  const parsed = finishCategorySchema.safeParse({
+    name: formData.get("name"),
+    selectionMode: formData.get("selectionMode"),
+  });
+  if (!parsed.success) back(developmentId, "Revisa los campos de la categoría");
+
+  await prisma.finishCategory.update({
+    where: { id: finishCategoryId, developmentId },
+    data: { name: parsed.data!.name, selectionMode: parsed.data!.selectionMode },
+  });
+  revalidatePath(`/dashboard/developments/${developmentId}/finishes`);
+  back(developmentId);
+}
+
+export async function deleteFinishCategory(developmentId: string, finishCategoryId: string) {
+  await requireDevelopmentForSession(developmentId);
+  try {
+    await prisma.finishCategory.delete({ where: { id: finishCategoryId, developmentId } });
+  } catch {
+    back(
+      developmentId,
+      "No se puede eliminar: elimina primero sus opciones o las cotizaciones que las usan.",
+    );
+  }
+  revalidatePath(`/dashboard/developments/${developmentId}/finishes`);
+  back(developmentId);
+}
+
 const finishLevelSchema = z.object({
   name: z.string().min(1).max(120),
   description: z.string().max(2000).optional().or(z.literal("")),
   priceDelta: z.coerce.number(),
 });
 
-export async function createFinishLevel(developmentId: string, formData: FormData) {
+export async function createFinishLevel(
+  developmentId: string,
+  finishCategoryId: string,
+  formData: FormData,
+) {
   await requireDevelopmentForSession(developmentId);
   const parsed = finishLevelSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
     priceDelta: formData.get("priceDelta"),
   });
-  if (!parsed.success) back(developmentId, "Revisa los campos del nivel de acabado");
+  if (!parsed.success) back(developmentId, "Revisa los campos de la opción de acabado");
 
   await prisma.finishLevel.create({
     data: {
       developmentId,
+      finishCategoryId,
       name: parsed.data!.name,
       description: parsed.data!.description || null,
       priceDelta: new Prisma.Decimal(parsed.data!.priceDelta),
@@ -51,7 +116,7 @@ export async function updateFinishLevel(
     description: formData.get("description"),
     priceDelta: formData.get("priceDelta"),
   });
-  if (!parsed.success) back(developmentId, "Revisa los campos del nivel de acabado");
+  if (!parsed.success) back(developmentId, "Revisa los campos de la opción de acabado");
 
   await prisma.finishLevel.update({
     where: { id: finishLevelId, developmentId },
@@ -102,14 +167,11 @@ export async function removeFinishLevelImage(developmentId: string, finishLevelI
 
 export async function deleteFinishLevel(developmentId: string, finishLevelId: string) {
   await requireDevelopmentForSession(developmentId);
-  try {
-    await prisma.finishLevel.delete({ where: { id: finishLevelId, developmentId } });
-  } catch {
-    back(
-      developmentId,
-      "No se puede eliminar: el nivel de acabado tiene cotizaciones asociadas.",
-    );
-  }
+  // Las cotizaciones guardan `finishOptionIds` como arreglo de ids sin
+  // relación referencial (mismo patrón que `extraIds`), así que borrar
+  // una opción no está bloqueado por cotizaciones existentes — solo deja
+  // de aparecer en las nuevas.
+  await prisma.finishLevel.delete({ where: { id: finishLevelId, developmentId } });
   revalidatePath(`/dashboard/developments/${developmentId}/finishes`);
   back(developmentId);
 }

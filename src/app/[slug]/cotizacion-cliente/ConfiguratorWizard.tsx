@@ -14,12 +14,19 @@ type ModelDTO = {
   imageUrls: string[];
 };
 
-type FinishLevelDTO = {
+type FinishOptionDTO = {
   id: string;
   name: string;
   description: string | null;
   priceDelta: number;
   imageUrls: string[];
+};
+
+type FinishCategoryDTO = {
+  id: string;
+  name: string;
+  selectionMode: "UNICA" | "MULTIPLE";
+  options: FinishOptionDTO[];
 };
 
 type ExtraDTO = {
@@ -33,7 +40,7 @@ type ExtraDTO = {
 
 type Breakdown = {
   basePrice: string;
-  finishLevelDelta: string;
+  finishesDelta: string;
   extrasDelta: string;
   promotionsDiscount: string;
   total: string;
@@ -65,7 +72,7 @@ export function ConfiguratorWizard({
   primaryColor,
   accentColor,
   models,
-  finishLevels,
+  finishCategories,
   extras,
 }: {
   slug: string;
@@ -79,11 +86,11 @@ export function ConfiguratorWizard({
   primaryColor?: string | null;
   accentColor: string | null;
   models: ModelDTO[];
-  finishLevels: FinishLevelDTO[];
+  finishCategories: FinishCategoryDTO[];
   extras: ExtraDTO[];
 }) {
   const [modelId, setModelId] = useState<string>(models[0]?.id ?? "");
-  const [finishLevelId, setFinishLevelId] = useState<string>("");
+  const [finishOptionIds, setFinishOptionIds] = useState<string[]>([]);
   const [extraIds, setExtraIds] = useState<string[]>([]);
   const [breakdown, setBreakdown] = useState<Breakdown | null>(null);
   const [priceError, setPriceError] = useState<string | null>(null);
@@ -108,24 +115,44 @@ export function ConfiguratorWizard({
   );
 
   const selectedModel = useMemo(() => models.find((m) => m.id === modelId) ?? null, [models, modelId]);
-  const selectedFinish = useMemo(
-    () => finishLevels.find((f) => f.id === finishLevelId) ?? null,
-    [finishLevels, finishLevelId],
+  const selectedFinishOptions = useMemo(
+    () =>
+      finishCategories.flatMap((category) =>
+        category.options.filter((option) => finishOptionIds.includes(option.id)),
+      ),
+    [finishCategories, finishOptionIds],
   );
   const selectedExtras = useMemo(
     () => applicableExtras.filter((e) => extraIds.includes(e.id)),
     [applicableExtras, extraIds],
   );
 
-  // El acabado elegido pisa las fotos del modelo si tiene fotos propias
-  // — sin eso, se ven las del modelo base. Varias fotos se navegan como
-  // un carrusel, igual que las fotos del vehículo en Tesla.
-  const mainImages = selectedFinish?.imageUrls.length ? selectedFinish.imageUrls : selectedModel?.imageUrls ?? [];
+  function toggleFinishOption(category: FinishCategoryDTO, optionId: string) {
+    setFinishOptionIds((prev) => {
+      if (category.selectionMode === "MULTIPLE") {
+        return prev.includes(optionId) ? prev.filter((id) => id !== optionId) : [...prev, optionId];
+      }
+      // Selección única: elegir otra opción de la misma categoría
+      // reemplaza la anterior; volver a tocar la ya elegida la quita
+      // (permite dejar la categoría sin selección, como el "Estándar"
+      // implícito de antes).
+      const categoryOptionIds = category.options.map((o) => o.id);
+      const withoutCategory = prev.filter((id) => !categoryOptionIds.includes(id));
+      return prev.includes(optionId) ? withoutCategory : [...withoutCategory, optionId];
+    });
+  }
 
-  // Reinicia el índice del carrusel al cambiar de modelo/acabado, sin un
-  // efecto aparte: se detecta el cambio de clave durante el render
+  // La primera opción de acabado elegida (en orden de categoría) que
+  // tenga fotos propias pisa las del modelo; sin eso, se ven las del
+  // modelo base. Varias fotos se navegan como un carrusel, igual que
+  // las fotos del vehículo en Tesla.
+  const firstFinishWithImages = selectedFinishOptions.find((o) => o.imageUrls.length > 0);
+  const mainImages = firstFinishWithImages?.imageUrls ?? selectedModel?.imageUrls ?? [];
+
+  // Reinicia el índice del carrusel al cambiar de modelo/acabados, sin
+  // un efecto aparte: se detecta el cambio de clave durante el render
   // (patrón "ajustar estado cuando cambia una prop" de React).
-  const imageSetKey = `${modelId}:${finishLevelId}`;
+  const imageSetKey = `${modelId}:${finishOptionIds.join(",")}`;
   const [prevImageSetKey, setPrevImageSetKey] = useState(imageSetKey);
   if (prevImageSetKey !== imageSetKey) {
     setPrevImageSetKey(imageSetKey);
@@ -173,7 +200,7 @@ export function ConfiguratorWizard({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         modelId,
-        finishLevelId: finishLevelId || undefined,
+        finishOptionIds,
         extraIds: extraIds.filter((id) => applicableExtras.some((e) => e.id === id)),
         promoCode: appliedPromoCode || undefined,
       }),
@@ -197,7 +224,7 @@ export function ConfiguratorWizard({
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, modelId, finishLevelId, extraIds, applicableExtras.length, appliedPromoCode]);
+  }, [slug, modelId, finishOptionIds, extraIds, applicableExtras.length, appliedPromoCode]);
 
   async function submitQuote() {
     setSubmitting(true);
@@ -208,7 +235,7 @@ export function ConfiguratorWizard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           modelId,
-          finishLevelId: finishLevelId || undefined,
+          finishOptionIds,
           extraIds: extraIds.filter((id) => applicableExtras.some((e) => e.id === id)),
           promoCode: appliedPromoCode || undefined,
           customerName,
@@ -259,7 +286,7 @@ export function ConfiguratorWizard({
 
   const summaryParts = [
     selectedModel?.name,
-    selectedFinish?.name,
+    ...selectedFinishOptions.map((o) => o.name),
     selectedExtras.length > 0 ? `${selectedExtras.length} extra${selectedExtras.length > 1 ? "s" : ""}` : null,
   ].filter(Boolean);
 
@@ -372,27 +399,26 @@ export function ConfiguratorWizard({
             )}
           </section>
 
-          <section className="flex flex-col gap-2">
-            <h2 className="text-sm font-medium text-muted-foreground">Nivel de acabado</h2>
-            <OptionRow
-              color={primary}
-              title="Estándar"
-              subtitle="Sin costo adicional"
-              selected={finishLevelId === ""}
-              onSelect={() => setFinishLevelId("")}
-            />
-            {finishLevels.map((fl) => (
-              <OptionRow
-                key={fl.id}
-                color={primary}
-                image={fl.imageUrls[0]}
-                title={fl.name}
-                price={`+${formatMoney(fl.priceDelta, currency)}`}
-                selected={finishLevelId === fl.id}
-                onSelect={() => setFinishLevelId(fl.id)}
-              />
-            ))}
-          </section>
+          {finishCategories.map((category) => (
+            <section key={category.id} className="flex flex-col gap-2">
+              <h2 className="text-sm font-medium text-muted-foreground">{category.name}</h2>
+              {category.options.map((option) => (
+                <OptionRow
+                  key={option.id}
+                  color={primary}
+                  image={option.imageUrls[0]}
+                  title={option.name}
+                  price={`+${formatMoney(option.priceDelta, currency)}`}
+                  selected={finishOptionIds.includes(option.id)}
+                  multi={category.selectionMode === "MULTIPLE"}
+                  onSelect={() => toggleFinishOption(category, option.id)}
+                />
+              ))}
+              {category.options.length === 0 && (
+                <p className="text-sm text-muted-foreground">Sin opciones en esta categoría.</p>
+              )}
+            </section>
+          ))}
 
           <section className="flex flex-col gap-2">
             <h2 className="text-sm font-medium text-muted-foreground">Extras</h2>
@@ -423,8 +449,8 @@ export function ConfiguratorWizard({
             {!loadingPrice && breakdown && (
               <ul className="flex flex-col gap-0.5 text-xs text-muted-foreground">
                 <li>Base: {formatMoney(breakdown.basePrice, currency)}</li>
-                {Number(breakdown.finishLevelDelta) !== 0 && (
-                  <li>Acabado: +{formatMoney(breakdown.finishLevelDelta, currency)}</li>
+                {Number(breakdown.finishesDelta) !== 0 && (
+                  <li>Acabados: +{formatMoney(breakdown.finishesDelta, currency)}</li>
                 )}
                 {Number(breakdown.extrasDelta) !== 0 && (
                   <li>Extras: +{formatMoney(breakdown.extrasDelta, currency)}</li>

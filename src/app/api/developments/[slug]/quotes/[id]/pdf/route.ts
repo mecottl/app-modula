@@ -34,9 +34,11 @@ export async function GET(
     return NextResponse.json({ error: "Cotización no encontrada" }, { status: 404 });
   }
 
-  const [model, finishLevel, extras] = await Promise.all([
+  const [model, finishOptions, extras] = await Promise.all([
     prisma.model.findUnique({ where: { id: quote.modelId } }),
-    quote.finishLevelId ? prisma.finishLevel.findUnique({ where: { id: quote.finishLevelId } }) : null,
+    quote.finishOptionIds.length
+      ? prisma.finishLevel.findMany({ where: { id: { in: quote.finishOptionIds } } })
+      : [],
     quote.extraIds.length ? prisma.extra.findMany({ where: { id: { in: quote.extraIds } } }) : [],
   ]);
 
@@ -51,8 +53,7 @@ export async function GET(
     quoteId: quote.id,
     modelName: model.name,
     modelPrice: model.basePrice.toFixed(2),
-    finishLevelName: finishLevel?.name,
-    finishLevelPrice: finishLevel?.priceDelta.toFixed(2),
+    finishOptions: finishOptions.map((f) => ({ name: f.name, price: f.priceDelta.toFixed(2) })),
     extras: extras.map((e) => ({ name: e.name, price: e.priceDelta.toFixed(2) })),
     total: quote.total.toFixed(2),
     customerName: quote.customerName,

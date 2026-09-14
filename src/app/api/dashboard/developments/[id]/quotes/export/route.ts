@@ -11,7 +11,7 @@ function csvEscape(value: string): string {
 const COLUMNS = [
   "fecha",
   "modelo",
-  "nivel_acabado",
+  "acabados",
   "extras",
   "total",
   "nombre_cliente",
@@ -46,18 +46,22 @@ export async function GET(
 
   const quotes = await prisma.quote.findMany({
     where: { developmentId: id, ...(status ? { status } : {}) },
-    include: { model: true, finishLevel: true },
+    include: { model: true },
     orderBy: { createdAt: "desc" },
   });
 
-  const extrasByDevelopment = await prisma.extra.findMany({ where: { developmentId: id } });
+  const [extrasByDevelopment, finishOptionsByDevelopment] = await Promise.all([
+    prisma.extra.findMany({ where: { developmentId: id } }),
+    prisma.finishLevel.findMany({ where: { developmentId: id } }),
+  ]);
   const extraNameById = new Map(extrasByDevelopment.map((e) => [e.id, e.name]));
+  const finishNameById = new Map(finishOptionsByDevelopment.map((f) => [f.id, f.name]));
 
   const rows = quotes.map((q) =>
     [
       q.createdAt.toISOString(),
       q.model.name,
-      q.finishLevel?.name ?? "",
+      q.finishOptionIds.map((fid) => finishNameById.get(fid) ?? fid).join("; "),
       q.extraIds.map((eid) => extraNameById.get(eid) ?? eid).join("; "),
       q.total.toString(),
       q.customerName,

@@ -14,7 +14,7 @@ export async function notifyNewQuote(params: {
   developmentId: string;
   developmentName: string;
   modelName: string;
-  finishLevelName?: string | null;
+  finishNames?: string[];
   extraNames: string[];
   breakdown: PriceBreakdown;
   customerName: string;
@@ -30,7 +30,7 @@ export async function notifyNewQuote(params: {
   const subject = `Nueva cotización: ${params.developmentName}`;
   const lines = [
     `Modelo: ${params.modelName}`,
-    params.finishLevelName ? `Nivel de acabado: ${params.finishLevelName}` : null,
+    params.finishNames?.length ? `Acabados: ${params.finishNames.join(", ")}` : null,
     params.extraNames.length ? `Extras: ${params.extraNames.join(", ")}` : null,
     `Total: ${params.breakdown.total}`,
     `Cliente: ${params.customerName} · ${params.customerEmail}${

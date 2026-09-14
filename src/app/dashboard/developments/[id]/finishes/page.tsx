@@ -2,6 +2,9 @@ import { ImageIcon, Pencil, Plus } from "lucide-react";
 import { requireDevelopmentForSession } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import {
+  createFinishCategory,
+  updateFinishCategory,
+  deleteFinishCategory,
   createFinishLevel,
   updateFinishLevel,
   deleteFinishLevel,
@@ -23,6 +26,11 @@ import { ImageGallery } from "@/components/dashboard/image-gallery";
 
 export const dynamic = "force-dynamic";
 
+const SELECTION_MODE_LABELS = {
+  UNICA: "Selección única",
+  MULTIPLE: "Selección múltiple",
+} as const;
+
 export default async function FinishesPage({
   params,
   searchParams,
@@ -34,8 +42,12 @@ export default async function FinishesPage({
   const { error } = await searchParams;
   await requireDevelopmentForSession(id);
 
-  const [finishLevels, extras, models] = await Promise.all([
-    prisma.finishLevel.findMany({ where: { developmentId: id }, orderBy: { createdAt: "asc" } }),
+  const [finishCategories, extras, models] = await Promise.all([
+    prisma.finishCategory.findMany({
+      where: { developmentId: id },
+      include: { options: { orderBy: { createdAt: "asc" } } },
+      orderBy: { order: "asc" },
+    }),
     prisma.extra.findMany({
       where: { developmentId: id },
       include: { modelLinks: true },
@@ -50,29 +62,35 @@ export default async function FinishesPage({
 
       <section className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-medium">Niveles de acabado</h2>
+          <div>
+            <h2 className="font-medium">Categorías de acabado</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Cada categoría (ej. fachada principal, carpintería) tiene sus propias opciones, y tú
+              decides si el comprador elige solo una o varias.
+            </p>
+          </div>
           <FormDialog
-            title="Agregar nivel de acabado"
-            description="Podrás agregar imágenes después de crearlo, desde Editar."
+            title="Agregar categoría de acabado"
             trigger={
               <Button size="sm" className="gap-2 rounded-full">
                 <Plus className="h-4 w-4" />
-                Agregar
+                Nueva categoría
               </Button>
             }
           >
-            <form action={createFinishLevel.bind(null, id)} className="flex flex-col gap-4">
+            <form action={createFinishCategory.bind(null, id)} className="flex flex-col gap-4">
               <ValidatedInput label="Nombre" name="name" required maxLength={120} autoFocus />
-              <ValidatedTextarea label="Descripción" name="description" maxLength={2000} rows={2} />
-              <ValidatedInput
-                label="Delta de precio"
-                name="priceDelta"
-                type="number"
-                step="0.01"
-                required
-                defaultValue={0}
-                errorMessage="Ingresa un número válido"
-              />
+              <label className="flex flex-col gap-1 text-sm">
+                Selección
+                <select
+                  name="selectionMode"
+                  defaultValue="UNICA"
+                  className="rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-foreground"
+                >
+                  <option value="UNICA">Única — el comprador elige como máximo una opción</option>
+                  <option value="MULTIPLE">Múltiple — el comprador puede elegir varias</option>
+                </select>
+              </label>
               <button
                 type="submit"
                 className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
@@ -83,80 +101,197 @@ export default async function FinishesPage({
           </FormDialog>
         </div>
 
-        <ul className="flex flex-col gap-3">
-          {finishLevels.map((fl) => (
-            <li
-              key={fl.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-border p-4"
-            >
-              <div className="flex items-center gap-3">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
-                  {fl.imageUrls[0] ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={fl.imageUrls[0]} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                  )}
-                </span>
+        <ul className="flex flex-col gap-6">
+          {finishCategories.map((category) => (
+            <li key={category.id} className="rounded-xl border border-border p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-medium">{fl.name}</p>
-                  <p className="mt-0.5 text-sm text-muted-foreground">+${fl.priceDelta.toString()}</p>
+                  <p className="font-medium">{category.name}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {SELECTION_MODE_LABELS[category.selectionMode]}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FormDialog
+                    title="Agregar opción"
+                    description="Podrás agregar imágenes después de crearla, desde Editar."
+                    trigger={
+                      <Button size="sm" variant="outline" className="gap-2 rounded-full">
+                        <Plus className="h-4 w-4" />
+                        Opción
+                      </Button>
+                    }
+                  >
+                    <form
+                      action={createFinishLevel.bind(null, id, category.id)}
+                      className="flex flex-col gap-4"
+                    >
+                      <ValidatedInput label="Nombre" name="name" required maxLength={120} autoFocus />
+                      <ValidatedTextarea label="Descripción" name="description" maxLength={2000} rows={2} />
+                      <ValidatedInput
+                        label="Delta de precio"
+                        name="priceDelta"
+                        type="number"
+                        step="0.01"
+                        required
+                        defaultValue={0}
+                        errorMessage="Ingresa un número válido"
+                      />
+                      <button
+                        type="submit"
+                        className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                      >
+                        Crear
+                      </button>
+                    </form>
+                  </FormDialog>
+                  <FormDialog
+                    title="Editar categoría"
+                    trigger={
+                      <button
+                        type="button"
+                        aria-label="Editar categoría"
+                        className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    }
+                  >
+                    <form
+                      action={updateFinishCategory.bind(null, id, category.id)}
+                      className="flex flex-col gap-4"
+                    >
+                      <ValidatedInput
+                        label="Nombre"
+                        name="name"
+                        required
+                        maxLength={120}
+                        defaultValue={category.name}
+                      />
+                      <label className="flex flex-col gap-1 text-sm">
+                        Selección
+                        <select
+                          name="selectionMode"
+                          defaultValue={category.selectionMode}
+                          className="rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-foreground"
+                        >
+                          <option value="UNICA">Única — el comprador elige como máximo una opción</option>
+                          <option value="MULTIPLE">Múltiple — el comprador puede elegir varias</option>
+                        </select>
+                      </label>
+                      <button
+                        type="submit"
+                        className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                      >
+                        Guardar
+                      </button>
+                    </form>
+                    <form
+                      action={deleteFinishCategory.bind(null, id, category.id)}
+                      className="mt-4 border-t border-border pt-4"
+                    >
+                      <button type="submit" className="text-sm text-red-400 underline underline-offset-4">
+                        Eliminar categoría
+                      </button>
+                    </form>
+                  </FormDialog>
                 </div>
               </div>
-              <FormDialog
-                title="Editar nivel de acabado"
-                trigger={
-                  <button
-                    type="button"
-                    aria-label="Editar nivel de acabado"
-                    className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+
+              <ul className="mt-4 flex flex-col gap-3">
+                {category.options.map((option) => (
+                  <li
+                    key={option.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
                   >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                }
-              >
-                <ImageGallery
-                  images={fl.imageUrls}
-                  addAction={addFinishLevelImage.bind(null, id, fl.id)}
-                  removeAction={removeFinishLevelImage.bind(null, id, fl.id)}
-                />
-                <form action={updateFinishLevel.bind(null, id, fl.id)} className="mt-4 flex flex-col gap-4">
-                  <ValidatedInput label="Nombre" name="name" required maxLength={120} defaultValue={fl.name} />
-                  <ValidatedTextarea
-                    label="Descripción"
-                    name="description"
-                    maxLength={2000}
-                    defaultValue={fl.description ?? ""}
-                    rows={2}
-                  />
-                  <ValidatedInput
-                    label="Delta de precio"
-                    name="priceDelta"
-                    type="number"
-                    step="0.01"
-                    required
-                    defaultValue={fl.priceDelta.toString()}
-                    errorMessage="Ingresa un número válido"
-                  />
-                  <button
-                    type="submit"
-                    className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-                  >
-                    Guardar
-                  </button>
-                </form>
-                <form action={deleteFinishLevel.bind(null, id, fl.id)} className="mt-1 border-t border-border pt-4">
-                  <button type="submit" className="text-sm text-red-400 underline underline-offset-4">
-                    Eliminar
-                  </button>
-                </form>
-              </FormDialog>
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
+                        {option.imageUrls[0] ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={option.imageUrls[0]} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </span>
+                      <div>
+                        <p className="text-sm font-medium">{option.name}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          +${option.priceDelta.toString()}
+                        </p>
+                      </div>
+                    </div>
+                    <FormDialog
+                      title="Editar opción"
+                      trigger={
+                        <button
+                          type="button"
+                          aria-label="Editar opción"
+                          className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      }
+                    >
+                      <ImageGallery
+                        images={option.imageUrls}
+                        addAction={addFinishLevelImage.bind(null, id, option.id)}
+                        removeAction={removeFinishLevelImage.bind(null, id, option.id)}
+                      />
+                      <form
+                        action={updateFinishLevel.bind(null, id, option.id)}
+                        className="mt-4 flex flex-col gap-4"
+                      >
+                        <ValidatedInput
+                          label="Nombre"
+                          name="name"
+                          required
+                          maxLength={120}
+                          defaultValue={option.name}
+                        />
+                        <ValidatedTextarea
+                          label="Descripción"
+                          name="description"
+                          maxLength={2000}
+                          defaultValue={option.description ?? ""}
+                          rows={2}
+                        />
+                        <ValidatedInput
+                          label="Delta de precio"
+                          name="priceDelta"
+                          type="number"
+                          step="0.01"
+                          required
+                          defaultValue={option.priceDelta.toString()}
+                          errorMessage="Ingresa un número válido"
+                        />
+                        <button
+                          type="submit"
+                          className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                        >
+                          Guardar
+                        </button>
+                      </form>
+                      <form
+                        action={deleteFinishLevel.bind(null, id, option.id)}
+                        className="mt-1 border-t border-border pt-4"
+                      >
+                        <button type="submit" className="text-sm text-red-400 underline underline-offset-4">
+                          Eliminar
+                        </button>
+                      </form>
+                    </FormDialog>
+                  </li>
+                ))}
+                {category.options.length === 0 && (
+                  <p className="text-sm text-muted-foreground">Sin opciones aún en esta categoría.</p>
+                )}
+              </ul>
             </li>
           ))}
-          {finishLevels.length === 0 && (
+          {finishCategories.length === 0 && (
             <EmptyState
-              title="Sin niveles de acabado aún"
-              description="Son opcionales: si no agregas ninguno, el comprador solo ve el precio base."
+              title="Sin categorías de acabado aún"
+              description="Son opcionales: si no agregas ninguna, el comprador solo ve el precio base. Crea una para empezar (ej. Fachada principal)."
             />
           )}
         </ul>

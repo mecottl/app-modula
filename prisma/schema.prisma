@@ -79,6 +79,13 @@ enum AnalyticsEventType {
   COTIZACION_ENVIADA
 }
 
+/// UNICA: el comprador elige como máximo una opción de la categoría
+/// (radio). MULTIPLE: puede elegir varias (checkbox). Ver issue #58.
+enum FinishSelectionMode {
+  UNICA
+  MULTIPLE
+}
+
 /// Cuenta de una desarrolladora inmobiliaria (tenant raíz).
 model Account {
   id                   String        @id @default(cuid())
@@ -133,6 +140,7 @@ model Development {
 
   account             Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
   models              Model[]
+  finishCategories    FinishCategory[]
   finishLevels        FinishLevel[]
   extras              Extra[]
   promotions          Promotion[]
@@ -166,21 +174,43 @@ model Model {
   @@map("models")
 }
 
-/// Nivel de acabado disponible para un desarrollo, con delta de precio.
-model FinishLevel {
-  id            String   @id @default(cuid())
+/// Categoría de acabado dentro de un desarrollo (ej. "Fachada
+/// principal", "Carpintería"). El desarrollador decide por categoría si
+/// el comprador puede elegir una sola opción o varias (issue #58).
+model FinishCategory {
+  id            String              @id @default(cuid())
   developmentId String
   name          String
-  description   String?
-  priceDelta    Decimal  @db.Decimal(14, 2) @default(0)
-  imageUrls     String[] @default([])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  selectionMode FinishSelectionMode @default(UNICA)
+  order         Int                 @default(0)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 
-  development Development @relation(fields: [developmentId], references: [id], onDelete: Cascade)
-  quotes      Quote[]
+  development Development   @relation(fields: [developmentId], references: [id], onDelete: Cascade)
+  options     FinishLevel[]
 
   @@index([developmentId])
+  @@map("finish_categories")
+}
+
+/// Opción de acabado dentro de una categoría (ej. "A"/"B" dentro de
+/// "Fachada principal"), con delta de precio.
+model FinishLevel {
+  id               String   @id @default(cuid())
+  developmentId    String
+  finishCategoryId String
+  name             String
+  description      String?
+  priceDelta       Decimal  @db.Decimal(14, 2) @default(0)
+  imageUrls        String[] @default([])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  development Development    @relation(fields: [developmentId], references: [id], onDelete: Cascade)
+  category    FinishCategory @relation(fields: [finishCategoryId], references: [id], onDelete: Cascade)
+
+  @@index([developmentId])
+  @@index([finishCategoryId])
   @@map("finish_levels")
 }
 
@@ -261,7 +291,7 @@ model Quote {
   id              String      @id @default(cuid())
   developmentId   String
   modelId         String
-  finishLevelId   String?
+  finishOptionIds String[]    @default([])
   extraIds        String[]    @default([])
   total           Decimal     @db.Decimal(14, 2)
   customerName    String
@@ -274,7 +304,6 @@ model Quote {
 
   development Development @relation(fields: [developmentId], references: [id], onDelete: Cascade)
   model       Model       @relation(fields: [modelId], references: [id])
-  finishLevel FinishLevel? @relation(fields: [finishLevelId], references: [id])
 
   @@index([developmentId])
   @@index([developmentId, status])

@@ -64,14 +64,15 @@ export default async function WidgetPage({
 
   const isPreview = environment === "VISTA_PREVIA" || isTokenPreview;
 
-  const [models, finishLevels, extras] = await Promise.all([
+  const [models, finishCategories, extras] = await Promise.all([
     prisma.model.findMany({
       where: { developmentId: development.id, active: true },
       orderBy: { basePrice: "asc" },
     }),
-    prisma.finishLevel.findMany({
+    prisma.finishCategory.findMany({
       where: { developmentId: development.id },
-      orderBy: { priceDelta: "asc" },
+      include: { options: { orderBy: { priceDelta: "asc" } } },
+      orderBy: { order: "asc" },
     }),
     prisma.extra.findMany({
       where: { developmentId: development.id },
@@ -101,12 +102,17 @@ export default async function WidgetPage({
           basePrice: m.basePrice.toNumber(),
           imageUrls: m.imageUrls,
         }))}
-        finishLevels={finishLevels.map((f) => ({
-          id: f.id,
-          name: f.name,
-          description: f.description,
-          priceDelta: f.priceDelta.toNumber(),
-          imageUrls: f.imageUrls,
+        finishCategories={finishCategories.map((c) => ({
+          id: c.id,
+          name: c.name,
+          selectionMode: c.selectionMode,
+          options: c.options.map((f) => ({
+            id: f.id,
+            name: f.name,
+            description: f.description,
+            priceDelta: f.priceDelta.toNumber(),
+            imageUrls: f.imageUrls,
+          })),
         }))}
         extras={extras.map((e) => ({
           id: e.id,

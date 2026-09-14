@@ -10,7 +10,7 @@ import { checkRateLimit, getClientIp, tooManyRequests } from "@/lib/rateLimit";
 
 const bodySchema = z.object({
   modelId: z.string().min(1),
-  finishLevelId: z.string().min(1).optional(),
+  finishOptionIds: z.array(z.string().min(1)).default([]),
   extraIds: z.array(z.string().min(1)).default([]),
   promoCode: z.string().min(1).max(40).optional(),
   customerName: z.string().min(2).max(160),
@@ -65,7 +65,7 @@ export async function POST(
     breakdown = await calculateQuotePrice({
       developmentId: development.id,
       modelId: parsed.data.modelId,
-      finishLevelId: parsed.data.finishLevelId,
+      finishOptionIds: parsed.data.finishOptionIds,
       extraIds: parsed.data.extraIds,
       promoCode: parsed.data.promoCode,
     });
@@ -76,11 +76,11 @@ export async function POST(
     throw error;
   }
 
-  const [model, finishLevel, extras] = await Promise.all([
+  const [model, finishOptions, extras] = await Promise.all([
     prisma.model.findUnique({ where: { id: parsed.data.modelId } }),
-    parsed.data.finishLevelId
-      ? prisma.finishLevel.findUnique({ where: { id: parsed.data.finishLevelId } })
-      : null,
+    parsed.data.finishOptionIds.length
+      ? prisma.finishLevel.findMany({ where: { id: { in: parsed.data.finishOptionIds } } })
+      : Promise.resolve([]),
     parsed.data.extraIds.length
       ? prisma.extra.findMany({ where: { id: { in: parsed.data.extraIds } } })
       : Promise.resolve([]),
@@ -90,7 +90,7 @@ export async function POST(
     data: {
       developmentId: development.id,
       modelId: parsed.data.modelId,
-      finishLevelId: parsed.data.finishLevelId,
+      finishOptionIds: parsed.data.finishOptionIds,
       extraIds: parsed.data.extraIds,
       total: breakdown.total,
       customerName: parsed.data.customerName,
@@ -111,7 +111,7 @@ export async function POST(
     developmentId: development.id,
     developmentName: development.name,
     modelName: model?.name ?? parsed.data.modelId,
-    finishLevelName: finishLevel?.name,
+    finishNames: finishOptions.map((f) => f.name),
     extraNames: extras.map((e) => e.name),
     breakdown,
     customerName: parsed.data.customerName,

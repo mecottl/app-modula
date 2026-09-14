@@ -12,7 +12,7 @@ export async function sendQuoteWebhook(webhookUrl: string, quote: Quote) {
     id: quote.id,
     developmentId: quote.developmentId,
     modelId: quote.modelId,
-    finishLevelId: quote.finishLevelId,
+    finishOptionIds: quote.finishOptionIds,
     extraIds: quote.extraIds,
     total: quote.total.toString(),
     customerName: quote.customerName,
