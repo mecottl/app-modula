@@ -26,8 +26,8 @@ type Star = [number, number, number, number, number, number, number, boolean];
 function themeColors(theme: Theme, bgOverride?: string, starOverride?: string) {
   const isLight = theme === "light";
   return {
-    fill: bgOverride ?? (isLight ? "rgba(255,255,255,1)" : "rgba(0,0,0,1)"),
-    star: starOverride ?? (isLight ? "rgba(23,23,23,0.7)" : "rgba(255,255,255,1)"),
+    fill: bgOverride ?? (isLight ? "#FAFAF7" : "#121111"),
+    star: starOverride ?? (isLight ? "#121111" : "#FAFAF7"),
   };
 }
 
@@ -72,7 +72,7 @@ export function Starfield({
   // los colores viven en un ref mutable en vez de una constante de
   // render, así un cambio de tema en vivo sí llega al frame siguiente.
   const colorsRef = useRef(themeColors(getCurrentTheme(), bgColor, starColor));
-  const getFill = () => (hyperspace ? `rgba(0,0,0,${opacity})` : colorsRef.current.fill);
+  const getFill = () => (hyperspace ? `rgba(18,17,17,${opacity})` : colorsRef.current.fill);
   const compSpeed = hyperspace ? speed * warpFactor : speed;
   const ratio = quantity / 2;
 

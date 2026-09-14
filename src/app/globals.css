@@ -73,6 +73,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -81,6 +87,16 @@ body {
 
 * {
   border-color: var(--color-border);
+}
+
+/* El popup nativo de <select> no hereda color-scheme de forma
+   confiable; sin esto se renderiza con fondo blanco del SO aunque el
+   :root diga dark. */
+:root select {
+  color-scheme: dark;
+}
+:root[data-theme="light"] select {
+  color-scheme: light;
 }
 
 ::selection {
