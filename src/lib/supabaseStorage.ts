@@ -3,9 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 /**
  * Cliente de Supabase Storage con la service role key (bypassa RLS) —
  * separado de Prisma, que es quien maneja la base de datos en el resto
- * del proyecto. Solo se usa server-side para subir archivos (logos por
- * ahora; ver README/issue "Media por combinación de opciones" para el
- * plan de imágenes/3D por modelo+acabado+extras a futuro).
+ * del proyecto. Solo se usa server-side para subir archivos (logo del
+ * desarrollo y, desde issue #47, imágenes de Model/FinishLevel/Extra).
  */
 const supabaseUrl = process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -20,7 +19,7 @@ export const MEDIA_BUCKET = "development-media";
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
-export async function uploadDevelopmentImage(developmentId: string, file: File): Promise<string> {
+async function uploadImage(path: string, file: File): Promise<string> {
   if (!supabaseAdmin) {
     throw new Error("Storage no configurado (falta SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY)");
   }
@@ -30,9 +29,6 @@ export async function uploadDevelopmentImage(developmentId: string, file: File):
   if (file.size > MAX_SIZE_BYTES) {
     throw new Error("La imagen no puede pesar más de 5 MB");
   }
-
-  const ext = file.name.split(".").pop() || "png";
-  const path = `${developmentId}/logo-${Date.now()}.${ext}`;
 
   const { error } = await supabaseAdmin.storage.from(MEDIA_BUCKET).upload(path, file, {
     contentType: file.type,
@@ -44,4 +40,26 @@ export async function uploadDevelopmentImage(developmentId: string, file: File):
 
   const { data } = supabaseAdmin.storage.from(MEDIA_BUCKET).getPublicUrl(path);
   return data.publicUrl;
+}
+
+export async function uploadDevelopmentImage(developmentId: string, file: File): Promise<string> {
+  const ext = file.name.split(".").pop() || "png";
+  return uploadImage(`${developmentId}/logo-${Date.now()}.${ext}`, file);
+}
+
+/**
+ * Imagen de un elemento del catálogo (Model/FinishLevel/Extra) — issue
+ * #47 "subir renders/imágenes por modelo, acabado y extra". A
+ * diferencia del logo (una sola imagen que se reemplaza), cada entidad
+ * guarda un arreglo de URLs (`imageUrls`), así que el archivo se sube
+ * con un nombre único y se agrega a la lista en vez de sobrescribir.
+ */
+export async function uploadCatalogImage(
+  developmentId: string,
+  category: "models" | "finishes" | "extras",
+  entityId: string,
+  file: File,
+): Promise<string> {
+  const ext = file.name.split(".").pop() || "png";
+  return uploadImage(`${developmentId}/${category}/${entityId}/${Date.now()}.${ext}`, file);
 }

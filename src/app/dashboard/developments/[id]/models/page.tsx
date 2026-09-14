@@ -1,12 +1,13 @@
-import { Pencil, Plus } from "lucide-react";
+import { ImageIcon, Pencil, Plus } from "lucide-react";
 import { requireDevelopmentForSession } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
-import { createModel, updateModel, deleteModel } from "@/lib/actions/models";
+import { createModel, updateModel, deleteModel, addModelImage, removeModelImage } from "@/lib/actions/models";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FormDialog } from "@/components/ui/form-dialog";
 import { Button } from "@/components/ui/button";
 import { ValidatedInput, ValidatedTextarea } from "@/components/ui/validated-input";
+import { ImageGallery } from "@/components/dashboard/image-gallery";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,7 @@ export default async function ModelsPage({
         <h2 className="font-medium">Catálogo de modelos</h2>
         <FormDialog
           title="Agregar modelo"
+          description="Podrás agregar imágenes después de crearlo, desde Editar."
           size="lg"
           trigger={
             <Button size="sm" className="gap-2 rounded-full">
@@ -96,11 +98,21 @@ export default async function ModelsPage({
               key={model.id}
               className="flex items-center justify-between gap-3 rounded-xl border border-border p-4"
             >
-              <div>
-                <p className="font-medium">{model.name}</p>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  ${model.basePrice.toString()} {!model.active && "· Inactivo"}
-                </p>
+              <div className="flex items-center gap-3">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
+                  {model.imageUrls[0] ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={model.imageUrls[0]} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </span>
+                <div>
+                  <p className="font-medium">{model.name}</p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    ${model.basePrice.toString()} {!model.active && "· Inactivo"}
+                  </p>
+                </div>
               </div>
               <FormDialog
                 title="Editar modelo"
@@ -115,7 +127,12 @@ export default async function ModelsPage({
                   </button>
                 }
               >
-                <form action={updateAction} className="flex flex-col gap-4">
+                <ImageGallery
+                  images={model.imageUrls}
+                  addAction={addModelImage.bind(null, id, model.id)}
+                  removeAction={removeModelImage.bind(null, id, model.id)}
+                />
+                <form action={updateAction} className="mt-4 flex flex-col gap-4">
                   <ValidatedInput
                     label="Nombre"
                     name="name"

@@ -45,7 +45,7 @@ const features = [
   },
   {
     title: "Reglas de precio",
-    description: "Promociones con vigencia por fechas, aplicadas automáticamente por el motor.",
+    description: "Cupones con código y vigencia por fechas, validados en tiempo real al cotizar.",
   },
   {
     title: "Cotizaciones calificadas",
@@ -174,7 +174,7 @@ export default function Home() {
                 href="/login"
                 className="rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
               >
-                Entrar al dashboard
+                Registrate ahora!
               </Link>
               <a
                 href="#como-funciona"

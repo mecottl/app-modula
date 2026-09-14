@@ -47,7 +47,7 @@ export function Header() {
 	return (
 		<header
 			className={cn(
-				'sticky top-0 z-50 mx-auto w-full max-w-5xl md:transition-all md:ease-out',
+				'mt-6 sticky top-0 z-50 mx-auto w-full max-w-5xl md:transition-all md:ease-out',
 				{
 					'border-b border-border bg-background/95 supports-[backdrop-filter]:bg-background/50 backdrop-blur-lg md:top-4 md:max-w-4xl md:rounded-md md:border md:shadow':
 						scrolled && !open,

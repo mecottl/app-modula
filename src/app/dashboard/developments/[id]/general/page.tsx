@@ -1,8 +1,12 @@
+import Link from "next/link";
 import { requireDevelopmentForSession } from "@/lib/tenant";
-import { updateDevelopmentGeneral, updateDevelopmentAdvanced, uploadDevelopmentLogo } from "@/lib/actions/developments";
+import {
+  updateDevelopmentGeneral,
+  updateDevelopmentAdvanced,
+  publishDevelopment,
+  unpublishDevelopment,
+} from "@/lib/actions/developments";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
-import { LogoUploader } from "@/components/dashboard/logo-uploader";
-import { ColorInput } from "@/components/ui/color-input";
 import { ValidatedInput, ValidatedTextarea } from "@/components/ui/validated-input";
 
 export const dynamic = "force-dynamic";
@@ -19,20 +23,57 @@ export default async function GeneralPage({
   const development = await requireDevelopmentForSession(id);
   const action = updateDevelopmentGeneral.bind(null, id);
   const advancedAction = updateDevelopmentAdvanced.bind(null, id);
-  const uploadLogoAction = uploadDevelopmentLogo.bind(null, id);
 
   return (
     <div className="flex max-w-lg flex-col gap-8">
       <ToastFromParams ok={ok ? "Guardado." : undefined} error={error} />
 
+      <div className="flex flex-col gap-3 rounded-xl border border-border p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <Link href="/dashboard/developments" className="text-xs text-muted-foreground hover:text-foreground">
+            ← Todos los desarrollos
+          </Link>
+          <h1 className="mt-1 text-lg font-semibold tracking-tight">{development.name}</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            /{development.slug}{" "}
+            <span className={development.status === "PUBLICADO" ? "text-green-400" : "text-amber-400"}>
+              · {development.status === "PUBLICADO" ? "Publicado" : "Borrador"}
+            </span>
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <a
+            href={`/${development.slug}/cotizacion-cliente?preview=1`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
+            Ver vista previa
+          </a>
+          {development.status === "PUBLICADO" ? (
+            <form action={unpublishDevelopment.bind(null, development.id)}>
+              <button
+                type="submit"
+                className="rounded-full border border-border px-4 py-1.5 text-sm transition-colors hover:border-foreground"
+              >
+                Volver a borrador
+              </button>
+            </form>
+          ) : (
+            <form action={publishDevelopment.bind(null, development.id)}>
+              <button
+                type="submit"
+                className="rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                Publicar
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+
       <section className="flex flex-col gap-4">
-        <h2 className="font-medium">General y marca</h2>
-
-        <label className="flex flex-col gap-1 text-sm">
-          Logo
-          <LogoUploader currentLogoUrl={development.logoUrl} uploadAction={uploadLogoAction} />
-        </label>
-
+        <h2 className="font-medium">General</h2>
         <form action={action} className="flex flex-col gap-4">
           <ValidatedInput label="Nombre" name="name" required maxLength={120} defaultValue={development.name} />
           <ValidatedTextarea
@@ -42,21 +83,6 @@ export default async function GeneralPage({
             defaultValue={development.description ?? ""}
             rows={3}
           />
-          <ValidatedInput
-            label="Texto del CTA"
-            name="ctaText"
-            maxLength={80}
-            defaultValue={development.ctaText ?? ""}
-            placeholder="Cotiza tu casa"
-          />
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <ColorInput name="primaryColor" label="Color primario" defaultValue={development.primaryColor} />
-            </div>
-            <div className="flex-1">
-              <ColorInput name="accentColor" label="Color de acento" defaultValue={development.accentColor} />
-            </div>
-          </div>
           <button
             type="submit"
             className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"

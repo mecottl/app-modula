@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireDevelopmentForSession } from "@/lib/tenant";
+import { uploadCatalogImage } from "@/lib/supabaseStorage";
 
 function back(developmentId: string, error?: string) {
   const qs = error ? `?error=${encodeURIComponent(error)}` : "";
@@ -62,6 +63,41 @@ export async function updateFinishLevel(
   });
   revalidatePath(`/dashboard/developments/${developmentId}/finishes`);
   back(developmentId);
+}
+
+export async function addFinishLevelImage(
+  developmentId: string,
+  finishLevelId: string,
+  formData: FormData,
+) {
+  await requireDevelopmentForSession(developmentId);
+
+  const file = formData.get("image");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("Selecciona una imagen");
+  }
+
+  const url = await uploadCatalogImage(developmentId, "finishes", finishLevelId, file);
+  const finishLevel = await prisma.finishLevel.update({
+    where: { id: finishLevelId, developmentId },
+    data: { imageUrls: { push: url } },
+  });
+
+  revalidatePath(`/dashboard/developments/${developmentId}/finishes`);
+  return finishLevel.imageUrls;
+}
+
+export async function removeFinishLevelImage(developmentId: string, finishLevelId: string, url: string) {
+  await requireDevelopmentForSession(developmentId);
+
+  const finishLevel = await prisma.finishLevel.findUniqueOrThrow({
+    where: { id: finishLevelId, developmentId },
+  });
+  const imageUrls = finishLevel.imageUrls.filter((u) => u !== url);
+  await prisma.finishLevel.update({ where: { id: finishLevelId, developmentId }, data: { imageUrls } });
+
+  revalidatePath(`/dashboard/developments/${developmentId}/finishes`);
+  return imageUrls;
 }
 
 export async function deleteFinishLevel(developmentId: string, finishLevelId: string) {
@@ -144,6 +180,35 @@ export async function updateExtra(developmentId: string, extraId: string, formDa
 
   revalidatePath(`/dashboard/developments/${developmentId}/finishes`);
   back(developmentId);
+}
+
+export async function addExtraImage(developmentId: string, extraId: string, formData: FormData) {
+  await requireDevelopmentForSession(developmentId);
+
+  const file = formData.get("image");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("Selecciona una imagen");
+  }
+
+  const url = await uploadCatalogImage(developmentId, "extras", extraId, file);
+  const extra = await prisma.extra.update({
+    where: { id: extraId, developmentId },
+    data: { imageUrls: { push: url } },
+  });
+
+  revalidatePath(`/dashboard/developments/${developmentId}/finishes`);
+  return extra.imageUrls;
+}
+
+export async function removeExtraImage(developmentId: string, extraId: string, url: string) {
+  await requireDevelopmentForSession(developmentId);
+
+  const extra = await prisma.extra.findUniqueOrThrow({ where: { id: extraId, developmentId } });
+  const imageUrls = extra.imageUrls.filter((u) => u !== url);
+  await prisma.extra.update({ where: { id: extraId, developmentId }, data: { imageUrls } });
+
+  revalidatePath(`/dashboard/developments/${developmentId}/finishes`);
+  return imageUrls;
 }
 
 export async function deleteExtra(developmentId: string, extraId: string) {

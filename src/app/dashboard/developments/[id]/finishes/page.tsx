@@ -1,13 +1,17 @@
-import { Pencil, Plus } from "lucide-react";
+import { ImageIcon, Pencil, Plus } from "lucide-react";
 import { requireDevelopmentForSession } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import {
   createFinishLevel,
   updateFinishLevel,
   deleteFinishLevel,
+  addFinishLevelImage,
+  removeFinishLevelImage,
   createExtra,
   updateExtra,
   deleteExtra,
+  addExtraImage,
+  removeExtraImage,
 } from "@/lib/actions/finishes";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -15,6 +19,7 @@ import { FormDialog } from "@/components/ui/form-dialog";
 import { Button } from "@/components/ui/button";
 import { ValidatedInput, ValidatedTextarea } from "@/components/ui/validated-input";
 import { ModelChipPicker } from "@/components/dashboard/model-chip-picker";
+import { ImageGallery } from "@/components/dashboard/image-gallery";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +53,7 @@ export default async function FinishesPage({
           <h2 className="font-medium">Niveles de acabado</h2>
           <FormDialog
             title="Agregar nivel de acabado"
+            description="Podrás agregar imágenes después de crearlo, desde Editar."
             trigger={
               <Button size="sm" className="gap-2 rounded-full">
                 <Plus className="h-4 w-4" />
@@ -83,9 +89,19 @@ export default async function FinishesPage({
               key={fl.id}
               className="flex items-center justify-between gap-3 rounded-xl border border-border p-4"
             >
-              <div>
-                <p className="font-medium">{fl.name}</p>
-                <p className="mt-0.5 text-sm text-muted-foreground">+${fl.priceDelta.toString()}</p>
+              <div className="flex items-center gap-3">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
+                  {fl.imageUrls[0] ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={fl.imageUrls[0]} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </span>
+                <div>
+                  <p className="font-medium">{fl.name}</p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">+${fl.priceDelta.toString()}</p>
+                </div>
               </div>
               <FormDialog
                 title="Editar nivel de acabado"
@@ -99,7 +115,12 @@ export default async function FinishesPage({
                   </button>
                 }
               >
-                <form action={updateFinishLevel.bind(null, id, fl.id)} className="flex flex-col gap-4">
+                <ImageGallery
+                  images={fl.imageUrls}
+                  addAction={addFinishLevelImage.bind(null, id, fl.id)}
+                  removeAction={removeFinishLevelImage.bind(null, id, fl.id)}
+                />
+                <form action={updateFinishLevel.bind(null, id, fl.id)} className="mt-4 flex flex-col gap-4">
                   <ValidatedInput label="Nombre" name="name" required maxLength={120} defaultValue={fl.name} />
                   <ValidatedTextarea
                     label="Descripción"
@@ -146,6 +167,7 @@ export default async function FinishesPage({
           <h2 className="font-medium">Extras</h2>
           <FormDialog
             title="Agregar extra"
+            description="Podrás agregar imágenes después de crearlo, desde Editar."
             size="lg"
             trigger={
               <Button size="sm" className="gap-2 rounded-full">
@@ -185,9 +207,19 @@ export default async function FinishesPage({
                 key={extra.id}
                 className="flex items-center justify-between gap-3 rounded-xl border border-border p-4"
               >
-                <div>
-                  <p className="font-medium">{extra.name}</p>
-                  <p className="mt-0.5 text-sm text-muted-foreground">+${extra.priceDelta.toString()}</p>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
+                    {extra.imageUrls[0] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={extra.imageUrls[0]} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </span>
+                  <div>
+                    <p className="font-medium">{extra.name}</p>
+                    <p className="mt-0.5 text-sm text-muted-foreground">+${extra.priceDelta.toString()}</p>
+                  </div>
                 </div>
                 <FormDialog
                   title="Editar extra"
@@ -202,7 +234,12 @@ export default async function FinishesPage({
                     </button>
                   }
                 >
-                  <form action={updateExtra.bind(null, id, extra.id)} className="flex flex-col gap-4">
+                  <ImageGallery
+                    images={extra.imageUrls}
+                    addAction={addExtraImage.bind(null, id, extra.id)}
+                    removeAction={removeExtraImage.bind(null, id, extra.id)}
+                  />
+                  <form action={updateExtra.bind(null, id, extra.id)} className="mt-4 flex flex-col gap-4">
                     <ValidatedInput
                       label="Nombre"
                       name="name"

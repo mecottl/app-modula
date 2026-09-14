@@ -64,9 +64,6 @@ const hexColor = z
 const generalSchema = z.object({
   name: z.string().min(2).max(120),
   description: z.string().max(2000).optional().or(z.literal("")),
-  ctaText: z.string().max(80).optional().or(z.literal("")),
-  primaryColor: hexColor,
-  accentColor: hexColor,
 });
 
 export async function updateDevelopmentGeneral(developmentId: string, formData: FormData) {
@@ -75,9 +72,6 @@ export async function updateDevelopmentGeneral(developmentId: string, formData: 
   const parsed = generalSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
-    ctaText: formData.get("ctaText"),
-    primaryColor: formData.get("primaryColor"),
-    accentColor: formData.get("accentColor"),
   });
   if (!parsed.success) {
     redirect(
@@ -92,6 +86,44 @@ export async function updateDevelopmentGeneral(developmentId: string, formData: 
     data: {
       name: parsed.data.name,
       description: parsed.data.description || null,
+    },
+  });
+
+  revalidatePath(`/dashboard/developments/${developmentId}`);
+  redirect(`/dashboard/developments/${developmentId}/general?ok=1`);
+}
+
+/**
+ * Marca: lo que ve el comprador en la página pública (logo, colores,
+ * texto del CTA) — separado de General (nombre/descripción/estado) en
+ * su propia pestaña para no mezclar identidad administrativa con
+ * identidad visual (issue "separar general y marca en 2").
+ */
+const brandSchema = z.object({
+  ctaText: z.string().max(80).optional().or(z.literal("")),
+  primaryColor: hexColor,
+  accentColor: hexColor,
+});
+
+export async function updateDevelopmentBrand(developmentId: string, formData: FormData) {
+  await requireDevelopmentForSession(developmentId);
+
+  const parsed = brandSchema.safeParse({
+    ctaText: formData.get("ctaText"),
+    primaryColor: formData.get("primaryColor"),
+    accentColor: formData.get("accentColor"),
+  });
+  if (!parsed.success) {
+    redirect(
+      `/dashboard/developments/${developmentId}/brand?error=${encodeURIComponent(
+        "Revisa los campos del formulario",
+      )}`,
+    );
+  }
+
+  await prisma.development.update({
+    where: { id: developmentId },
+    data: {
       ctaText: parsed.data.ctaText || null,
       primaryColor: parsed.data.primaryColor || null,
       accentColor: parsed.data.accentColor || null,
@@ -99,7 +131,7 @@ export async function updateDevelopmentGeneral(developmentId: string, formData: 
   });
 
   revalidatePath(`/dashboard/developments/${developmentId}`);
-  redirect(`/dashboard/developments/${developmentId}/general?ok=1`);
+  redirect(`/dashboard/developments/${developmentId}/brand?ok=1`);
 }
 
 /**
