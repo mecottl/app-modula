@@ -5,6 +5,7 @@ import { getBaseUrl } from "@/lib/baseUrl";
 import { updateIntegrationSettings, regenerateIntegrationToken } from "@/lib/actions/integration";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { CopyButton } from "@/components/ui/copy-button";
+import { WidgetLivePreview } from "@/components/dashboard/widget-live-preview";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +77,18 @@ export default async function IntegrationPage({
           <CopyButton value={snippet} label="Copiar snippet" />
         </div>
         <pre className="mt-2 overflow-x-auto rounded border bg-muted p-3 text-xs">{snippet}</pre>
+      </section>
+
+      <section>
+        <h3 className="font-medium">Vista previa en vivo</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Así se ve el widget embebido, sin copiar nada. Se muestra en modo vista previa aunque el
+          entorno de abajo esté en Producción — el snippet público no incluye esta puerta de
+          vista previa.
+        </p>
+        <div className="mt-3 overflow-hidden rounded border">
+          <WidgetLivePreview src={`${widgetUrl}?preview_token=${settings.token}`} slug={development.slug} />
+        </div>
       </section>
 
       <section className="rounded border p-4">

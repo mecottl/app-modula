@@ -13,8 +13,15 @@ export const dynamic = "force-dynamic";
  * desarrollo antes de servir contenido; en modo vista previa omite esa
  * validación a propósito para que la desarrolladora pueda probar cambios.
  */
-export default async function WidgetPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function WidgetPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ preview_token?: string }>;
+}) {
   const { slug } = await params;
+  const { preview_token } = await searchParams;
 
   const development = await prisma.development.findUnique({
     where: { slug },
@@ -33,9 +40,16 @@ export default async function WidgetPage({ params }: { params: Promise<{ slug: s
     );
   }
 
-  const { environment, authorizedDomains } = development.integrationSettings;
+  const { environment, authorizedDomains, token } = development.integrationSettings;
 
-  if (environment === "PRODUCCION") {
+  // Vista previa en vivo desde el dashboard (issue #41): el token del
+  // proyecto (mismo que se muestra/regenera en Integración) autoriza al
+  // iframe embebido ahí a ver el widget aunque el entorno esté en
+  // Producción, sin exponer el snippet público a esta puerta trasera —
+  // el token nunca forma parte del snippet de instalación.
+  const isTokenPreview = Boolean(preview_token) && preview_token === token;
+
+  if (environment === "PRODUCCION" && !isTokenPreview) {
     const h = await headers();
     const referer = h.get("referer");
     const hostname = referer ? extractHostname(referer) : null;
@@ -48,7 +62,7 @@ export default async function WidgetPage({ params }: { params: Promise<{ slug: s
     }
   }
 
-  const isPreview = environment === "VISTA_PREVIA";
+  const isPreview = environment === "VISTA_PREVIA" || isTokenPreview;
 
   const [models, finishLevels, extras] = await Promise.all([
     prisma.model.findMany({

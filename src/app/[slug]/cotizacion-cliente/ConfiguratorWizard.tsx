@@ -100,6 +100,7 @@ export function ConfiguratorWizard({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [confirmedTotal, setConfirmedTotal] = useState<string | null>(null);
+  const [confirmedQuoteId, setConfirmedQuoteId] = useState<string | null>(null);
 
   const applicableExtras = useMemo(
     () => extras.filter((e) => e.modelIds.includes(modelId)),
@@ -223,6 +224,7 @@ export function ConfiguratorWizard({
       }
       const data = await res.json();
       setConfirmedTotal(data.total);
+      setConfirmedQuoteId(data.id);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Error inesperado");
     } finally {
@@ -242,6 +244,15 @@ export function ConfiguratorWizard({
         <p className="text-2xl font-semibold">¡Listo! Recibimos tu cotización.</p>
         <p className="text-muted-foreground">Total cotizado: {formatMoney(confirmedTotal, currency)}</p>
         <p className="text-sm text-muted-foreground">Nos pondremos en contacto contigo pronto.</p>
+        {confirmedQuoteId && (
+          <a
+            href={`/api/developments/${slug}/quotes/${confirmedQuoteId}/pdf${previewQs}`}
+            style={{ backgroundColor: accent }}
+            className="mt-4 rounded-full px-6 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+          >
+            Descargar cotización en PDF
+          </a>
+        )}
       </div>
     );
   }
