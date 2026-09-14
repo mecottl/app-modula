@@ -185,20 +185,20 @@ export async function startSubscriptionForAccount(plan: "BASICO" | "PROFESIONAL"
     });
     if (existing.status === "incomplete") {
       const currentItem = existing.items.data[0];
-      const updated =
-        currentItem.price.id === priceId
-          ? existing
-          : await stripe.subscriptions.update(account.stripeSubscriptionId, {
-              items: [{ id: currentItem.id, price: priceId }],
-              payment_behavior: "default_incomplete",
-              expand: ["latest_invoice.confirmation_secret"],
-            });
-      const existingInvoice = updated.latest_invoice;
-      const existingSecret =
-        existingInvoice && typeof existingInvoice === "object"
-          ? existingInvoice.confirmation_secret?.client_secret
-          : null;
-      if (existingSecret) return existingSecret;
+      if (currentItem.price.id === priceId) {
+        const existingInvoice = existing.latest_invoice;
+        const existingSecret =
+          existingInvoice && typeof existingInvoice === "object"
+            ? existingInvoice.confirmation_secret?.client_secret
+            : null;
+        if (existingSecret) return existingSecret;
+      } else {
+        // Stripe no permite cambiar el precio de una suscripción en
+        // `incomplete` (rechaza cualquier update que genere una factura
+        // nueva) — se cancela y se sigue abajo para crear una nueva con
+        // el plan correcto, en vez de dejarla huérfana.
+        await stripe.subscriptions.cancel(account.stripeSubscriptionId);
+      }
     }
   }
 
