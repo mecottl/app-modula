@@ -308,10 +308,10 @@ export default function Home() {
                 </p>
               </div>
               <Link
-                href="/register"
+                href="/demo"
                 className="shrink-0 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
               >
-                Crear mi cuenta
+                Agendar una demo
               </Link>
             </div>
           </section>
