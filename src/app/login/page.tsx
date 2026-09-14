@@ -46,7 +46,7 @@ export default async function LoginPage({
             <p className="mt-2 text-sm text-muted-foreground">Entra al dashboard de tu cuenta.</p>
           </div>
           {error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" aria-live="polite" className="text-sm text-destructive">
               Correo o contraseña incorrectos.
             </p>
           )}
@@ -57,6 +57,8 @@ export default async function LoginPage({
                 name="email"
                 type="email"
                 required
+                autoFocus
+                autoComplete="email"
                 placeholder="tu@desarrolladora.com"
                 className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground"
               />

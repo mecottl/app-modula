@@ -14,6 +14,7 @@ export function PasswordField() {
           name="password"
           type={visible ? "text" : "password"}
           required
+          autoComplete="current-password"
           className="w-full rounded-md border border-border bg-transparent px-3 py-2 pr-10 outline-none focus:border-foreground"
         />
         <button
@@ -21,6 +22,7 @@ export function PasswordField() {
           onClick={() => setVisible((v) => !v)}
           className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground transition-colors hover:text-foreground"
           aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
+          aria-pressed={visible}
         >
           {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
