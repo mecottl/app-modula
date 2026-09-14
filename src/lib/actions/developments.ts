@@ -196,6 +196,18 @@ export async function uploadDevelopmentLogo(developmentId: string, formData: For
 
 export async function publishDevelopment(developmentId: string) {
   await requireDevelopmentForSession(developmentId);
+
+  const activeModels = await prisma.model.count({
+    where: { developmentId, active: true },
+  });
+  if (activeModels === 0) {
+    redirect(
+      `/dashboard/developments/${developmentId}/general?error=${encodeURIComponent(
+        "Agrega al menos un modelo activo antes de publicar",
+      )}`,
+    );
+  }
+
   await prisma.development.update({
     where: { id: developmentId },
     data: { status: "PUBLICADO" },

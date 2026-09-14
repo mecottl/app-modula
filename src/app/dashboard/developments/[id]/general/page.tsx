@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Check } from "lucide-react";
 import { requireDevelopmentForSession } from "@/lib/tenant";
+import { prisma } from "@/lib/prisma";
 import {
   updateDevelopmentGeneral,
   updateDevelopmentAdvanced,
@@ -8,6 +10,7 @@ import {
 } from "@/lib/actions/developments";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { ValidatedInput, ValidatedTextarea } from "@/components/ui/validated-input";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +26,36 @@ export default async function GeneralPage({
   const development = await requireDevelopmentForSession(id);
   const action = updateDevelopmentGeneral.bind(null, id);
   const advancedAction = updateDevelopmentAdvanced.bind(null, id);
+
+  const [activeModels, finishCategories, extras] = await Promise.all([
+    prisma.model.count({ where: { developmentId: id, active: true } }),
+    prisma.finishCategory.count({ where: { developmentId: id } }),
+    prisma.extra.count({ where: { developmentId: id } }),
+  ]);
+  const hasModel = activeModels > 0;
+  const hasFinishesOrExtras = finishCategories > 0 || extras > 0;
+  const isPublished = development.status === "PUBLICADO";
+
+  const steps = [
+    {
+      label: "Agrega un modelo",
+      description: "Al menos uno activo, o el configurador no tiene nada que mostrar.",
+      done: hasModel,
+      href: `/dashboard/developments/${id}/models`,
+    },
+    {
+      label: "Acabados y extras (opcional)",
+      description: "Ofrece variantes de precio, pero no son obligatorios para publicar.",
+      done: hasFinishesOrExtras,
+      href: `/dashboard/developments/${id}/finishes`,
+    },
+    {
+      label: "Publica",
+      description: "Hazlo visible en la página pública y el widget.",
+      done: isPublished,
+      href: undefined,
+    },
+  ];
 
   return (
     <div className="flex max-w-lg flex-col gap-8">
@@ -63,7 +96,9 @@ export default async function GeneralPage({
             <form action={publishDevelopment.bind(null, development.id)}>
               <button
                 type="submit"
-                className="rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                disabled={!hasModel}
+                title={hasModel ? undefined : "Agrega al menos un modelo activo antes de publicar"}
+                className="rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Publicar
               </button>
@@ -71,6 +106,40 @@ export default async function GeneralPage({
           )}
         </div>
       </div>
+
+      {!isPublished && (
+        <section className="flex flex-col gap-3 rounded-xl border border-border p-5">
+          <h2 className="font-medium">Antes de publicar</h2>
+          <ul className="flex flex-col gap-3">
+            {steps.map((step, i) => (
+              <li key={step.label} className="flex items-start gap-3">
+                <span
+                  className={cn(
+                    "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs",
+                    step.done
+                      ? "border-green-500 bg-green-500/10 text-green-400"
+                      : "border-border text-muted-foreground",
+                  )}
+                >
+                  {step.done ? <Check className="h-3 w-3" /> : i + 1}
+                </span>
+                <div>
+                  <p className={cn("text-sm", step.done ? "text-muted-foreground line-through" : "font-medium")}>
+                    {step.href ? (
+                      <Link href={step.href} className="underline-offset-4 hover:underline">
+                        {step.label}
+                      </Link>
+                    ) : (
+                      step.label
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{step.description}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="flex flex-col gap-4">
         <h2 className="font-medium">General</h2>
