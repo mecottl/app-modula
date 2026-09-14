@@ -2,6 +2,7 @@ import { QuoteStatus } from "@prisma/client";
 import { requireDevelopmentForSession } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { updateQuoteStatus, deleteQuoteData } from "@/lib/actions/quotes";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const dynamic = "force-dynamic";
 
@@ -106,7 +107,12 @@ export default async function QuotesPage({
             </form>
           </li>
         ))}
-        {quotes.length === 0 && <li className="text-sm text-muted-foreground">Sin cotizaciones aún.</li>}
+        {quotes.length === 0 && (
+          <EmptyState
+            title="Sin cotizaciones aún"
+            description="Aparecerán aquí en cuanto compartas tu página o widget y alguien envíe una cotización."
+          />
+        )}
       </ul>
     </div>
   );

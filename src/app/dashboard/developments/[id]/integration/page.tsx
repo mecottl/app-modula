@@ -3,6 +3,8 @@ import { requireDevelopmentForSession } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { getBaseUrl } from "@/lib/baseUrl";
 import { updateIntegrationSettings, regenerateIntegrationToken } from "@/lib/actions/integration";
+import { ToastFromParams } from "@/components/ui/toast-from-params";
+import { CopyButton } from "@/components/ui/copy-button";
 
 export const dynamic = "force-dynamic";
 
@@ -59,22 +61,34 @@ export default async function IntegrationPage({
 
   return (
     <div className="flex flex-col gap-8">
+      <ToastFromParams ok={ok} />
       <div>
         <h2 className="font-medium">Integración (Plan Profesional widget embebible)</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Copia este snippet en el sitio de la desarrolladora para embeber el configurador vía{" "}
           <code>iframe</code>.
         </p>
-        {ok && <p className="mt-2 text-sm text-green-400">{ok}</p>}
       </div>
 
       <section>
-        <h3 className="font-medium">Snippet de instalación</h3>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-medium">Snippet de instalación</h3>
+          <CopyButton value={snippet} label="Copiar snippet" />
+        </div>
         <pre className="mt-2 overflow-x-auto rounded border bg-muted p-3 text-xs">{snippet}</pre>
       </section>
 
       <section className="rounded border p-4">
         <h3 className="font-medium">Entorno y dominios autorizados</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Esto es independiente del estado &quot;Publicado/Borrador&quot; del desarrollo (arriba):
+          ese controla la página propia (Plan Básico); esto de aquí controla únicamente el widget
+          embebido (Plan Profesional).{" "}
+          <strong>Vista previa</strong> no valida el dominio de origen, para que pruebes el widget
+          libremente. <strong>Producción</strong> solo sirve el widget si la solicitud viene de uno
+          de los dominios autorizados de abajo — actívalo cuando ya hayas pegado el snippet en tu
+          sitio real.
+        </p>
         <form
           action={updateIntegrationSettings.bind(null, id)}
           className="mt-3 flex flex-col gap-4 sm:max-w-md"
@@ -107,7 +121,10 @@ export default async function IntegrationPage({
       </section>
 
       <section className="rounded border p-4">
-        <h3 className="font-medium">Token del proyecto</h3>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-medium">Token del proyecto</h3>
+          <CopyButton value={settings.token} label="Copiar token" />
+        </div>
         <p className="mt-1 break-all font-mono text-xs text-muted-foreground">{settings.token}</p>
         <form action={regenerateIntegrationToken.bind(null, id)} className="mt-3">
           <button type="submit" className="rounded border px-4 py-2 text-sm">

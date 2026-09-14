@@ -1,38 +1,36 @@
-import Link from "next/link";
+import { Toaster } from "sonner";
+import { LogOut } from "lucide-react";
 import { signOut } from "@/auth";
+import { SidebarProvider } from "@/components/dashboard/sidebar-context";
+import { Sidebar } from "@/components/dashboard/sidebar";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const signOutButton = (
+    <form
+      action={async () => {
+        "use server";
+        await signOut({ redirectTo: "/login" });
+      }}
+    >
+      <button
+        type="submit"
+        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+      >
+        <LogOut className="h-4 w-4" />
+        Cerrar sesión
+      </button>
+    </form>
+  );
+
   return (
-    <div className="min-h-screen">
-      <header className="flex items-center justify-between border-b border-border bg-background px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="text-sm font-semibold tracking-tight">
-            MODULA
-          </Link>
-          <nav className="flex gap-4 text-sm text-muted-foreground">
-            <Link href="/dashboard/developments" className="transition-colors hover:text-foreground">
-              Desarrollos
-            </Link>
-            <Link href="/dashboard/members" className="transition-colors hover:text-foreground">
-              Miembros
-            </Link>
-            <Link href="/dashboard/billing" className="transition-colors hover:text-foreground">
-              Facturación
-            </Link>
-          </nav>
-        </div>
-        <form
-          action={async () => {
-            "use server";
-            await signOut({ redirectTo: "/login" });
-          }}
-        >
-          <button type="submit" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-            Cerrar sesión
-          </button>
-        </form>
-      </header>
-      <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6">{children}</main>
-    </div>
+    <SidebarProvider>
+      <div className="flex min-h-screen">
+        <Sidebar footer={signOutButton} />
+        <main className="min-w-0 flex-1 px-4 py-8 sm:px-8 lg:px-10">
+          <div className="mx-auto max-w-5xl">{children}</div>
+        </main>
+      </div>
+      <Toaster theme="dark" position="bottom-right" richColors />
+    </SidebarProvider>
   );
 }

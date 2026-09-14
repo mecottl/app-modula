@@ -1,6 +1,8 @@
 import { requireDevelopmentForSession } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { createModel, updateModel, deleteModel } from "@/lib/actions/models";
+import { ToastFromParams } from "@/components/ui/toast-from-params";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const dynamic = "force-dynamic";
 
@@ -21,9 +23,9 @@ export default async function ModelsPage({
 
   return (
     <div className="flex flex-col gap-6">
+      <ToastFromParams error={error} />
       <div>
         <h2 className="font-medium">Catálogo de modelos</h2>
-        {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
       </div>
 
       <ul className="flex flex-col gap-3">
@@ -113,7 +115,12 @@ export default async function ModelsPage({
             </li>
           );
         })}
-        {models.length === 0 && <li className="text-sm text-muted-foreground">Sin modelos aún.</li>}
+        {models.length === 0 && (
+          <EmptyState
+            title="Sin modelos aún"
+            description="Agrega tu primer modelo abajo — sin al menos uno, el configurador no tiene nada que mostrar."
+          />
+        )}
       </ul>
 
       <section className="rounded border p-4">

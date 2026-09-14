@@ -37,8 +37,9 @@ export default async function LoginPage({
     <main className="grid min-h-screen lg:grid-cols-2">
       <div className="flex flex-col justify-center px-6 py-16 sm:px-12 lg:px-16">
         <div className="mx-auto flex w-full max-w-sm flex-col gap-8">
-          <Link href="/" className="text-sm font-semibold tracking-tight">
-            MODULA
+          <Link href="/" className="flex items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/LOGO-BLANCO.svg" alt="MODULA" className="h-4 w-auto" />
           </Link>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Inicia sesión en tu cuenta</h1>

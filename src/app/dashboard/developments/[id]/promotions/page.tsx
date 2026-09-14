@@ -1,6 +1,8 @@
 import { requireDevelopmentForSession } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { createPromotion, updatePromotion, deletePromotion } from "@/lib/actions/promotions";
+import { ToastFromParams } from "@/components/ui/toast-from-params";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const dynamic = "force-dynamic";
 
@@ -25,10 +27,9 @@ export default async function PromotionsPage({
 
   return (
     <div className="flex flex-col gap-6">
+      <ToastFromParams error={error} warning={warning} />
       <div>
         <h2 className="font-medium">Reglas de precio (promociones)</h2>
-        {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
-        {warning && <p className="mt-2 text-sm text-amber-400">{warning}</p>}
       </div>
 
       <ul className="flex flex-col gap-3">
@@ -110,7 +111,12 @@ export default async function PromotionsPage({
             </details>
           </li>
         ))}
-        {promotions.length === 0 && <li className="text-sm text-muted-foreground">Sin promociones aún.</li>}
+        {promotions.length === 0 && (
+          <EmptyState
+            title="Sin promociones aún"
+            description="Son opcionales: crea una abajo con vigencia por fechas para aplicar un descuento automático."
+          />
+        )}
       </ul>
 
       <section className="rounded border p-4">

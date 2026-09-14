@@ -8,6 +8,8 @@ import {
   updateExtra,
   deleteExtra,
 } from "@/lib/actions/finishes";
+import { ToastFromParams } from "@/components/ui/toast-from-params";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +36,7 @@ export default async function FinishesPage({
 
   return (
     <div className="flex flex-col gap-10">
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      <ToastFromParams error={error} />
 
       <section className="flex flex-col gap-4">
         <h2 className="font-medium">Niveles de acabado</h2>
@@ -93,7 +95,10 @@ export default async function FinishesPage({
             </li>
           ))}
           {finishLevels.length === 0 && (
-            <li className="text-sm text-muted-foreground">Sin niveles de acabado aún.</li>
+            <EmptyState
+              title="Sin niveles de acabado aún"
+              description="Son opcionales: si no agregas ninguno, el comprador solo ve el precio base."
+            />
           )}
         </ul>
 
@@ -202,7 +207,12 @@ export default async function FinishesPage({
               </li>
             );
           })}
-          {extras.length === 0 && <li className="text-sm text-muted-foreground">Sin extras aún.</li>}
+          {extras.length === 0 && (
+            <EmptyState
+              title="Sin extras aún"
+              description="Son opcionales — agrégalos abajo si quieres ofrecer mejoras adicionales por modelo."
+            />
+          )}
         </ul>
 
         <div className="rounded border p-4">

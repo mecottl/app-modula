@@ -1,32 +1,10 @@
+import Link from "next/link";
 import { requireSessionAccount } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
-import { stripe, planFromPriceId } from "@/lib/stripe";
-import { createCheckoutSession, createBillingPortalSession } from "@/lib/actions/billing";
-
-async function getPendingDowngrade(subscriptionId: string) {
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
-    expand: ["schedule"],
-  });
-  const schedule = subscription.schedule;
-  if (!schedule || typeof schedule !== "object" || schedule.status !== "active") return null;
-
-  const nextPhase = schedule.phases[1];
-  if (!nextPhase) return null;
-
-  const nextPriceItem = nextPhase.items[0]?.price;
-  const nextPriceId = typeof nextPriceItem === "string" ? nextPriceItem : nextPriceItem?.id;
-  const plan = planFromPriceId(nextPriceId);
-  if (!plan) return null;
-
-  return {
-    plan,
-    date: new Date(nextPhase.start_date * 1000).toLocaleDateString("es-MX", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    }),
-  };
-}
+import { stripe } from "@/lib/stripe";
+import { changePlan } from "@/lib/actions/billing";
+import { getPendingDowngrade } from "@/lib/billingHelpers";
+import { ToastFromParams } from "@/components/ui/toast-from-params";
 
 const invoiceStatusLabels: Record<string, string> = {
   paid: "Pagada",
@@ -36,8 +14,13 @@ const invoiceStatusLabels: Record<string, string> = {
   draft: "Borrador",
 };
 
-async function getRecentInvoices(customerId: string) {
-  const invoices = await stripe.invoices.list({ customer: customerId, limit: 5 });
+async function getRecentInvoices(customerId: string, subscriptionId: string) {
+  // Filtrado por la suscripción actual, no por todo el cliente de
+  // Stripe: si en algún momento se creó y abandonó otra suscripción
+  // (ej. cambiando de plan antes de terminar de pagar, ver
+  // startSubscriptionForAccount), sus facturas huérfanas no deben
+  // aparecer aquí como si fueran cobros reales de esta cuenta.
+  const invoices = await stripe.invoices.list({ customer: customerId, subscription: subscriptionId, limit: 5 });
   return invoices.data.map((invoice) => ({
     id: invoice.id,
     date: new Date(invoice.created * 1000).toLocaleDateString("es-MX", {
@@ -75,75 +58,92 @@ export default async function BillingPage({
   const { error, ok, checkout } = await searchParams;
   const { accountId, role } = await requireSessionAccount();
   const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
-  const invoices = account.stripeCustomerId ? await getRecentInvoices(account.stripeCustomerId) : [];
+  const hasActiveSubscription = Boolean(account.stripeSubscriptionId) && account.billingStatus === "ACTIVO";
+  const invoices =
+    account.stripeCustomerId && account.stripeSubscriptionId
+      ? await getRecentInvoices(account.stripeCustomerId, account.stripeSubscriptionId)
+      : [];
   const pendingDowngrade =
     account.stripeSubscriptionId && account.billingStatus === "ACTIVO"
       ? await getPendingDowngrade(account.stripeSubscriptionId)
       : null;
 
+  const checkoutOk = checkout === "success" ? "Pago recibido, tu plan ya está actualizado." : undefined;
+  const checkoutInfo = checkout === "cancelled" ? "Pago cancelado, no se cambió nada." : undefined;
+
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-xl font-semibold">Facturación</h1>
-        {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
-        {ok && <p className="mt-2 text-sm text-green-400">{ok}</p>}
-        {checkout === "success" && (
-          <p className="mt-2 text-sm text-green-400">Pago recibido, tu plan ya está actualizado.</p>
-        )}
-        {checkout === "cancelled" && (
-          <p className="mt-2 text-sm text-muted-foreground">Pago cancelado, no se cambió nada.</p>
-        )}
-      </div>
+      <ToastFromParams ok={ok ?? checkoutOk} error={error} info={checkoutInfo} />
+      <h1 className="text-xl font-semibold tracking-tight">Facturación</h1>
 
-      <section className="rounded border p-4">
+      <section className="rounded-xl border border-border p-6">
         <h2 className="font-medium">Plan contratado</h2>
-        <p className="mt-1 text-sm">
+        <p className="mt-2 text-sm">
           Plan actual: <strong>{planLabels[account.plan] ?? account.plan}</strong>
         </p>
         <p className="text-sm text-muted-foreground">
           Estado: {billingStatusLabels[account.billingStatus] ?? account.billingStatus}
         </p>
         {pendingDowngrade && (
-          <p className="mt-1 text-sm text-amber-400">
+          <p className="mt-2 text-sm text-amber-400">
             Baja a {planLabels[pendingDowngrade.plan] ?? pendingDowngrade.plan} programada para el{" "}
             {pendingDowngrade.date}. Sin cargos ni reembolsos mientras tanto.
           </p>
         )}
 
-        {role === "ADMINISTRADOR" ? (
-          <div className="mt-4 flex flex-wrap gap-3">
-            {(account.plan !== "PROFESIONAL" || pendingDowngrade) && (
-              <form action={createCheckoutSession}>
+        {role === "ADMINISTRADOR" && hasActiveSubscription && (
+          <div className="mt-5 flex flex-wrap gap-3">
+            {pendingDowngrade ? (
+              <form action={changePlan}>
                 <input type="hidden" name="plan" value="PROFESIONAL" />
-                <button type="submit" className="rounded bg-primary px-3 py-2 text-sm text-primary-foreground">
-                  {pendingDowngrade
-                    ? "Cancelar baja programada"
-                    : `Subir a Profesional (${planPrices.PROFESIONAL})`}
+                <button
+                  type="submit"
+                  className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                >
+                  Cancelar baja programada
                 </button>
               </form>
+            ) : (
+              account.plan !== "PROFESIONAL" && (
+                <Link
+                  href="/dashboard/billing/upgrade"
+                  className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                >
+                  Subir a Profesional ({planPrices.PROFESIONAL})
+                </Link>
+              )
             )}
             {account.plan !== "BASICO" && !pendingDowngrade && (
-              <form action={createCheckoutSession}>
-                <input type="hidden" name="plan" value="BASICO" />
-                <button type="submit" className="rounded border px-3 py-2 text-sm">
-                  Bajar a Básico ({planPrices.BASICO})
-                </button>
-              </form>
-            )}
-            {account.stripeCustomerId && (
-              <form action={createBillingPortalSession}>
-                <button type="submit" className="rounded border px-3 py-2 text-sm">
-                  Gestionar suscripción
-                </button>
-              </form>
+              <Link
+                href="/dashboard/billing/downgrade"
+                className="rounded-full border border-border px-4 py-2 text-sm transition-colors hover:border-foreground"
+              >
+                Bajar a Básico ({planPrices.BASICO})
+              </Link>
             )}
           </div>
-        ) : (
-          <p className="mt-2 text-xs text-muted-foreground">Solo un administrador puede cambiar el plan.</p>
+        )}
+        {role !== "ADMINISTRADOR" && (
+          <p className="mt-3 text-xs text-muted-foreground">Solo un administrador puede cambiar el plan.</p>
         )}
       </section>
 
-      <section className="rounded border p-4">
+      <section className="rounded-xl border border-border p-6">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-medium">Método de pago y suscripción</h2>
+          <Link
+            href="/dashboard/billing/cards"
+            className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
+            Gestionar →
+          </Link>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Agrega o quita tarjetas, cambia la predeterminada, o cancela tu suscripción.
+        </p>
+      </section>
+
+      <section className="rounded-xl border border-border p-6">
         <h2 className="font-medium">Historial de facturas</h2>
         {invoices.length === 0 ? (
           <p className="mt-2 text-sm text-muted-foreground">
@@ -152,9 +152,9 @@ export default async function BillingPage({
               : "Aparecerán aquí en cuanto tengas una suscripción activa."}
           </p>
         ) : (
-          <ul className="mt-4 flex flex-col gap-4">
+          <ul className="mt-4 flex flex-col gap-3">
             {invoices.map((invoice) => (
-              <li key={invoice.id} className="rounded border p-3 text-sm">
+              <li key={invoice.id} className="rounded-lg border border-border p-4 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-muted-foreground">{invoice.date}</span>
                   <span className="font-medium">
@@ -184,10 +184,6 @@ export default async function BillingPage({
             ))}
           </ul>
         )}
-        <p className="mt-3 text-xs text-muted-foreground">
-          El método de pago y la cancelación se gestionan desde el botón &quot;Gestionar
-          suscripción&quot; arriba.
-        </p>
       </section>
     </div>
   );

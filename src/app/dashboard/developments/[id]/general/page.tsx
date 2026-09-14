@@ -1,5 +1,6 @@
 import { requireDevelopmentForSession } from "@/lib/tenant";
 import { updateDevelopmentGeneral } from "@/lib/actions/developments";
+import { ToastFromParams } from "@/components/ui/toast-from-params";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +18,8 @@ export default async function GeneralPage({
 
   return (
     <div className="max-w-lg">
+      <ToastFromParams ok={ok ? "Guardado." : undefined} error={error} />
       <h2 className="font-medium">General y marca</h2>
-      {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
-      {ok && <p className="mt-2 text-sm text-green-400">Guardado.</p>}
 
       <form action={action} className="mt-4 flex flex-col gap-4">
         <label className="flex flex-col gap-1 text-sm">

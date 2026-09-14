@@ -5,19 +5,16 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSessionAccount } from "@/lib/tenant";
 import { stripe, STRIPE_PRICE_IDS, planFromPriceId } from "@/lib/stripe";
-import { getBaseUrl } from "@/lib/baseUrl";
 
 const planSchema = z.enum(["BASICO", "PROFESIONAL"]);
 
 /**
- * Crea una sesión de Stripe Checkout para suscribir la cuenta al plan
- * elegido (README.md issue "Integrar Stripe y probar el control de
- * acceso por plan en producción"). El plan/estado real de la cuenta se
- * actualiza únicamente vía webhook (src/app/api/stripe/webhook/route.ts)
- * cuando Stripe confirma el pago — nunca se actualiza aquí de forma
- * optimista.
+ * Cambia el plan de una cuenta que YA tiene una suscripción activa
+ * (upgrade, downgrade, o cancelar una baja programada). Para el alta
+ * inicial (sin suscripción activa todavía) se usa
+ * startSubscriptionForAccount, con la ventana de pago propia.
  */
-export async function createCheckoutSession(formData: FormData) {
+export async function changePlan(formData: FormData) {
   const { accountId, role } = await requireSessionAccount();
   if (role !== "ADMINISTRADOR") {
     redirect(`/dashboard/billing?error=${encodeURIComponent("Solo un administrador puede cambiar el plan")}`);
@@ -36,7 +33,6 @@ export async function createCheckoutSession(formData: FormData) {
   }
 
   const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
-  const baseUrl = await getBaseUrl();
 
   // Si ya hay una suscripción activa, esto es un cambio de plan
   // (upgrade o downgrade), no un alta nueva.
@@ -141,60 +137,128 @@ export async function createCheckoutSession(formData: FormData) {
     redirect(`/dashboard/billing?checkout=success`);
   }
 
-  // Sin suscripción activa todavía: se crea desde cero vía Checkout.
-  // Si la cuenta todavía no tiene cliente de Stripe, se le pasa el correo
-  // del administrador que hace el checkout para que Stripe cree el
-  // cliente con ese correo (y no pida capturarlo de nuevo).
-  let customerEmail: string | undefined;
-  if (!account.stripeCustomerId) {
-    const admin = await prisma.member.findFirst({
-      where: { accountId, role: "ADMINISTRADOR" },
-    });
-    customerEmail = admin?.email;
-  }
-
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    customer: account.stripeCustomerId ?? undefined,
-    customer_email: account.stripeCustomerId ? undefined : customerEmail,
-    client_reference_id: accountId,
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${baseUrl}/dashboard/billing?checkout=cancelled`,
-    metadata: { accountId },
-    subscription_data: { metadata: { accountId } },
-  });
-
-  if (!session.url) {
-    redirect(`/dashboard/billing?error=${encodeURIComponent("No se pudo iniciar el pago")}`);
-  }
-
-  redirect(session.url!);
+  // Sin suscripción activa todavía: no debería llegarse aquí — el
+  // dashboard usa startSubscriptionForAccount (ventana de pago propia)
+  // para el alta inicial. Se deja como resguardo por si el formulario
+  // se envía en un estado inesperado.
+  redirect(
+    `/dashboard/billing?error=${encodeURIComponent("Usa el formulario de arriba para contratar tu primer plan")}`,
+  );
 }
 
 /**
- * Confirma una Checkout Session recién completada y sincroniza
- * `Account.plan`/`billingStatus` de inmediato, en vez de esperar
- * exclusivamente al webhook. El webhook sigue siendo la fuente de
- * verdad para el resto del ciclo de vida de la suscripción (renovación,
- * cancelación, pagos fallidos) — esto solo cubre el instante justo
- * después de pagar, cuando el webhook puede no haber llegado todavía
- * (o, en desarrollo con un túnel, no estar corriendo). Es seguro
- * porque nosotros mismos llamamos a la API de Stripe con el
- * `session_id` y verificamos que la sesión pertenece a la cuenta
- * autenticada (`metadata.accountId`) antes de escribir nada — nunca se
- * confía en datos que el navegador pudiera traer manipulados.
+ * Arranca (o retoma) una suscripción nueva para la cuenta autenticada,
+ * en estado `incomplete` (payment_behavior: "default_incomplete"): el
+ * pago se confirma en la propia página del dashboard con Stripe
+ * Elements (src/components/billing/checkout-form.tsx), en vez de
+ * redirigir a una página hospedada por Stripe (README.md issue
+ * "Pasarela de pago propia"). Devuelve el `client_secret` del
+ * PaymentIntent del primer invoice, que el cliente usa para montar el
+ * formulario de tarjeta.
  */
-export async function syncAccountFromCheckoutSession(sessionId: string, accountId: string) {
-  const session = await stripe.checkout.sessions.retrieve(sessionId, {
-    expand: ["subscription"],
+export async function startSubscriptionForAccount(plan: "BASICO" | "PROFESIONAL") {
+  const { accountId, role } = await requireSessionAccount();
+  if (role !== "ADMINISTRADOR") {
+    throw new Error("Solo un administrador puede contratar un plan");
+  }
+
+  const priceId = STRIPE_PRICE_IDS[plan];
+  if (!priceId) {
+    throw new Error("Stripe no está configurado (falta el Price ID)");
+  }
+
+  const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
+  if (account.stripeSubscriptionId && account.billingStatus === "ACTIVO") {
+    throw new Error("Ya tienes una suscripción activa; usa el cambio de plan en su lugar");
+  }
+
+  // Idempotencia: si ya existe un intento sin terminar de pagar (el
+  // usuario recargó la página a medio pago, cambió de plan antes de
+  // pagar en el paso 2 del registro, o el componente se montó dos veces
+  // por Strict Mode en desarrollo), se reutiliza esa MISMA suscripción
+  // en vez de crear una nueva — evita dejar suscripciones "incomplete"
+  // duplicadas y huérfanas (con su propia factura "open" fantasma) en
+  // Stripe cada vez que se cambia la selección de plan.
+  if (account.stripeSubscriptionId) {
+    const existing = await stripe.subscriptions.retrieve(account.stripeSubscriptionId, {
+      expand: ["latest_invoice.confirmation_secret"],
+    });
+    if (existing.status === "incomplete") {
+      const currentItem = existing.items.data[0];
+      const updated =
+        currentItem.price.id === priceId
+          ? existing
+          : await stripe.subscriptions.update(account.stripeSubscriptionId, {
+              items: [{ id: currentItem.id, price: priceId }],
+              payment_behavior: "default_incomplete",
+              expand: ["latest_invoice.confirmation_secret"],
+            });
+      const existingInvoice = updated.latest_invoice;
+      const existingSecret =
+        existingInvoice && typeof existingInvoice === "object"
+          ? existingInvoice.confirmation_secret?.client_secret
+          : null;
+      if (existingSecret) return existingSecret;
+    }
+  }
+
+  // Reutiliza el cliente de Stripe si ya existe (ej. una suscripción
+  // anterior cancelada); si no, lo crea con el correo del administrador
+  // para que Stripe no tenga que volver a pedirlo.
+  let customerId = account.stripeCustomerId;
+  if (!customerId) {
+    const admin = await prisma.member.findFirst({ where: { accountId, role: "ADMINISTRADOR" } });
+    const customer = await stripe.customers.create({ email: admin?.email, metadata: { accountId } });
+    customerId = customer.id;
+  }
+
+  const subscription = await stripe.subscriptions.create({
+    customer: customerId,
+    items: [{ price: priceId }],
+    payment_behavior: "default_incomplete",
+    payment_settings: {
+      save_default_payment_method: "on_subscription",
+      payment_method_types: ["card"],
+    },
+    expand: ["latest_invoice.confirmation_secret"],
+    metadata: { accountId },
   });
 
-  if (session.metadata?.accountId !== accountId) return null;
+  await prisma.account.update({
+    where: { id: accountId },
+    data: { stripeCustomerId: customerId, stripeSubscriptionId: subscription.id },
+  });
 
-  const subscription = session.subscription;
-  if (!subscription || typeof subscription !== "object") return null;
+  const invoice = subscription.latest_invoice;
+  const clientSecret =
+    invoice && typeof invoice === "object" ? invoice.confirmation_secret?.client_secret : null;
 
+  if (!clientSecret) {
+    throw new Error("No se pudo iniciar el pago");
+  }
+
+  return clientSecret;
+}
+
+/**
+ * Confirma, del lado del servidor, que la suscripción de la cuenta
+ * autenticada ya se activó, y sincroniza `Account.plan`/`billingStatus`
+ * de inmediato — en vez de esperar exclusivamente al webhook, que puede
+ * tardar o (en desarrollo, sin `stripe listen` corriendo) no llegar
+ * nunca. Se llama justo después de que `stripe.confirmPayment` resuelve
+ * en el cliente. Es seguro porque somos nosotros quienes consultamos la
+ * suscripción directamente en la API de Stripe usando el
+ * `stripeSubscriptionId` ya guardado en la cuenta autenticada — nunca
+ * se confía en un estado que el navegador pudiera reportar manipulado.
+ * El webhook sigue siendo la fuente de verdad para el resto del ciclo
+ * de vida (renovación, cancelación, pagos fallidos).
+ */
+export async function confirmSubscriptionActivation() {
+  const { accountId } = await requireSessionAccount();
+  const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
+  if (!account.stripeSubscriptionId) return null;
+
+  const subscription = await stripe.subscriptions.retrieve(account.stripeSubscriptionId);
   const priceId = subscription.items.data[0]?.price.id;
   const plan = planFromPriceId(priceId);
   const billingStatus =
@@ -202,40 +266,63 @@ export async function syncAccountFromCheckoutSession(sessionId: string, accountI
 
   await prisma.account.update({
     where: { id: accountId },
-    data: {
-      stripeCustomerId: typeof session.customer === "string" ? session.customer : (session.customer?.id ?? undefined),
-      stripeSubscriptionId: subscription.id,
-      plan: plan ?? undefined,
-      billingStatus,
-    },
+    data: { plan: plan ?? undefined, billingStatus },
   });
 
   return { plan, billingStatus };
 }
 
 /**
- * Abre el Portal de Facturación de Stripe (gestionado por Stripe: ahí
- * se ve el historial de facturas, se actualiza el método de pago, o se
- * cancela la suscripción) para la cuenta autenticada.
+ * Programa la cancelación de la suscripción para el final del periodo
+ * ya pagado (`cancel_at_period_end: true`), en vez de cancelarla de
+ * inmediato: la cuenta conserva su plan actual y sigue cobrando normal
+ * hasta esa fecha, sin reembolso — mismo principio que bajar de plan
+ * (changePlan). El webhook (`customer.subscription.deleted`) es quien
+ * marca `billingStatus: CANCELADO` cuando Stripe la cancela de verdad
+ * al llegar esa fecha.
  */
-export async function createBillingPortalSession() {
+export async function cancelSubscriptionAtPeriodEnd() {
   const { accountId, role } = await requireSessionAccount();
   if (role !== "ADMINISTRADOR") {
-    redirect(`/dashboard/billing?error=${encodeURIComponent("Solo un administrador puede gestionar la facturación")}`);
+    throw new Error("Solo un administrador puede cancelar la suscripción");
   }
 
   const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
-  if (!account.stripeCustomerId) {
-    redirect(
-      `/dashboard/billing?error=${encodeURIComponent("Aún no tienes una suscripción activa con Stripe")}`,
-    );
+  if (!account.stripeSubscriptionId) {
+    throw new Error("No tienes una suscripción activa");
   }
 
-  const baseUrl = await getBaseUrl();
-  const session = await stripe.billingPortal.sessions.create({
-    customer: account.stripeCustomerId!,
-    return_url: `${baseUrl}/dashboard/billing`,
+  // Si hay una baja de plan programada (ver changePlan), la suscripción
+  // queda "administrada" por esa Subscription Schedule y Stripe rechaza
+  // tocar `cancel_at_period_end` directamente. Cancelar de plano no
+  // tiene caso mantener una baja de plan pendiente, así que se libera
+  // el schedule primero (vuelve a ser una suscripción normal, en el
+  // precio actual) y luego sí se agenda la cancelación.
+  const subscription = await stripe.subscriptions.retrieve(account.stripeSubscriptionId, {
+    expand: ["schedule"],
   });
+  if (subscription.schedule && typeof subscription.schedule === "object") {
+    await stripe.subscriptionSchedules.release(subscription.schedule.id);
+  }
 
-  redirect(session.url);
+  await stripe.subscriptions.update(account.stripeSubscriptionId, { cancel_at_period_end: true });
+}
+
+/**
+ * Revierte una cancelación programada (ver cancelSubscriptionAtPeriodEnd)
+ * mientras todavía no llega la fecha — la suscripción sigue exactamente
+ * igual, nunca se interrumpió.
+ */
+export async function resumeSubscription() {
+  const { accountId, role } = await requireSessionAccount();
+  if (role !== "ADMINISTRADOR") {
+    throw new Error("Solo un administrador puede reactivar la suscripción");
+  }
+
+  const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
+  if (!account.stripeSubscriptionId) {
+    throw new Error("No tienes una suscripción activa");
+  }
+
+  await stripe.subscriptions.update(account.stripeSubscriptionId, { cancel_at_period_end: false });
 }

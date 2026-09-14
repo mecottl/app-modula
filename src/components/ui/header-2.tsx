@@ -63,8 +63,9 @@ export function Header() {
 					},
 				)}
 			>
-				<Link href="/" className="text-sm font-semibold tracking-tight">
-					MODULA
+				<Link href="/" className="flex items-center">
+					{/* eslint-disable-next-line @next/next/no-img-element */}
+					<img src="/LOGO-BLANCO.svg" alt="MODULA" className="h-4 w-auto" />
 				</Link>
 				<div className="hidden items-center gap-2 md:flex">
 					{links.map((link, i) => (

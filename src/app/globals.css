@@ -9,15 +9,15 @@
  */
 :root {
   color-scheme: dark;
-  --background: #0a0a0a; /* casi negro, estilo Vercel */
+  --background: #121111; /* casi negro, estilo Vercel */
   --foreground: #fafaf7; /* blanco hueso */
   --color-primary: #fafaf7; /* botón invertido: claro sobre fondo oscuro */
-  --color-primary-foreground: #0a0a0a;
+  --color-primary-foreground: #121111;
   --color-muted: #1a1a1a; /* superficies (tarjetas) */
   --color-muted-foreground: #a3a3a3;
   --color-border: #333333; /* el color principal pedido, como línea/borde */
   --color-destructive: #f87171;
-  --color-destructive-foreground: #0a0a0a;
+  --color-destructive-foreground: #121111;
   --color-card: #141414;
   --color-card-foreground: #fafaf7;
   --color-secondary: #1a1a1a; /* mismo tono que muted: superficie secundaria */

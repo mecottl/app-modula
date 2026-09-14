@@ -2,7 +2,6 @@
 
 import type { ComponentProps, ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { FrameIcon } from "lucide-react";
 
 interface FooterLink {
   title: string;
@@ -53,7 +52,8 @@ export function Footer() {
 
       <div className="grid w-full gap-8 xl:grid-cols-3 xl:gap-8">
         <AnimatedContainer className="space-y-4">
-          <FrameIcon className="size-8" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/ICONO-BLANCO.svg" alt="MODULA" className="size-8" />
           <p className="text-muted-foreground mt-8 text-sm md:mt-0">
             © {new Date().getFullYear()} MODULA. Todos los derechos reservados.
           </p>

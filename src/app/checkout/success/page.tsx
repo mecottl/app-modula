@@ -1,51 +1,44 @@
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { stripe } from "@/lib/stripe";
+import { prisma } from "@/lib/prisma";
 import { requireSessionAccount } from "@/lib/tenant";
-import { syncAccountFromCheckoutSession } from "@/lib/actions/billing";
+import { confirmSubscriptionActivation } from "@/lib/actions/billing";
 
 export const dynamic = "force-dynamic";
 
-async function getCheckoutDetails(sessionId: string) {
+async function getSubscriptionDetails(subscriptionId: string) {
   try {
-    const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ["line_items.data.price.product"],
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
+      expand: ["items.data.price.product", "customer"],
     });
-    const item = session.line_items?.data[0];
-    const price = item?.price;
+    const price = subscription.items.data[0]?.price;
     const product = price?.product;
     const productName = typeof product === "object" && product && "name" in product ? product.name : null;
     const amount = price?.unit_amount != null ? (price.unit_amount / 100).toLocaleString("es-MX") : null;
     const currency = price?.currency?.toUpperCase();
     const interval = price?.recurring?.interval === "month" ? "mes" : price?.recurring?.interval;
-    const priceId = price?.id;
+    const customer = subscription.customer;
+    const customerEmail = typeof customer === "object" && customer && "email" in customer ? customer.email : null;
 
-    return {
-      customerEmail: session.customer_details?.email ?? null,
-      productName,
-      amount,
-      currency,
-      interval,
-      priceId,
-    };
+    return { productName, amount, currency, interval, customerEmail };
   } catch {
     return null;
   }
 }
 
-export default async function CheckoutSuccessPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ session_id?: string }>;
-}) {
-  const { session_id } = await searchParams;
+export default async function CheckoutSuccessPage() {
   const { accountId } = await requireSessionAccount();
 
-  if (session_id) {
-    await syncAccountFromCheckoutSession(session_id, accountId).catch(() => null);
-  }
+  // Ya somos nosotros quienes confirmamos la suscripción justo antes de
+  // llegar aquí (CheckoutForm), pero se repite por si el usuario
+  // recarga esta página directamente.
+  await confirmSubscriptionActivation().catch(() => null);
 
-  const details = session_id ? await getCheckoutDetails(session_id) : null;
+  const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
+  const details = account.stripeSubscriptionId
+    ? await getSubscriptionDetails(account.stripeSubscriptionId)
+    : null;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-6 py-16">
@@ -70,8 +63,7 @@ export default async function CheckoutSuccessPage({
           </p>
         ) : (
           <p className="mt-3 text-sm text-muted-foreground">
-            Confirmamos tu pago. El plan de tu cuenta se activa en cuanto se termine de procesar
-            la suscripción.
+            Confirmamos tu pago. El plan de tu cuenta ya está activo.
           </p>
         )}
 

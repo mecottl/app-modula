@@ -4,13 +4,18 @@ import { Footer } from "@/components/ui/footer-section";
 import { Header } from "@/components/ui/header-2";
 import { Starfield } from "@/components/ui/starfield-1";
 
-// Mismo glow decorativo que trae el FAQ de 21st.dev, replicado en el
-// resto de secciones planas de la landing para continuidad visual.
-function SectionGlow() {
+// Antes cada sección tenía su propio glow (SectionGlow), reiniciado y
+// recortado por el `overflow-hidden` de esa sección: al hacer scroll se
+// veía "cortado" entre una sección y la siguiente en vez de continuo.
+// Este glow es uno solo, del tamaño de todo el bloque de secciones
+// planas (Producto → CTA final), con el mismo gradiente repetido cada
+// 640px (bg-repeat-y + bg-[length:...]) para que se vea uniforme sin
+// importar cuánto mida el contenido.
+function PageGlow() {
   return (
-    <span
+    <div
       aria-hidden="true"
-      className="pointer-events-none absolute -top-40 left-1/2 z-0 h-[500px] w-[600px] -translate-x-1/2 rounded-full bg-gradient-to-r from-primary/10 to-primary/5 blur-3xl"
+      className="pointer-events-none absolute inset-0 z-0 bg-repeat-y bg-[length:100%_640px] bg-[radial-gradient(560px_460px_at_50%_0%,theme(colors.primary/8%),transparent_70%)] blur-3xl"
     />
   );
 }
@@ -155,7 +160,7 @@ export default function Home() {
       <main className="flex-1">
         {/* Hero */}
         <section className="relative flex min-h-screen items-center overflow-hidden border-b border-border">
-          <Starfield quantity={400} speed={0.3} opacity={0.15} bgColor="#0a0a0a" />
+          <Starfield quantity={400} speed={0.3} opacity={0.15} bgColor="#121111" />
           <div className="relative z-10 flex w-full flex-col items-center px-6 py-24 text-center">
             <h1 className="max-w-3xl text-4xl font-semibold leading-[1.1] tracking-tight sm:text-6xl">
               Cotización en tiempo real para preventa inmobiliaria
@@ -185,130 +190,132 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Features */}
-        <section id="producto" className="relative overflow-hidden border-t border-border">
-          <SectionGlow />
-          <div className="relative z-10 mx-auto max-w-5xl px-6 py-20">
-            <h2 className="text-sm font-medium text-muted-foreground">Producto</h2>
-            <p className="mt-2 max-w-2xl text-2xl font-semibold tracking-tight sm:text-3xl">
-              Un motor. Dos formas de entregarlo.
-            </p>
-            <div className="mt-12 grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
-              {features.map((feature) => (
-                <div key={feature.title} className="bg-background p-6">
-                  <h3 className="font-medium">{feature.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{feature.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* Producto → CTA final: un solo glow continuo detrás de todo el bloque,
+            en vez de uno por sección, para que no se vea cortado al hacer scroll. */}
+        <div className="relative overflow-hidden">
+          <PageGlow />
 
-        {/* Cómo funciona */}
-        <section id="como-funciona" className="relative overflow-hidden border-t border-border">
-          <SectionGlow />
-          <div className="relative z-10 mx-auto max-w-5xl px-6 py-20">
-            <h2 className="text-sm font-medium text-muted-foreground">Cómo funciona</h2>
-            <div className="mt-8 grid gap-10 sm:grid-cols-3">
-              {steps.map((step) => (
-                <div key={step.number}>
-                  <span className="font-mono text-sm text-muted-foreground">{step.number}</span>
-                  <h3 className="mt-3 font-medium">{step.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{step.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Planes */}
-        <section id="planes" className="relative overflow-hidden border-t border-border">
-          <SectionGlow />
-          <div className="relative z-10 mx-auto max-w-5xl px-6 py-20">
-            <h2 className="text-sm font-medium text-muted-foreground">Planes</h2>
-            <p className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-              El mismo motor, dos modalidades de entrega.
-            </p>
-            <div className="mt-12 grid gap-6 sm:grid-cols-2">
-              <div className="flex flex-col rounded-xl border border-border p-8">
-                <h3 className="font-medium">Plan Básico</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Para desarrolladoras sin sitio propio o sin equipo técnico.
-                </p>
-                <p className="mt-6 text-3xl font-semibold tracking-tight">
-                  $499 <span className="text-base font-normal text-muted-foreground">MXN/mes</span>
-                </p>
-                <ul className="mt-6 flex flex-1 flex-col gap-3 text-sm">
-                  {planAFeatures.map((item) => (
-                    <li key={item} className="flex gap-2">
-                      <span className="text-muted-foreground">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/register?plan=BASICO"
-                  className="mt-8 rounded-full border border-foreground px-6 py-3 text-center text-sm font-medium transition-colors hover:bg-foreground hover:text-background"
-                >
-                  Contratar Plan Básico
-                </Link>
-              </div>
-              <div className="flex flex-col rounded-xl border border-foreground p-8">
-                <h3 className="font-medium">Plan Profesional</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Para desarrolladoras con tráfico propio que no quieren perder su marca.
-                </p>
-                <p className="mt-6 text-3xl font-semibold tracking-tight">
-                  $999 <span className="text-base font-normal text-muted-foreground">MXN/mes</span>
-                </p>
-                <ul className="mt-6 flex flex-1 flex-col gap-3 text-sm">
-                  {planBFeatures.map((item) => (
-                    <li key={item} className="flex gap-2">
-                      <span className="text-muted-foreground">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/register?plan=PROFESIONAL"
-                  className="mt-8 rounded-full bg-primary px-6 py-3 text-center text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-                >
-                  Contratar Plan Profesional
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* FAQ */}
-        <section id="faq" className="border-t border-border">
-          <FAQ
-            title="Preguntas frecuentes"
-            subtitle="¿Tienes dudas?"
-            categories={faqCategories}
-            faqData={faqData}
-            className="mx-auto max-w-5xl py-20"
-          />
-        </section>
-
-        {/* CTA final */}
-        <section className="relative overflow-hidden border-t border-border">
-          <SectionGlow />
-          <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-start justify-between gap-6 px-6 py-20 sm:flex-row sm:items-center">
-            <div>
-              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                Configura tu primer desarrollo hoy.
-              </h2>
-              <p className="mt-2 text-muted-foreground">
-                Sin instalación para el Plan Básico, sin fricción de marca para el Profesional.
+          {/* Features */}
+          <section id="producto" className="relative border-t border-border">
+            <div className="relative z-10 mx-auto max-w-5xl px-6 py-20">
+              <h2 className="text-sm font-medium text-muted-foreground">Producto</h2>
+              <p className="mt-2 max-w-2xl text-2xl font-semibold tracking-tight sm:text-3xl">
+                Un motor. Dos formas de entregarlo.
               </p>
+              <div className="mt-12 grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+                {features.map((feature) => (
+                  <div key={feature.title} className="bg-background p-6">
+                    <h3 className="font-medium">{feature.title}</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">{feature.description}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-            <Link
-              href="/register"
-              className="shrink-0 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-            >
-              Crear mi cuenta
-            </Link>
-          </div>
-        </section>
+          </section>
+
+          {/* Cómo funciona */}
+          <section id="como-funciona" className="relative border-t border-border">
+            <div className="relative z-10 mx-auto max-w-5xl px-6 py-20">
+              <h2 className="text-sm font-medium text-muted-foreground">Cómo funciona</h2>
+              <div className="mt-8 grid gap-10 sm:grid-cols-3">
+                {steps.map((step) => (
+                  <div key={step.number}>
+                    <span className="font-mono text-sm text-muted-foreground">{step.number}</span>
+                    <h3 className="mt-3 font-medium">{step.title}</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">{step.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Planes */}
+          <section id="planes" className="relative border-t border-border">
+            <div className="relative z-10 mx-auto max-w-5xl px-6 py-20">
+              <h2 className="text-sm font-medium text-muted-foreground">Planes</h2>
+              <p className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+                El mismo motor, dos modalidades de entrega.
+              </p>
+              <div className="mt-12 grid gap-6 sm:grid-cols-2">
+                <div className="flex flex-col rounded-xl border border-border p-8">
+                  <h3 className="font-medium">Plan Básico</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Para desarrolladoras sin sitio propio o sin equipo técnico.
+                  </p>
+                  <p className="mt-6 text-3xl font-semibold tracking-tight">
+                    $499 <span className="text-base font-normal text-muted-foreground">MXN/mes</span>
+                  </p>
+                  <ul className="mt-6 flex flex-1 flex-col gap-3 text-sm">
+                    {planAFeatures.map((item) => (
+                      <li key={item} className="flex gap-2">
+                        <span className="text-muted-foreground">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="/register?plan=BASICO"
+                    className="mt-8 rounded-full border border-foreground px-6 py-3 text-center text-sm font-medium transition-colors hover:bg-foreground hover:text-background"
+                  >
+                    Contratar Plan Básico
+                  </Link>
+                </div>
+                <div className="flex flex-col rounded-xl border border-foreground p-8">
+                  <h3 className="font-medium">Plan Profesional</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Para desarrolladoras con tráfico propio que no quieren perder su marca.
+                  </p>
+                  <p className="mt-6 text-3xl font-semibold tracking-tight">
+                    $999 <span className="text-base font-normal text-muted-foreground">MXN/mes</span>
+                  </p>
+                  <ul className="mt-6 flex flex-1 flex-col gap-3 text-sm">
+                    {planBFeatures.map((item) => (
+                      <li key={item} className="flex gap-2">
+                        <span className="text-muted-foreground">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="/register?plan=PROFESIONAL"
+                    className="mt-8 rounded-full bg-primary px-6 py-3 text-center text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                  >
+                    Contratar Plan Profesional
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* FAQ */}
+          <section id="faq" className="relative border-t border-border">
+            <FAQ
+              title="Preguntas frecuentes"
+              subtitle="¿Tienes dudas?"
+              categories={faqCategories}
+              faqData={faqData}
+              className="relative z-10 mx-auto max-w-5xl py-20"
+            />
+          </section>
+
+          {/* CTA final */}
+          <section className="relative border-t border-border">
+            <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-start justify-between gap-6 px-6 py-20 sm:flex-row sm:items-center">
+              <div>
+                <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                  Configura tu primer desarrollo hoy.
+                </h2>
+                <p className="mt-2 text-muted-foreground">
+                  Sin instalación para el Plan Básico, sin fricción de marca para el Profesional.
+                </p>
+              </div>
+              <Link
+                href="/register"
+                className="shrink-0 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                Crear mi cuenta
+              </Link>
+            </div>
+          </section>
+        </div>
       </main>
 
       <Footer />

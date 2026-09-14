@@ -97,11 +97,15 @@ contra la base de MODULA, ya que limpian sus propios datos.
 
 ## 6. Stripe (facturación real, probado en modo prueba)
 
-MODULA cobra por plan vía Stripe Checkout + webhooks — `Account.plan`/
-`billingStatus` se actualizan SOLO desde el webhook (nunca de forma
-optimista en el checkout), y el widget/Integración (Plan B) están
-bloqueados en servidor para cuentas en Plan Básico
-(`src/app/widget/[slug]/page.tsx` y `.../integration/page.tsx`).
+MODULA cobra por plan con una ventana de pago propia embebida en el
+dashboard (Stripe Elements, `src/components/billing/`) — nunca se
+redirige a una página hospedada por Stripe. `Account.plan`/
+`billingStatus` se confirman apenas el pago se resuelve en el cliente
+(`confirmSubscriptionActivation`, consultando la suscripción
+directamente en la API de Stripe) y, como respaldo, también vía
+webhook. El widget/Integración (Plan B) están bloqueados en servidor
+para cuentas en Plan Básico (`src/app/widget/[slug]/page.tsx` y
+`.../integration/page.tsx`).
 
 Se puede probar el flujo completo en desarrollo, sin desplegar nada:
 
@@ -132,14 +136,23 @@ Se puede probar el flujo completo en desarrollo, sin desplegar nada:
    Imprime un `whsec_...` — pégalo en `STRIPE_WEBHOOK_SECRET` y
    reinicia `npm run dev` para que lo tome.
 
-5. En el dashboard, Facturación → "Subir a Profesional" te lleva a
-   Stripe Checkout real (modo prueba). Usa la tarjeta de prueba
+5. El alta de la primera suscripción ocurre en `/register` (paso 2 de
+   2, ver sección 7) — Facturación ya no tiene un formulario de pago
+   para eso. Para probar el pago, usa la tarjeta de prueba
    `4242 4242 4242 4242`, cualquier fecha futura y CVC — el pago se
-   simula sin mover dinero real. Al confirmar, el webhook actualiza el
-   plan en segundos y desbloquea Integración automáticamente.
+   simula sin mover dinero real.
+6. Con una cuenta ya suscrita, Facturación → "Subir a Profesional"
+   lleva a `/dashboard/billing/upgrade`, una pantalla propia que
+   calcula y muestra el monto prorrateado real (vía
+   `stripe.invoices.createPreview`) antes de cobrarlo — usa el método
+   de pago ya guardado, no pide tarjeta de nuevo. "Bajar a Básico"
+   lleva a `/dashboard/billing/downgrade`, que muestra la fecha exacta
+   en que aplicará el cambio (sin cargo ni reembolso inmediato).
 
-Verificado end-to-end: checkout → webhook → plan actualizado → widget
-desbloqueado, y cancelación de suscripción → webhook →
+Verificado end-to-end: pago embebido → plan actualizado → widget
+desbloqueado; cambio de plan con una suscripción ya activa (prorrateo
+inmediato al subir, baja programada al final del periodo sin
+reembolso); y cancelación de suscripción → webhook →
 `billingStatus: CANCELADO` + plan degradado a Básico.
 
 ## 7. Alta de nuevas cuentas (registro público)
@@ -148,10 +161,10 @@ Una desarrolladora nueva se da de alta sola, sin intervención manual,
 desde la landing (`/register?plan=BASICO` o `/register?plan=PROFESIONAL`,
 enlazado desde los botones "Contratar..." de la sección Planes y el
 botón "Comenzar" del header): el formulario crea la `Account` y el
-primer `Member` (`ADMINISTRADOR`), inicia sesión, y manda directo a
-Stripe Checkout para el plan elegido (`src/lib/actions/register.ts`).
-Igual que en Facturación, el plan solo se marca como pagado cuando el
-webhook confirma el pago — nunca de forma optimista en el registro.
+primer `Member` (`ADMINISTRADOR`), inicia sesión, y manda a Facturación
+con el plan preseleccionado (`src/lib/actions/register.ts`), donde se
+completa el pago con la misma ventana de tarjeta embebida — nunca se
+sale a una página hospedada por Stripe.
 
 ## 8. Estado del proyecto
 
