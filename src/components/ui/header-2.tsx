@@ -5,10 +5,23 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { MenuToggleIcon } from '@/components/ui/menu-toggle-icon';
 import { useScroll } from '@/components/ui/use-scroll';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { getCurrentTheme } from '@/lib/theme';
 
 export function Header() {
 	const [open, setOpen] = React.useState(false);
 	const scrolled = useScroll(50);
+	const [logoSrc, setLogoSrc] = React.useState('/LOGO-BLANCO.svg');
+
+	React.useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- sincroniza con data-theme fijado por el script inline de layout.tsx, no con el montaje
+		setLogoSrc(getCurrentTheme() === 'light' ? '/LOGO-NEGRO.svg' : '/LOGO-BLANCO.svg');
+		const observer = new MutationObserver(() => {
+			setLogoSrc(getCurrentTheme() === 'light' ? '/LOGO-NEGRO.svg' : '/LOGO-BLANCO.svg');
+		});
+		observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+		return () => observer.disconnect();
+	}, []);
 
 	const links = [
 		{
@@ -65,7 +78,7 @@ export function Header() {
 			>
 				<Link href="/" className="flex items-center">
 					{/* eslint-disable-next-line @next/next/no-img-element */}
-					<img src="/LOGO-BLANCO.svg" alt="MODULA" className="h-4 w-auto" />
+					<img src={logoSrc} alt="MODULA" className="h-4 w-auto" />
 				</Link>
 				<div className="hidden items-center gap-2 md:flex">
 					{links.map((link, i) => (
@@ -79,10 +92,14 @@ export function Header() {
 					<Link href="/register" className={buttonVariants({})}>
 						Comenzar
 					</Link>
+					<ThemeToggle />
 				</div>
-				<Button size="icon" variant="outline" onClick={() => setOpen(!open)} className="md:hidden">
-					<MenuToggleIcon open={open} className="size-5" duration={300} />
-				</Button>
+				<div className="flex items-center gap-2 md:hidden">
+					<ThemeToggle />
+					<Button size="icon" variant="outline" onClick={() => setOpen(!open)}>
+						<MenuToggleIcon open={open} className="size-5" duration={300} />
+					</Button>
+				</div>
 			</nav>
 
 			<div

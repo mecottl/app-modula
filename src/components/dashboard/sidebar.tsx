@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Building2, ChevronDown, CreditCard, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebarContext } from "./sidebar-context";
 import { MenuToggleIcon } from "@/components/ui/menu-toggle-icon";
+import { getCurrentTheme } from "@/lib/theme";
 
 type NavChild = { href: string; label: string };
 type NavItem = {
@@ -85,9 +86,9 @@ function NavSection({
       </div>
 
       {hasChildren && open && (
-        <div className="ml-4 mt-1 flex flex-col gap-0.5 border-l border-border pl-3">
+        <div className="ml-4 mt-1 flex flex-col gap-1.5 border-l border-border pl-3">
           {contextLabel && (
-            <p className="truncate px-2 py-1 text-xs font-medium text-foreground">{contextLabel}</p>
+            <p className="truncate px-2 pb-1 pt-1 text-xs font-medium text-foreground">{contextLabel}</p>
           )}
           {item.children!.map((child) => {
             const active = pathname === child.href;
@@ -97,7 +98,7 @@ function NavSection({
                 href={child.href}
                 onClick={onNavigate}
                 className={cn(
-                  "truncate rounded-md px-2 py-1.5 text-sm transition-colors",
+                  "truncate rounded-md px-2 py-2 text-sm transition-colors",
                   active
                     ? "bg-muted text-foreground"
                     : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
@@ -145,6 +146,15 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
 export function Sidebar({ footer }: { footer?: ReactNode }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [logoSrc, setLogoSrc] = useState("/LOGO-BLANCO.svg");
+
+  useEffect(() => {
+    const sync = () => setLogoSrc(getCurrentTheme() === "light" ? "/LOGO-NEGRO.svg" : "/LOGO-BLANCO.svg");
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <>
@@ -152,7 +162,7 @@ export function Sidebar({ footer }: { footer?: ReactNode }) {
       <div className="flex items-center justify-between border-b border-border bg-background px-4 py-3 md:hidden">
         <Link href="/dashboard" className="flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/LOGO-BLANCO.svg" alt="MODULA" className="h-3.5 w-auto" />
+          <img src={logoSrc} alt="MODULA" className="h-3.5 w-auto" />
         </Link>
         <button
           type="button"
@@ -182,7 +192,7 @@ export function Sidebar({ footer }: { footer?: ReactNode }) {
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-background md:flex">
         <Link href="/dashboard" className="flex items-center px-5 py-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/LOGO-BLANCO.svg" alt="MODULA" className="h-4 w-auto" />
+          <img src={logoSrc} alt="MODULA" className="h-4 w-auto" />
         </Link>
         <SidebarNav pathname={pathname} />
         {footer && <div className="border-t border-border p-3">{footer}</div>}

@@ -3,9 +3,11 @@
 
 /*
  * Sistema de diseño MODULA — Swiss/Minimalism monocromático, estilo
- * Vercel: modo oscuro por defecto, tipografía Geist, alto contraste,
- * sin gradientes ni sombras decorativas, un solo color de acento (el
- * propio primario, invertido sobre el fondo oscuro).
+ * Vercel: tipografía Geist, alto contraste, sin gradientes ni sombras
+ * decorativas, un solo color de acento (el propio primario, invertido
+ * sobre el fondo). Oscuro es el default histórico de la app; claro
+ * (issue #57) se activa con `data-theme="light"` en <html>, fijado por
+ * el script inline en src/app/layout.tsx antes del primer paint.
  */
 :root {
   color-scheme: dark;
@@ -26,6 +28,27 @@
   --color-accent-foreground: #fafaf7;
   --color-input: #333333; /* mismo tono que border */
   --color-ring: #fafaf7; /* mismo tono que primary, anillo de foco visible en fondo oscuro */
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --background: #fafaf7; /* mismo blanco hueso, ahora de fondo */
+  --foreground: #121111;
+  --color-primary: #121111; /* botón invertido: oscuro sobre fondo claro */
+  --color-primary-foreground: #fafaf7;
+  --color-muted: #f0efec; /* superficies (tarjetas) */
+  --color-muted-foreground: #6b6862;
+  --color-border: #e2e0da;
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #fafaf7;
+  --color-card: #ffffff;
+  --color-card-foreground: #121111;
+  --color-secondary: #f0efec;
+  --color-secondary-foreground: #121111;
+  --color-accent: #f0efec;
+  --color-accent-foreground: #121111;
+  --color-input: #e2e0da;
+  --color-ring: #121111;
 }
 
 @theme inline {
