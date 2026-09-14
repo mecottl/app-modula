@@ -1,3 +1,4 @@
+import { Pencil, Plus } from "lucide-react";
 import { requireDevelopmentForSession } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import {
@@ -10,6 +11,10 @@ import {
 } from "@/lib/actions/finishes";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FormDialog } from "@/components/ui/form-dialog";
+import { Button } from "@/components/ui/button";
+import { ValidatedInput, ValidatedTextarea } from "@/components/ui/validated-input";
+import { ModelChipPicker } from "@/components/dashboard/model-chip-picker";
 
 export const dynamic = "force-dynamic";
 
@@ -39,59 +44,92 @@ export default async function FinishesPage({
       <ToastFromParams error={error} />
 
       <section className="flex flex-col gap-4">
-        <h2 className="font-medium">Niveles de acabado</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-medium">Niveles de acabado</h2>
+          <FormDialog
+            title="Agregar nivel de acabado"
+            trigger={
+              <Button size="sm" className="gap-2 rounded-full">
+                <Plus className="h-4 w-4" />
+                Agregar
+              </Button>
+            }
+          >
+            <form action={createFinishLevel.bind(null, id)} className="flex flex-col gap-4">
+              <ValidatedInput label="Nombre" name="name" required maxLength={120} autoFocus />
+              <ValidatedTextarea label="Descripción" name="description" maxLength={2000} rows={2} />
+              <ValidatedInput
+                label="Delta de precio"
+                name="priceDelta"
+                type="number"
+                step="0.01"
+                required
+                defaultValue={0}
+                errorMessage="Ingresa un número válido"
+              />
+              <button
+                type="submit"
+                className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                Crear
+              </button>
+            </form>
+          </FormDialog>
+        </div>
+
         <ul className="flex flex-col gap-3">
           {finishLevels.map((fl) => (
-            <li key={fl.id} className="rounded border p-4">
-              <details>
-                <summary className="cursor-pointer font-medium">
-                  {fl.name} (+${fl.priceDelta.toString()})
-                </summary>
-                <form
-                  action={updateFinishLevel.bind(null, id, fl.id)}
-                  className="mt-4 flex flex-col gap-3 sm:max-w-sm"
-                >
-                  <label className="flex flex-col gap-1 text-sm">
-                    Nombre
-                    <input
-                      name="name"
-                      required
-                      maxLength={120}
-                      defaultValue={fl.name}
-                      className="rounded border px-3 py-2"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm">
-                    Descripción
-                    <textarea
-                      name="description"
-                      maxLength={2000}
-                      defaultValue={fl.description ?? ""}
-                      className="rounded border px-3 py-2"
-                      rows={2}
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm">
-                    Delta de precio
-                    <input
-                      name="priceDelta"
-                      type="number"
-                      step="0.01"
-                      required
-                      defaultValue={fl.priceDelta.toString()}
-                      className="rounded border px-3 py-2"
-                    />
-                  </label>
-                  <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
+            <li
+              key={fl.id}
+              className="flex items-center justify-between gap-3 rounded-xl border border-border p-4"
+            >
+              <div>
+                <p className="font-medium">{fl.name}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">+${fl.priceDelta.toString()}</p>
+              </div>
+              <FormDialog
+                title="Editar nivel de acabado"
+                trigger={
+                  <button
+                    type="button"
+                    aria-label="Editar nivel de acabado"
+                    className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                }
+              >
+                <form action={updateFinishLevel.bind(null, id, fl.id)} className="flex flex-col gap-4">
+                  <ValidatedInput label="Nombre" name="name" required maxLength={120} defaultValue={fl.name} />
+                  <ValidatedTextarea
+                    label="Descripción"
+                    name="description"
+                    maxLength={2000}
+                    defaultValue={fl.description ?? ""}
+                    rows={2}
+                  />
+                  <ValidatedInput
+                    label="Delta de precio"
+                    name="priceDelta"
+                    type="number"
+                    step="0.01"
+                    required
+                    defaultValue={fl.priceDelta.toString()}
+                    errorMessage="Ingresa un número válido"
+                  />
+                  <button
+                    type="submit"
+                    className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                  >
                     Guardar
                   </button>
                 </form>
-                <form action={deleteFinishLevel.bind(null, id, fl.id)} className="mt-2">
-                  <button type="submit" className="text-sm text-red-400 underline">
+                <form action={deleteFinishLevel.bind(null, id, fl.id)} className="mt-1 border-t border-border pt-4">
+                  <button type="submit" className="text-sm text-red-400 underline underline-offset-4">
                     Eliminar
                   </button>
                 </form>
-              </details>
+              </FormDialog>
             </li>
           ))}
           {finishLevels.length === 0 && (
@@ -101,159 +139,117 @@ export default async function FinishesPage({
             />
           )}
         </ul>
+      </section>
 
-        <div className="rounded border p-4">
-          <h3 className="font-medium">Agregar nivel de acabado</h3>
-          <form action={createFinishLevel.bind(null, id)} className="mt-3 flex flex-col gap-3 sm:max-w-sm">
-            <label className="flex flex-col gap-1 text-sm">
-              Nombre
-              <input name="name" required maxLength={120} className="rounded border px-3 py-2" />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              Descripción
-              <textarea name="description" maxLength={2000} className="rounded border px-3 py-2" rows={2} />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              Delta de precio
-              <input
+      <section className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-medium">Extras</h2>
+          <FormDialog
+            title="Agregar extra"
+            size="lg"
+            trigger={
+              <Button size="sm" className="gap-2 rounded-full">
+                <Plus className="h-4 w-4" />
+                Agregar
+              </Button>
+            }
+          >
+            <form action={createExtra.bind(null, id)} className="flex flex-col gap-4">
+              <ValidatedInput label="Nombre" name="name" required maxLength={120} autoFocus />
+              <ValidatedTextarea label="Descripción" name="description" maxLength={2000} rows={2} />
+              <ValidatedInput
+                label="Delta de precio"
                 name="priceDelta"
                 type="number"
                 step="0.01"
                 required
                 defaultValue={0}
-                className="rounded border px-3 py-2"
+                errorMessage="Ingresa un número válido"
               />
-            </label>
-            <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
-              Crear
-            </button>
-          </form>
+              <ModelChipPicker models={models} selectedIds={new Set()} />
+              <button
+                type="submit"
+                className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                Crear
+              </button>
+            </form>
+          </FormDialog>
         </div>
-      </section>
 
-      <section className="flex flex-col gap-4">
-        <h2 className="font-medium">Extras</h2>
         <ul className="flex flex-col gap-3">
           {extras.map((extra) => {
             const linkedModelIds = new Set(extra.modelLinks.map((l) => l.modelId));
             return (
-              <li key={extra.id} className="rounded border p-4">
-                <details>
-                  <summary className="cursor-pointer font-medium">
-                    {extra.name} (+${extra.priceDelta.toString()})
-                  </summary>
-                  <form
-                    action={updateExtra.bind(null, id, extra.id)}
-                    className="mt-4 flex flex-col gap-3 sm:max-w-sm"
-                  >
-                    <label className="flex flex-col gap-1 text-sm">
-                      Nombre
-                      <input
-                        name="name"
-                        required
-                        maxLength={120}
-                        defaultValue={extra.name}
-                        className="rounded border px-3 py-2"
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1 text-sm">
-                      Descripción
-                      <textarea
-                        name="description"
-                        maxLength={2000}
-                        defaultValue={extra.description ?? ""}
-                        className="rounded border px-3 py-2"
-                        rows={2}
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1 text-sm">
-                      Delta de precio
-                      <input
-                        name="priceDelta"
-                        type="number"
-                        step="0.01"
-                        required
-                        defaultValue={extra.priceDelta.toString()}
-                        className="rounded border px-3 py-2"
-                      />
-                    </label>
-                    <fieldset className="flex flex-col gap-1 text-sm">
-                      <legend>Aplica a estos modelos</legend>
-                      {models.map((model) => (
-                        <label key={model.id} className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            name="modelIds"
-                            value={model.id}
-                            defaultChecked={linkedModelIds.has(model.id)}
-                          />
-                          {model.name}
-                        </label>
-                      ))}
-                      {models.length === 0 && (
-                        <p className="text-muted-foreground">Crea primero un modelo en Catálogo.</p>
-                      )}
-                    </fieldset>
-                    <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
+              <li
+                key={extra.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-border p-4"
+              >
+                <div>
+                  <p className="font-medium">{extra.name}</p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">+${extra.priceDelta.toString()}</p>
+                </div>
+                <FormDialog
+                  title="Editar extra"
+                  size="lg"
+                  trigger={
+                    <button
+                      type="button"
+                      aria-label="Editar extra"
+                      className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                  }
+                >
+                  <form action={updateExtra.bind(null, id, extra.id)} className="flex flex-col gap-4">
+                    <ValidatedInput
+                      label="Nombre"
+                      name="name"
+                      required
+                      maxLength={120}
+                      defaultValue={extra.name}
+                    />
+                    <ValidatedTextarea
+                      label="Descripción"
+                      name="description"
+                      maxLength={2000}
+                      defaultValue={extra.description ?? ""}
+                      rows={2}
+                    />
+                    <ValidatedInput
+                      label="Delta de precio"
+                      name="priceDelta"
+                      type="number"
+                      step="0.01"
+                      required
+                      defaultValue={extra.priceDelta.toString()}
+                      errorMessage="Ingresa un número válido"
+                    />
+                    <ModelChipPicker models={models} selectedIds={linkedModelIds} />
+                    <button
+                      type="submit"
+                      className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                    >
                       Guardar
                     </button>
                   </form>
-                  <form action={deleteExtra.bind(null, id, extra.id)} className="mt-2">
-                    <button type="submit" className="text-sm text-red-400 underline">
+                  <form action={deleteExtra.bind(null, id, extra.id)} className="mt-1 border-t border-border pt-4">
+                    <button type="submit" className="text-sm text-red-400 underline underline-offset-4">
                       Eliminar
                     </button>
                   </form>
-                </details>
+                </FormDialog>
               </li>
             );
           })}
           {extras.length === 0 && (
             <EmptyState
               title="Sin extras aún"
-              description="Son opcionales — agrégalos abajo si quieres ofrecer mejoras adicionales por modelo."
+              description="Son opcionales — agrégalos con el botón de arriba si quieres ofrecer mejoras adicionales por modelo."
             />
           )}
         </ul>
-
-        <div className="rounded border p-4">
-          <h3 className="font-medium">Agregar extra</h3>
-          <form action={createExtra.bind(null, id)} className="mt-3 flex flex-col gap-3 sm:max-w-sm">
-            <label className="flex flex-col gap-1 text-sm">
-              Nombre
-              <input name="name" required maxLength={120} className="rounded border px-3 py-2" />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              Descripción
-              <textarea name="description" maxLength={2000} className="rounded border px-3 py-2" rows={2} />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              Delta de precio
-              <input
-                name="priceDelta"
-                type="number"
-                step="0.01"
-                required
-                defaultValue={0}
-                className="rounded border px-3 py-2"
-              />
-            </label>
-            <fieldset className="flex flex-col gap-1 text-sm">
-              <legend>Aplica a estos modelos</legend>
-              {models.map((model) => (
-                <label key={model.id} className="flex items-center gap-2">
-                  <input type="checkbox" name="modelIds" value={model.id} />
-                  {model.name}
-                </label>
-              ))}
-              {models.length === 0 && (
-                <p className="text-muted-foreground">Crea primero un modelo en Catálogo.</p>
-              )}
-            </fieldset>
-            <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
-              Crear
-            </button>
-          </form>
-        </div>
       </section>
     </div>
   );

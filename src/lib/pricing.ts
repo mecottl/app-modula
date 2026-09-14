@@ -7,7 +7,8 @@ export class PricingError extends Error {
     public readonly code:
       | "MODEL_NOT_FOUND"
       | "FINISH_LEVEL_NOT_FOUND"
-      | "EXTRA_NOT_APPLICABLE",
+      | "EXTRA_NOT_APPLICABLE"
+      | "PROMO_CODE_INVALID",
   ) {
     super(message);
     this.name = "PricingError";
@@ -36,9 +37,10 @@ export async function calculateQuotePrice(params: {
   modelId: string;
   finishLevelId?: string | null;
   extraIds?: string[];
+  promoCode?: string | null;
   at?: Date;
 }): Promise<PriceBreakdown> {
-  const { developmentId, modelId, finishLevelId, extraIds = [], at = new Date() } = params;
+  const { developmentId, modelId, finishLevelId, extraIds = [], promoCode, at = new Date() } = params;
 
   const model = await prisma.model.findFirst({
     where: { id: modelId, developmentId, active: true },
@@ -86,28 +88,29 @@ export async function calculateQuotePrice(params: {
 
   const subtotal = basePrice.add(finishLevelDelta).add(extrasDelta);
 
-  const activePromotions = await prisma.promotion.findMany({
-    where: {
-      developmentId,
-      active: true,
-      startDate: { lte: at },
-      endDate: { gte: at },
-    },
-  });
-
+  // Las promociones ya NO se aplican solas por estar vigentes en fecha
+  // (issue "promociones con código, no automáticas"): el comprador debe
+  // teclear el código exacto. Un código inválido/vencido/inactivo se
+  // reporta como error explícito en vez de ignorarse en silencio, para
+  // que el configurador pueda avisarle en vez de solo no aplicar nada.
   let promotionsDiscount = new Prisma.Decimal(0);
   const appliedPromotions: PriceBreakdown["appliedPromotions"] = [];
-  for (const promo of activePromotions) {
-    const discount =
-      promo.type === "PORCENTAJE"
-        ? subtotal.mul(promo.value).div(100)
-        : promo.value;
-    promotionsDiscount = promotionsDiscount.add(discount);
-    appliedPromotions.push({
-      id: promo.id,
-      name: promo.name,
-      discount: discount.toFixed(2),
+  if (promoCode) {
+    const promo = await prisma.promotion.findFirst({
+      where: {
+        developmentId,
+        code: promoCode.trim().toUpperCase(),
+        active: true,
+        startDate: { lte: at },
+        endDate: { gte: at },
+      },
     });
+    if (!promo) {
+      throw new PricingError("El código de promoción no es válido o ya venció", "PROMO_CODE_INVALID");
+    }
+    const discount = promo.type === "PORCENTAJE" ? subtotal.mul(promo.value).div(100) : promo.value;
+    promotionsDiscount = promotionsDiscount.add(discount);
+    appliedPromotions.push({ id: promo.id, name: promo.name, discount: discount.toFixed(2) });
   }
 
   const total = Prisma.Decimal.max(subtotal.sub(promotionsDiscount), new Prisma.Decimal(0));

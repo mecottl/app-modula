@@ -14,6 +14,12 @@ function back(developmentId: string, message?: string, kind: "error" | "warning"
 
 const promotionSchema = z.object({
   name: z.string().min(1).max(120),
+  code: z
+    .string()
+    .min(3)
+    .max(40)
+    .regex(/^[A-Za-z0-9-]+$/, "Solo letras, números y guiones")
+    .transform((v) => v.toUpperCase()),
   type: z.enum(["PORCENTAJE", "FIJO"]),
   value: z.coerce.number().nonnegative(),
   startDate: z.coerce.date(),
@@ -21,30 +27,11 @@ const promotionSchema = z.object({
   active: z.coerce.boolean().default(true),
 });
 
-async function warnIfOverlapping(
-  developmentId: string,
-  startDate: Date,
-  endDate: Date,
-  excludeId?: string,
-) {
-  const overlapping = await prisma.promotion.findFirst({
-    where: {
-      developmentId,
-      active: true,
-      id: excludeId ? { not: excludeId } : undefined,
-      startDate: { lte: endDate },
-      endDate: { gte: startDate },
-    },
-  });
-  return overlapping
-    ? `Ojo: esta promoción se traslapa con "${overlapping.name}" en fechas. El motor de precio aplicará ambas.`
-    : undefined;
-}
-
 export async function createPromotion(developmentId: string, formData: FormData) {
   await requireDevelopmentForSession(developmentId);
   const parsed = promotionSchema.safeParse({
     name: formData.get("name"),
+    code: formData.get("code"),
     type: formData.get("type"),
     value: formData.get("value"),
     startDate: formData.get("startDate"),
@@ -53,16 +40,22 @@ export async function createPromotion(developmentId: string, formData: FormData)
   });
   if (!parsed.success) back(developmentId, "Revisa los campos de la promoción");
 
-  const { name, type, value, startDate, endDate, active } = parsed.data!;
+  const { name, code, type, value, startDate, endDate, active } = parsed.data!;
   if (endDate < startDate) back(developmentId, "La fecha de fin no puede ser antes que la de inicio");
 
-  await prisma.promotion.create({
-    data: { developmentId, name, type, value: new Prisma.Decimal(value), startDate, endDate, active },
-  });
+  try {
+    await prisma.promotion.create({
+      data: { developmentId, name, code, type, value: new Prisma.Decimal(value), startDate, endDate, active },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      back(developmentId, `Ya existe una promoción con el código "${code}"`);
+    }
+    throw error;
+  }
 
-  const warning = active ? await warnIfOverlapping(developmentId, startDate, endDate) : undefined;
   revalidatePath(`/dashboard/developments/${developmentId}/promotions`);
-  back(developmentId, warning, "warning");
+  back(developmentId);
 }
 
 export async function updatePromotion(
@@ -73,6 +66,7 @@ export async function updatePromotion(
   await requireDevelopmentForSession(developmentId);
   const parsed = promotionSchema.safeParse({
     name: formData.get("name"),
+    code: formData.get("code"),
     type: formData.get("type"),
     value: formData.get("value"),
     startDate: formData.get("startDate"),
@@ -81,19 +75,23 @@ export async function updatePromotion(
   });
   if (!parsed.success) back(developmentId, "Revisa los campos de la promoción");
 
-  const { name, type, value, startDate, endDate, active } = parsed.data!;
+  const { name, code, type, value, startDate, endDate, active } = parsed.data!;
   if (endDate < startDate) back(developmentId, "La fecha de fin no puede ser antes que la de inicio");
 
-  await prisma.promotion.update({
-    where: { id: promotionId, developmentId },
-    data: { name, type, value: new Prisma.Decimal(value), startDate, endDate, active },
-  });
+  try {
+    await prisma.promotion.update({
+      where: { id: promotionId, developmentId },
+      data: { name, code, type, value: new Prisma.Decimal(value), startDate, endDate, active },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      back(developmentId, `Ya existe una promoción con el código "${code}"`);
+    }
+    throw error;
+  }
 
-  const warning = active
-    ? await warnIfOverlapping(developmentId, startDate, endDate, promotionId)
-    : undefined;
   revalidatePath(`/dashboard/developments/${developmentId}/promotions`);
-  back(developmentId, warning, "warning");
+  back(developmentId);
 }
 
 export async function deletePromotion(developmentId: string, promotionId: string) {

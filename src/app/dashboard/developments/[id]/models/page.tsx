@@ -1,8 +1,12 @@
+import { Pencil, Plus } from "lucide-react";
 import { requireDevelopmentForSession } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { createModel, updateModel, deleteModel } from "@/lib/actions/models";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FormDialog } from "@/components/ui/form-dialog";
+import { Button } from "@/components/ui/button";
+import { ValidatedInput, ValidatedTextarea } from "@/components/ui/validated-input";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +28,63 @@ export default async function ModelsPage({
   return (
     <div className="flex flex-col gap-6">
       <ToastFromParams error={error} />
-      <div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-medium">Catálogo de modelos</h2>
+        <FormDialog
+          title="Agregar modelo"
+          size="lg"
+          trigger={
+            <Button size="sm" className="gap-2 rounded-full">
+              <Plus className="h-4 w-4" />
+              Agregar modelo
+            </Button>
+          }
+        >
+          <form action={createModel.bind(null, id)} className="flex flex-col gap-4">
+            <ValidatedInput label="Nombre" name="name" required maxLength={120} autoFocus />
+            <ValidatedTextarea label="Descripción" name="description" maxLength={2000} rows={2} />
+            <div className="grid grid-cols-2 gap-4">
+              <ValidatedInput
+                label="m²"
+                name="areaM2"
+                type="number"
+                step="0.01"
+                min="1"
+                required
+                errorMessage="Ingresa un número mayor a 0"
+              />
+              <ValidatedInput
+                label="Recámaras"
+                name="bedrooms"
+                type="number"
+                min="0"
+                max="20"
+                required
+                errorMessage="Ingresa un número entre 0 y 20"
+              />
+            </div>
+            <ValidatedInput
+              label="Precio base"
+              name="basePrice"
+              type="number"
+              step="0.01"
+              min="1"
+              required
+              errorMessage="Ingresa un precio mayor a 0"
+            />
+            <label className="flex items-center gap-2 text-sm">
+              <input name="active" type="checkbox" defaultChecked />
+              Activo (visible en el configurador)
+            </label>
+            <button
+              type="submit"
+              className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Crear
+            </button>
+          </form>
+        </FormDialog>
       </div>
 
       <ul className="flex flex-col gap-3">
@@ -33,144 +92,105 @@ export default async function ModelsPage({
           const updateAction = updateModel.bind(null, id, model.id);
           const deleteAction = deleteModel.bind(null, id, model.id);
           return (
-            <li key={model.id} className="rounded border p-4">
-              <details>
-                <summary className="cursor-pointer font-medium">
-                  {model.name} · ${model.basePrice.toString()} {!model.active && "(inactivo)"}
-                </summary>
-                <form action={updateAction} className="mt-4 flex flex-col gap-3 sm:max-w-sm">
-                  <label className="flex flex-col gap-1 text-sm">
-                    Nombre
-                    <input
-                      name="name"
-                      required
-                      maxLength={120}
-                      defaultValue={model.name}
-                      className="rounded border px-3 py-2"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm">
-                    Descripción
-                    <textarea
-                      name="description"
-                      maxLength={2000}
-                      defaultValue={model.description ?? ""}
-                      className="rounded border px-3 py-2"
-                      rows={2}
-                    />
-                  </label>
-                  <div className="flex gap-4">
-                    <label className="flex flex-1 flex-col gap-1 text-sm">
-                      m²
-                      <input
-                        name="areaM2"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        required
-                        defaultValue={model.areaM2.toString()}
-                        className="rounded border px-3 py-2"
-                      />
-                    </label>
-                    <label className="flex flex-1 flex-col gap-1 text-sm">
-                      Recámaras
-                      <input
-                        name="bedrooms"
-                        type="number"
-                        min="0"
-                        required
-                        defaultValue={model.bedrooms}
-                        className="rounded border px-3 py-2"
-                      />
-                    </label>
-                  </div>
-                  <label className="flex flex-col gap-1 text-sm">
-                    Precio base
-                    <input
-                      name="basePrice"
+            <li
+              key={model.id}
+              className="flex items-center justify-between gap-3 rounded-xl border border-border p-4"
+            >
+              <div>
+                <p className="font-medium">{model.name}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  ${model.basePrice.toString()} {!model.active && "· Inactivo"}
+                </p>
+              </div>
+              <FormDialog
+                title="Editar modelo"
+                size="lg"
+                trigger={
+                  <button
+                    type="button"
+                    aria-label="Editar modelo"
+                    className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                }
+              >
+                <form action={updateAction} className="flex flex-col gap-4">
+                  <ValidatedInput
+                    label="Nombre"
+                    name="name"
+                    required
+                    maxLength={120}
+                    defaultValue={model.name}
+                  />
+                  <ValidatedTextarea
+                    label="Descripción"
+                    name="description"
+                    maxLength={2000}
+                    defaultValue={model.description ?? ""}
+                    rows={2}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <ValidatedInput
+                      label="m²"
+                      name="areaM2"
                       type="number"
                       step="0.01"
-                      min="0"
+                      min="1"
                       required
-                      defaultValue={model.basePrice.toString()}
-                      className="rounded border px-3 py-2"
+                      defaultValue={model.areaM2.toString()}
+                      errorMessage="Ingresa un número mayor a 0"
                     />
-                  </label>
+                    <ValidatedInput
+                      label="Recámaras"
+                      name="bedrooms"
+                      type="number"
+                      min="0"
+                      max="20"
+                      required
+                      defaultValue={model.bedrooms}
+                      errorMessage="Ingresa un número entre 0 y 20"
+                    />
+                  </div>
+                  <ValidatedInput
+                    label="Precio base"
+                    name="basePrice"
+                    type="number"
+                    step="0.01"
+                    min="1"
+                    required
+                    defaultValue={model.basePrice.toString()}
+                    errorMessage="Ingresa un precio mayor a 0"
+                  />
                   <label className="flex items-center gap-2 text-sm">
                     <input name="active" type="checkbox" defaultChecked={model.active} />
                     Activo (visible en el configurador)
                   </label>
-                  <div className="flex gap-3">
-                    <button type="submit" className="rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
+                  <div className="mt-1 flex items-center justify-between">
+                    <button
+                      type="submit"
+                      className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                    >
                       Guardar
                     </button>
                   </div>
                 </form>
-                <form action={deleteAction} className="mt-2">
-                  <button type="submit" className="text-sm text-red-400 underline">
+                <form action={deleteAction} className="mt-1 border-t border-border pt-4">
+                  <button type="submit" className="text-sm text-red-400 underline underline-offset-4">
                     Eliminar modelo
                   </button>
                 </form>
-              </details>
+              </FormDialog>
             </li>
           );
         })}
         {models.length === 0 && (
           <EmptyState
             title="Sin modelos aún"
-            description="Agrega tu primer modelo abajo — sin al menos uno, el configurador no tiene nada que mostrar."
+            description="Agrega tu primer modelo con el botón de arriba — sin al menos uno, el configurador no tiene nada que mostrar."
           />
         )}
       </ul>
-
-      <section className="rounded border p-4">
-        <h3 className="font-medium">Agregar modelo</h3>
-        <form action={createModel.bind(null, id)} className="mt-3 flex flex-col gap-3 sm:max-w-sm">
-          <label className="flex flex-col gap-1 text-sm">
-            Nombre
-            <input name="name" required maxLength={120} className="rounded border px-3 py-2" />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            Descripción
-            <textarea name="description" maxLength={2000} className="rounded border px-3 py-2" rows={2} />
-          </label>
-          <div className="flex gap-4">
-            <label className="flex flex-1 flex-col gap-1 text-sm">
-              m²
-              <input
-                name="areaM2"
-                type="number"
-                step="0.01"
-                min="0"
-                required
-                className="rounded border px-3 py-2"
-              />
-            </label>
-            <label className="flex flex-1 flex-col gap-1 text-sm">
-              Recámaras
-              <input name="bedrooms" type="number" min="0" required className="rounded border px-3 py-2" />
-            </label>
-          </div>
-          <label className="flex flex-col gap-1 text-sm">
-            Precio base
-            <input
-              name="basePrice"
-              type="number"
-              step="0.01"
-              min="0"
-              required
-              className="rounded border px-3 py-2"
-            />
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input name="active" type="checkbox" defaultChecked />
-            Activo (visible en el configurador)
-          </label>
-          <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
-            Crear
-          </button>
-        </form>
-      </section>
     </div>
   );
 }

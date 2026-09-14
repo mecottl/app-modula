@@ -74,6 +74,7 @@ async function main() {
     data: {
       developmentId: development.id,
       name: "Lanzamiento",
+      code: "LANZAMIENTO",
       type: "PORCENTAJE",
       value: 5,
       startDate: new Date(Date.now() - 1000 * 60 * 60 * 24),

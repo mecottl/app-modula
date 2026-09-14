@@ -40,7 +40,7 @@ function formatMoney(value: string | number, currency: string) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency }).format(num);
 }
 
-const STEPS = ["modelo", "acabado", "extras", "contacto", "confirmacion"] as const;
+const STEPS = ["Modelo", "Acabado", "Extras", "Contacto", "Listo"] as const;
 
 export function ConfiguratorWizard({
   slug,
@@ -70,6 +70,9 @@ export function ConfiguratorWizard({
   const [breakdown, setBreakdown] = useState<Breakdown | null>(null);
   const [priceError, setPriceError] = useState<string | null>(null);
   const [loadingPrice, setLoadingPrice] = useState(false);
+
+  const [promoCodeInput, setPromoCodeInput] = useState("");
+  const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
 
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
@@ -125,22 +128,29 @@ export function ConfiguratorWizard({
         modelId,
         finishLevelId: finishLevelId || undefined,
         extraIds: extraIds.filter((id) => applicableExtras.some((e) => e.id === id)),
+        promoCode: appliedPromoCode || undefined,
       }),
       signal: controller.signal,
     })
       .then(async (res) => {
-        if (!res.ok) throw new Error((await res.json()).error ?? "No se pudo calcular el precio");
-        return res.json();
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "No se pudo calcular el precio");
+        return data;
       })
       .then((data: Breakdown) => setBreakdown(data))
       .catch((err) => {
-        if (err.name !== "AbortError") setPriceError(err.message);
+        if (err.name !== "AbortError") {
+          setPriceError(err.message);
+          // Un código de promoción inválido no debe tumbar todo el
+          // cálculo del precio — se limpia y se recalcula sin él.
+          if (appliedPromoCode) setAppliedPromoCode(null);
+        }
       })
       .finally(() => setLoadingPrice(false));
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, modelId, finishLevelId, extraIds, applicableExtras.length]);
+  }, [slug, modelId, finishLevelId, extraIds, applicableExtras.length, appliedPromoCode]);
 
   async function submitQuote() {
     setSubmitting(true);
@@ -153,6 +163,7 @@ export function ConfiguratorWizard({
           modelId,
           finishLevelId: finishLevelId || undefined,
           extraIds: extraIds.filter((id) => applicableExtras.some((e) => e.id === id)),
+          promoCode: appliedPromoCode || undefined,
           customerName,
           customerEmail,
           customerPhone: customerPhone || undefined,
@@ -178,25 +189,32 @@ export function ConfiguratorWizard({
 
   return (
     <div className="flex flex-col gap-6">
-      <ol className="flex flex-wrap gap-2 text-xs text-muted-foreground" aria-label="Progreso">
+      <ol className="flex flex-wrap items-center gap-2 text-xs" aria-label="Progreso">
         {STEPS.map((label, i) => (
-          <li
-            key={label}
-            aria-current={i === step ? "step" : undefined}
-            className={i === step ? "font-semibold text-foreground" : ""}
-          >
-            {i + 1}. {label}
+          <li key={label} aria-current={i === step ? "step" : undefined} className="flex items-center gap-2">
+            <span
+              className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-medium transition-colors"
+              style={
+                i <= step
+                  ? { backgroundColor: accent, color: "#fff" }
+                  : { backgroundColor: "var(--color-muted)", color: "var(--color-muted-foreground)" }
+              }
+            >
+              {i + 1}
+            </span>
+            <span className={i === step ? "font-medium text-foreground" : "text-muted-foreground"}>{label}</span>
+            {i < STEPS.length - 1 && <span className="mx-1 h-px w-4 bg-border" aria-hidden="true" />}
           </li>
         ))}
       </ol>
 
       {step === 0 && (
         <fieldset className="flex flex-col gap-3">
-          <legend className="mb-2 font-medium">Elige un modelo</legend>
+          <legend className="mb-1 font-medium">Elige un modelo</legend>
           {models.map((model) => (
             <label
               key={model.id}
-              className="flex cursor-pointer flex-col gap-1 rounded border p-3 has-[:checked]:border-foreground"
+              className="flex cursor-pointer flex-col gap-1 rounded-xl border border-border p-4 transition-colors has-[:checked]:border-foreground"
             >
               <span className="flex items-center gap-2">
                 <input
@@ -223,7 +241,7 @@ export function ConfiguratorWizard({
             disabled={!modelId}
             onClick={() => setStep(1)}
             style={{ backgroundColor: accent }}
-            className="mt-2 self-start rounded px-4 py-2 text-sm text-white disabled:opacity-50"
+            className="mt-2 self-start rounded-full px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             Continuar
           </button>
@@ -232,8 +250,8 @@ export function ConfiguratorWizard({
 
       {step === 1 && (
         <fieldset className="flex flex-col gap-3">
-          <legend className="mb-2 font-medium">Elige un nivel de acabado</legend>
-          <label className="flex cursor-pointer items-center gap-2 rounded border p-3">
+          <legend className="mb-1 font-medium">Elige un nivel de acabado</legend>
+          <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-border p-4 has-[:checked]:border-foreground">
             <input
               type="radio"
               name="finish"
@@ -243,7 +261,10 @@ export function ConfiguratorWizard({
             Estándar (sin costo adicional)
           </label>
           {finishLevels.map((fl) => (
-            <label key={fl.id} className="flex cursor-pointer items-center gap-2 rounded border p-3">
+            <label
+              key={fl.id}
+              className="flex cursor-pointer items-center gap-2 rounded-xl border border-border p-4 has-[:checked]:border-foreground"
+            >
               <input
                 type="radio"
                 name="finish"
@@ -254,14 +275,18 @@ export function ConfiguratorWizard({
             </label>
           ))}
           <div className="mt-2 flex gap-3">
-            <button type="button" onClick={() => setStep(0)} className="rounded border px-4 py-2 text-sm">
+            <button
+              type="button"
+              onClick={() => setStep(0)}
+              className="rounded-full border border-border px-5 py-2.5 text-sm transition-colors hover:border-foreground"
+            >
               Atrás
             </button>
             <button
               type="button"
               onClick={() => setStep(2)}
               style={{ backgroundColor: accent }}
-              className="rounded px-4 py-2 text-sm text-white"
+              className="rounded-full px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
             >
               Continuar
             </button>
@@ -271,9 +296,12 @@ export function ConfiguratorWizard({
 
       {step === 2 && (
         <fieldset className="flex flex-col gap-3">
-          <legend className="mb-2 font-medium">Elige extras</legend>
+          <legend className="mb-1 font-medium">Elige extras</legend>
           {applicableExtras.map((extra) => (
-            <label key={extra.id} className="flex cursor-pointer items-center gap-2 rounded border p-3">
+            <label
+              key={extra.id}
+              className="flex cursor-pointer items-center gap-2 rounded-xl border border-border p-4 has-[:checked]:border-foreground"
+            >
               <input
                 type="checkbox"
                 checked={extraIds.includes(extra.id)}
@@ -290,14 +318,18 @@ export function ConfiguratorWizard({
             <p className="text-sm text-muted-foreground">Sin extras disponibles para este modelo.</p>
           )}
           <div className="mt-2 flex gap-3">
-            <button type="button" onClick={() => setStep(1)} className="rounded border px-4 py-2 text-sm">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="rounded-full border border-border px-5 py-2.5 text-sm transition-colors hover:border-foreground"
+            >
               Atrás
             </button>
             <button
               type="button"
               onClick={() => setStep(3)}
               style={{ backgroundColor: accent }}
-              className="rounded px-4 py-2 text-sm text-white"
+              className="rounded-full px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
             >
               Continuar
             </button>
@@ -311,7 +343,7 @@ export function ConfiguratorWizard({
             e.preventDefault();
             submitQuote();
           }}
-          className="flex flex-col gap-3"
+          className="flex flex-col gap-4"
         >
           <h2 className="font-medium">Tus datos de contacto</h2>
           {/* Honeypot: oculto para personas, visible para bots que rellenan todo el formulario */}
@@ -330,10 +362,11 @@ export function ConfiguratorWizard({
             Nombre
             <input
               required
+              minLength={2}
               maxLength={160}
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
-              className="rounded border px-3 py-2"
+              className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
@@ -343,7 +376,7 @@ export function ConfiguratorWizard({
               required
               value={customerEmail}
               onChange={(e) => setCustomerEmail(e.target.value)}
-              className="rounded border px-3 py-2"
+              className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
@@ -353,7 +386,7 @@ export function ConfiguratorWizard({
               maxLength={40}
               value={customerPhone}
               onChange={(e) => setCustomerPhone(e.target.value)}
-              className="rounded border px-3 py-2"
+              className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground"
             />
           </label>
           {submitError && (
@@ -361,15 +394,19 @@ export function ConfiguratorWizard({
               {submitError}
             </p>
           )}
-          <div className="mt-2 flex gap-3">
-            <button type="button" onClick={() => setStep(2)} className="rounded border px-4 py-2 text-sm">
+          <div className="mt-1 flex gap-3">
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              className="rounded-full border border-border px-5 py-2.5 text-sm transition-colors hover:border-foreground"
+            >
               Atrás
             </button>
             <button
               type="submit"
               disabled={submitting}
               style={{ backgroundColor: accent }}
-              className="rounded px-4 py-2 text-sm text-white disabled:opacity-50"
+              className="rounded-full px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               {submitting ? "Enviando…" : ctaText}
             </button>
@@ -378,7 +415,7 @@ export function ConfiguratorWizard({
       )}
 
       {step === 4 && (
-        <div role="status" className="rounded border border-green-700 bg-green-950 p-4">
+        <div role="status" className="rounded-xl border border-green-800 bg-green-950 p-5">
           <p className="font-medium text-green-400">¡Listo! Recibimos tu cotización.</p>
           {confirmedTotal && (
             <p className="mt-1 text-sm text-green-400">
@@ -390,14 +427,13 @@ export function ConfiguratorWizard({
       )}
 
       {step < 4 && (
-        <aside aria-live="polite" className="rounded border bg-muted p-4">
+        <aside aria-live="polite" className="rounded-xl border border-border bg-muted/40 p-5">
           <h3 className="text-sm font-medium text-muted-foreground">Precio estimado</h3>
-          {loadingPrice && <p className="text-sm text-muted-foreground">Calculando…</p>}
-          {priceError && <p className="text-sm text-red-400">{priceError}</p>}
-          {breakdown && !loadingPrice && !priceError && (
+          {loadingPrice && <p className="mt-2 text-sm text-muted-foreground">Calculando…</p>}
+          {!loadingPrice && breakdown && (
             <div className="mt-1">
               <p className="text-2xl font-semibold">{formatMoney(breakdown.total, currency)}</p>
-              <ul className="mt-1 text-xs text-muted-foreground">
+              <ul className="mt-2 flex flex-col gap-0.5 text-xs text-muted-foreground">
                 <li>Base: {formatMoney(breakdown.basePrice, currency)}</li>
                 {Number(breakdown.finishLevelDelta) !== 0 && (
                   <li>Acabado: +{formatMoney(breakdown.finishLevelDelta, currency)}</li>
@@ -406,13 +442,63 @@ export function ConfiguratorWizard({
                   <li>Extras: +{formatMoney(breakdown.extrasDelta, currency)}</li>
                 )}
                 {breakdown.appliedPromotions.map((p) => (
-                  <li key={p.id}>
+                  <li key={p.id} className="text-green-500">
                     {p.name}: -{formatMoney(p.discount, currency)}
                   </li>
                 ))}
               </ul>
             </div>
           )}
+
+          <div className="mt-4 border-t border-border pt-4">
+            {appliedPromoCode ? (
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <span className="text-green-500">
+                  Código <span className="font-mono">{appliedPromoCode}</span> aplicado
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAppliedPromoCode(null);
+                    setPromoCodeInput("");
+                    setPriceError(null);
+                  }}
+                  className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                >
+                  Quitar
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <label htmlFor="promo-code" className="text-xs text-muted-foreground">
+                  ¿Tienes un código de promoción?
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="promo-code"
+                    value={promoCodeInput}
+                    onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                    placeholder="CÓDIGO"
+                    maxLength={40}
+                    className="min-w-0 flex-1 rounded-md border border-border bg-transparent px-3 py-2 font-mono text-sm outline-none focus:border-foreground"
+                  />
+                  <button
+                    type="button"
+                    disabled={!promoCodeInput.trim()}
+                    onClick={() => setAppliedPromoCode(promoCodeInput.trim())}
+                    className="shrink-0 rounded-md border border-border px-3 py-2 text-sm transition-colors hover:border-foreground disabled:opacity-50"
+                  >
+                    Aplicar
+                  </button>
+                </div>
+                {priceError && (
+                  <p role="alert" className="text-xs text-red-400">
+                    {priceError}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </aside>
       )}
     </div>

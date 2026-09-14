@@ -52,6 +52,7 @@ export async function createTestTenant(label: string) {
     data: {
       developmentId: development.id,
       name: `[test] Promo ${label}`,
+      code: `TEST-${label}`.toUpperCase().replace(/[^A-Z0-9-]/g, "-"),
       type: "PORCENTAJE",
       value: 5,
       startDate: new Date(Date.now() - 86_400_000),

@@ -1,6 +1,9 @@
 import { requireDevelopmentForSession } from "@/lib/tenant";
-import { updateDevelopmentGeneral } from "@/lib/actions/developments";
+import { updateDevelopmentGeneral, updateDevelopmentAdvanced, uploadDevelopmentLogo } from "@/lib/actions/developments";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
+import { LogoUploader } from "@/components/dashboard/logo-uploader";
+import { ColorInput } from "@/components/ui/color-input";
+import { ValidatedInput, ValidatedTextarea } from "@/components/ui/validated-input";
 
 export const dynamic = "force-dynamic";
 
@@ -15,102 +18,86 @@ export default async function GeneralPage({
   const { error, ok } = await searchParams;
   const development = await requireDevelopmentForSession(id);
   const action = updateDevelopmentGeneral.bind(null, id);
+  const advancedAction = updateDevelopmentAdvanced.bind(null, id);
+  const uploadLogoAction = uploadDevelopmentLogo.bind(null, id);
 
   return (
-    <div className="max-w-lg">
+    <div className="flex max-w-lg flex-col gap-8">
       <ToastFromParams ok={ok ? "Guardado." : undefined} error={error} />
-      <h2 className="font-medium">General y marca</h2>
 
-      <form action={action} className="mt-4 flex flex-col gap-4">
+      <section className="flex flex-col gap-4">
+        <h2 className="font-medium">General y marca</h2>
+
         <label className="flex flex-col gap-1 text-sm">
-          Nombre
-          <input
-            name="name"
-            required
-            maxLength={120}
-            defaultValue={development.name}
-            className="rounded border px-3 py-2"
-          />
+          Logo
+          <LogoUploader currentLogoUrl={development.logoUrl} uploadAction={uploadLogoAction} />
         </label>
-        <label className="flex flex-col gap-1 text-sm">
-          Descripción
-          <textarea
+
+        <form action={action} className="flex flex-col gap-4">
+          <ValidatedInput label="Nombre" name="name" required maxLength={120} defaultValue={development.name} />
+          <ValidatedTextarea
+            label="Descripción"
             name="description"
             maxLength={2000}
             defaultValue={development.description ?? ""}
-            className="rounded border px-3 py-2"
             rows={3}
           />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          Moneda
-          <input
-            name="currency"
-            required
-            maxLength={6}
-            defaultValue={development.currency}
-            className="rounded border px-3 py-2"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          Texto del CTA
-          <input
+          <ValidatedInput
+            label="Texto del CTA"
             name="ctaText"
             maxLength={80}
             defaultValue={development.ctaText ?? ""}
             placeholder="Cotiza tu casa"
-            className="rounded border px-3 py-2"
           />
-        </label>
-        <div className="flex gap-4">
-          <label className="flex flex-1 flex-col gap-1 text-sm">
-            Color primario
-            <input
-              name="primaryColor"
-              type="text"
-              defaultValue={development.primaryColor ?? ""}
-              placeholder="#262626"
-              className="rounded border px-3 py-2"
-            />
-          </label>
-          <label className="flex flex-1 flex-col gap-1 text-sm">
-            Color de acento
-            <input
-              name="accentColor"
-              type="text"
-              defaultValue={development.accentColor ?? ""}
-              placeholder="#2563eb"
-              className="rounded border px-3 py-2"
-            />
-          </label>
-        </div>
-        <label className="flex flex-col gap-1 text-sm">
-          URL del logo
-          <input
-            name="logoUrl"
-            type="url"
-            defaultValue={development.logoUrl ?? ""}
-            placeholder="https://…"
-            className="rounded border px-3 py-2"
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <ColorInput name="primaryColor" label="Color primario" defaultValue={development.primaryColor} />
+            </div>
+            <div className="flex-1">
+              <ColorInput name="accentColor" label="Color de acento" defaultValue={development.accentColor} />
+            </div>
+          </div>
+          <button
+            type="submit"
+            className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Guardar
+          </button>
+        </form>
+      </section>
+
+      <details className="group rounded-xl border border-border p-5">
+        <summary className="cursor-pointer text-sm font-medium text-muted-foreground group-open:text-foreground">
+          Configuración avanzada
+        </summary>
+        <form action={advancedAction} className="mt-4 flex flex-col gap-4">
+          <ValidatedInput
+            label="Moneda"
+            name="currency"
+            required
+            minLength={3}
+            maxLength={6}
+            pattern="[A-Za-z]{3,6}"
+            defaultValue={development.currency}
+            errorMessage="Usa un código de moneda de 3 a 6 letras, ej. MXN"
           />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          Webhook de cotizaciones (opcional)
-          <input
+          <ValidatedInput
+            label="Webhook de cotizaciones (opcional)"
             name="webhookUrl"
             type="url"
             defaultValue={development.webhookUrl ?? ""}
             placeholder="https://tu-crm.com/webhooks/modula"
-            className="rounded border px-3 py-2"
+            hint="Cada cotización nueva se enviará también como POST a esta URL."
+            errorMessage="Ingresa una URL válida (https://…)"
           />
-          <span className="text-xs text-muted-foreground">
-            Cada cotización nueva se enviará también como POST a esta URL.
-          </span>
-        </label>
-        <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
-          Guardar
-        </button>
-      </form>
+          <button
+            type="submit"
+            className="self-start rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:border-foreground"
+          >
+            Guardar
+          </button>
+        </form>
+      </details>
     </div>
   );
 }

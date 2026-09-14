@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSessionAccount, requireDevelopmentForSession } from "@/lib/tenant";
 import { slugify } from "@/lib/slug";
 import { generateProjectToken } from "@/lib/tokens";
+import { uploadDevelopmentImage } from "@/lib/supabaseStorage";
 
 const createSchema = z.object({
   name: z.string().min(2).max(120),
@@ -54,15 +55,18 @@ export async function createDevelopment(formData: FormData) {
   redirect(`/dashboard/developments/${development.id}/general`);
 }
 
+const hexColor = z
+  .string()
+  .regex(/^#[0-9A-Fa-f]{6}$/)
+  .optional()
+  .or(z.literal(""));
+
 const generalSchema = z.object({
   name: z.string().min(2).max(120),
   description: z.string().max(2000).optional().or(z.literal("")),
-  currency: z.string().min(3).max(6),
   ctaText: z.string().max(80).optional().or(z.literal("")),
-  primaryColor: z.string().max(20).optional().or(z.literal("")),
-  accentColor: z.string().max(20).optional().or(z.literal("")),
-  logoUrl: z.string().url().max(500).optional().or(z.literal("")),
-  webhookUrl: z.string().url().max(500).optional().or(z.literal("")),
+  primaryColor: hexColor,
+  accentColor: hexColor,
 });
 
 export async function updateDevelopmentGeneral(developmentId: string, formData: FormData) {
@@ -71,12 +75,9 @@ export async function updateDevelopmentGeneral(developmentId: string, formData: 
   const parsed = generalSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
-    currency: formData.get("currency"),
     ctaText: formData.get("ctaText"),
     primaryColor: formData.get("primaryColor"),
     accentColor: formData.get("accentColor"),
-    logoUrl: formData.get("logoUrl"),
-    webhookUrl: formData.get("webhookUrl"),
   });
   if (!parsed.success) {
     redirect(
@@ -91,17 +92,74 @@ export async function updateDevelopmentGeneral(developmentId: string, formData: 
     data: {
       name: parsed.data.name,
       description: parsed.data.description || null,
-      currency: parsed.data.currency,
       ctaText: parsed.data.ctaText || null,
       primaryColor: parsed.data.primaryColor || null,
       accentColor: parsed.data.accentColor || null,
-      logoUrl: parsed.data.logoUrl || null,
+    },
+  });
+
+  revalidatePath(`/dashboard/developments/${developmentId}`);
+  redirect(`/dashboard/developments/${developmentId}/general?ok=1`);
+}
+
+/**
+ * Configuración avanzada: campos que no afectan lo que ve el comprador
+ * de inmediato (moneda, webhook de integración con un CRM externo) —
+ * separados del formulario principal de General y marca para no
+ * abrumar el flujo de creación/edición común (issue "quitar campos
+ * innecesarios de la pantalla principal").
+ */
+const advancedSchema = z.object({
+  currency: z.string().min(3).max(6),
+  webhookUrl: z.string().url().max(500).optional().or(z.literal("")),
+});
+
+export async function updateDevelopmentAdvanced(developmentId: string, formData: FormData) {
+  await requireDevelopmentForSession(developmentId);
+
+  const parsed = advancedSchema.safeParse({
+    currency: formData.get("currency"),
+    webhookUrl: formData.get("webhookUrl"),
+  });
+  if (!parsed.success) {
+    redirect(
+      `/dashboard/developments/${developmentId}/general?error=${encodeURIComponent(
+        "Revisa los campos de configuración avanzada",
+      )}`,
+    );
+  }
+
+  await prisma.development.update({
+    where: { id: developmentId },
+    data: {
+      currency: parsed.data.currency,
       webhookUrl: parsed.data.webhookUrl || null,
     },
   });
 
   revalidatePath(`/dashboard/developments/${developmentId}`);
   redirect(`/dashboard/developments/${developmentId}/general?ok=1`);
+}
+
+/**
+ * Sube el logo del desarrollo a Supabase Storage (bucket
+ * "development-media") y guarda la URL pública resultante. Reemplaza el
+ * campo de texto libre "URL del logo" por un botón de subir imagen real
+ * (issue "botón de subir imagen en vez de pegar URL").
+ */
+export async function uploadDevelopmentLogo(developmentId: string, formData: FormData) {
+  await requireDevelopmentForSession(developmentId);
+
+  const file = formData.get("logo");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("Selecciona una imagen");
+  }
+
+  const logoUrl = await uploadDevelopmentImage(developmentId, file);
+
+  await prisma.development.update({ where: { id: developmentId }, data: { logoUrl } });
+  revalidatePath(`/dashboard/developments/${developmentId}`);
+  return logoUrl;
 }
 
 export async function publishDevelopment(developmentId: string) {

@@ -1,7 +1,13 @@
+import { UserPlus } from "lucide-react";
 import { requireSessionAccount } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { inviteMember, removeMember } from "@/lib/actions/members";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
+import { FormDialog } from "@/components/ui/form-dialog";
+import { Button } from "@/components/ui/button";
+
+const inputClass =
+  "rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground";
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +32,44 @@ export default async function MembersPage({
   return (
     <div className="flex flex-col gap-8">
       <ToastFromParams ok={ok} error={error} />
-      <div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold tracking-tight">Miembros del equipo</h1>
+        <FormDialog
+          title="Invitar miembro"
+          description="Solo un administrador puede invitar o quitar miembros."
+          trigger={
+            <Button size="sm" className="gap-2 rounded-full">
+              <UserPlus className="h-4 w-4" />
+              Invitar miembro
+            </Button>
+          }
+        >
+          <form action={inviteMember} className="flex flex-col gap-4">
+            <label className="flex flex-col gap-1.5 text-sm">
+              Nombre
+              <input name="name" required maxLength={120} autoFocus className={inputClass} />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm">
+              Correo
+              <input name="email" type="email" required className={inputClass} />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm">
+              Rol
+              <select name="role" defaultValue="SOLO_LECTURA" className={inputClass}>
+                <option value="ADMINISTRADOR">Administrador</option>
+                <option value="EDITOR_CATALOGO">Editor de catálogo</option>
+                <option value="SOLO_LECTURA">Solo lectura</option>
+              </select>
+            </label>
+            <button
+              type="submit"
+              className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Invitar
+            </button>
+          </form>
+        </FormDialog>
       </div>
 
       <ul className="flex flex-col gap-3">
@@ -54,51 +96,6 @@ export default async function MembersPage({
           </li>
         ))}
       </ul>
-
-      <section className="rounded-xl border border-border p-6">
-        <h2 className="font-medium">Invitar miembro</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Solo un administrador puede invitar o quitar miembros.
-        </p>
-        <form action={inviteMember} className="mt-4 flex flex-col gap-4 sm:max-w-sm">
-          <label className="flex flex-col gap-1.5 text-sm">
-            Nombre
-            <input
-              name="name"
-              required
-              maxLength={120}
-              className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground"
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm">
-            Correo
-            <input
-              name="email"
-              type="email"
-              required
-              className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground"
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm">
-            Rol
-            <select
-              name="role"
-              defaultValue="SOLO_LECTURA"
-              className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground"
-            >
-              <option value="ADMINISTRADOR">Administrador</option>
-              <option value="EDITOR_CATALOGO">Editor de catálogo</option>
-              <option value="SOLO_LECTURA">Solo lectura</option>
-            </select>
-          </label>
-          <button
-            type="submit"
-            className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            Invitar
-          </button>
-        </form>
-      </section>
     </div>
   );
 }

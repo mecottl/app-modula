@@ -12,6 +12,7 @@ const bodySchema = z.object({
   modelId: z.string().min(1),
   finishLevelId: z.string().min(1).optional(),
   extraIds: z.array(z.string().min(1)).default([]),
+  promoCode: z.string().min(1).max(40).optional(),
   customerName: z.string().min(2).max(160),
   customerEmail: z.string().email(),
   customerPhone: z.string().max(40).optional(),
@@ -66,6 +67,7 @@ export async function POST(
       modelId: parsed.data.modelId,
       finishLevelId: parsed.data.finishLevelId,
       extraIds: parsed.data.extraIds,
+      promoCode: parsed.data.promoCode,
     });
   } catch (error) {
     if (error instanceof PricingError) {

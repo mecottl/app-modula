@@ -212,10 +212,14 @@ model ExtraModel {
 }
 
 /// Promoción/regla de precio con vigencia.
+/// Promociones tipo cupón: el comprador debe teclear `code` en el
+/// configurador para que se aplique — nunca se aplican solas por fecha
+/// (issue "promociones con código, no automáticas").
 model Promotion {
   id            String        @id @default(cuid())
   developmentId String
   name          String
+  code          String
   type          PromotionType
   value         Decimal       @db.Decimal(14, 2)
   startDate     DateTime
@@ -226,6 +230,7 @@ model Promotion {
 
   development Development @relation(fields: [developmentId], references: [id], onDelete: Cascade)
 
+  @@unique([developmentId, code])
   @@index([developmentId])
   @@index([developmentId, active, startDate, endDate])
   @@map("promotions")
