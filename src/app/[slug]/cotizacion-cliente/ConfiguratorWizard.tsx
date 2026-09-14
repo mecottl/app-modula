@@ -213,7 +213,7 @@ export function ConfiguratorWizard({
           promoCode: appliedPromoCode || undefined,
           customerName,
           customerEmail,
-          customerPhone: customerPhone || undefined,
+          customerPhone,
           originPlan,
           website,
         }),
@@ -530,9 +530,11 @@ export function ConfiguratorWizard({
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              Teléfono (opcional)
+              Teléfono
               <input
                 type="tel"
+                required
+                minLength={7}
                 maxLength={40}
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}

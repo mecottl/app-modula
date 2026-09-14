@@ -15,7 +15,7 @@ const bodySchema = z.object({
   promoCode: z.string().min(1).max(40).optional(),
   customerName: z.string().min(2).max(160),
   customerEmail: z.string().email(),
-  customerPhone: z.string().max(40).optional(),
+  customerPhone: z.string().min(7).max(40),
   originPlan: z.enum(["A", "B"]).default("A"),
   // Honeypot: campo oculto en el formulario real (invisible para
   // personas, atractivo para bots que rellenan todo). Si viene con

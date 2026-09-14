@@ -266,7 +266,7 @@ model Quote {
   total           Decimal     @db.Decimal(14, 2)
   customerName    String
   customerEmail   String
-  customerPhone   String?
+  customerPhone   String
   status          QuoteStatus @default(NUEVA)
   originPlan      QuoteOrigin
   createdAt       DateTime    @default(now())

@@ -67,6 +67,7 @@ export async function createTestTenant(label: string) {
       total: 1_000_000,
       customerName: `[test] Cliente ${label}`,
       customerEmail: `cliente-${label}@example.com`,
+      customerPhone: "5555555555",
       originPlan: "A",
     },
   });
