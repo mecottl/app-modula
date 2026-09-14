@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { getCurrentTheme, type Theme } from "@/lib/theme";
 
 export interface StarfieldProps {
   starColor?: string;
@@ -19,14 +20,25 @@ export interface StarfieldProps {
 // Tupla de cada estrella: [x, y, z, screenX, screenY, prevScreenX, prevScreenY, visible]
 type Star = [number, number, number, number, number, number, number, boolean];
 
+// Colores por defecto según el tema activo (issue #60) cuando el
+// llamador no fuerza uno explícito — en claro, fondo claro con
+// estrellas oscuras; en oscuro, el efecto original.
+function themeColors(theme: Theme, bgOverride?: string, starOverride?: string) {
+  const isLight = theme === "light";
+  return {
+    fill: bgOverride ?? (isLight ? "rgba(255,255,255,1)" : "rgba(0,0,0,1)"),
+    star: starOverride ?? (isLight ? "rgba(23,23,23,0.7)" : "rgba(255,255,255,1)"),
+  };
+}
+
 /**
  * Fondo animado de campo de estrellas (componente de 21st.dev,
  * implementado al pie de la letra — misma lógica de canvas — solo
  * convertido a TypeScript real en vez de PropTypes).
  */
 export function Starfield({
-  starColor = "rgba(255,255,255,1)",
-  bgColor = "rgba(0,0,0,1)",
+  starColor,
+  bgColor,
   mouseAdjust = false,
   tiltAdjust = false,
   easing = 1,
@@ -55,7 +67,12 @@ export function Starfield({
     prevTime: 0,
   });
 
-  const colors = { fill: hyperspace ? `rgba(0,0,0,${opacity})` : bgColor };
+  // El loop de animación captura estas funciones una sola vez al montar
+  // (ver el efecto de abajo, cuyas deps no incluyen colores) — por eso
+  // los colores viven en un ref mutable en vez de una constante de
+  // render, así un cambio de tema en vivo sí llega al frame siguiente.
+  const colorsRef = useRef(themeColors(getCurrentTheme(), bgColor, starColor));
+  const getFill = () => (hyperspace ? `rgba(0,0,0,${opacity})` : colorsRef.current.fill);
   const compSpeed = hyperspace ? speed * warpFactor : speed;
   const ratio = quantity / 2;
 
@@ -88,8 +105,8 @@ export function Starfield({
       canvas.width = sd.current.w;
       canvas.height = sd.current.h;
       if (sd.current.ctx) {
-        sd.current.ctx.fillStyle = colors.fill;
-        sd.current.ctx.strokeStyle = starColor;
+        sd.current.ctx.fillStyle = getFill();
+        sd.current.ctx.strokeStyle = colorsRef.current.star;
       }
     }
   };
@@ -143,8 +160,8 @@ export function Starfield({
       }
 
       if (sd.current.ctx) {
-        sd.current.ctx.fillStyle = colors.fill;
-        sd.current.ctx.strokeStyle = starColor;
+        sd.current.ctx.fillStyle = getFill();
+        sd.current.ctx.strokeStyle = colorsRef.current.star;
       }
     }
   };
@@ -200,9 +217,9 @@ export function Starfield({
   const draw = () => {
     const ctx = sd.current.ctx;
     if (!ctx) return;
-    ctx.fillStyle = colors.fill;
+    ctx.fillStyle = getFill();
     ctx.fillRect(0, 0, sd.current.w, sd.current.h);
-    ctx.strokeStyle = starColor;
+    ctx.strokeStyle = colorsRef.current.star;
 
     sd.current.star.arr.forEach((star) => {
       if (star[5] > 0 && star[5] < sd.current.w && star[6] > 0 && star[6] < sd.current.h && star[7]) {
@@ -291,6 +308,16 @@ export function Starfield({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mouseAdjust, tiltAdjust, clickToWarp]);
+
+  useEffect(() => {
+    const sync = () => {
+      colorsRef.current = themeColors(getCurrentTheme(), bgColor, starColor);
+    };
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, [bgColor, starColor]);
 
   return (
     <div style={{ position: "absolute", width: "100%", height: "100%" }}>

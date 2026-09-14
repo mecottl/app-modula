@@ -160,7 +160,7 @@ export default function Home() {
       <main className="flex-1">
         {/* Hero */}
         <section className="relative flex min-h-screen items-center overflow-hidden border-b border-border">
-          <Starfield quantity={400} speed={0.3} opacity={0.15} bgColor="#121111" />
+          <Starfield quantity={400} speed={0.3} opacity={0.15} />
           <div className="relative z-10 flex w-full flex-col items-center px-6 py-24 text-center">
             <h1 className="max-w-3xl text-4xl font-semibold leading-[1.1] tracking-tight sm:text-6xl">
               Cotización en tiempo real para preventa inmobiliaria
