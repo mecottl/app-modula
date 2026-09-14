@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, ImageIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImageIcon, Plus } from "lucide-react";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { formatMoney } from "@/lib/money";
 
 type ModelDTO = {
   id: string;
@@ -46,11 +48,6 @@ type Breakdown = {
   total: string;
   appliedPromotions: { id: string; name: string; discount: string }[];
 };
-
-function formatMoney(value: string | number, currency: string) {
-  const num = typeof value === "string" ? Number(value) : value;
-  return new Intl.NumberFormat("es-MX", { style: "currency", currency }).format(num);
-}
 
 /**
  * Configurador estilo Tesla (issue "copiarle la distribución a Tesla"):
@@ -272,13 +269,21 @@ export function ConfiguratorWizard({
         <p className="text-muted-foreground">Total cotizado: {formatMoney(confirmedTotal, currency)}</p>
         <p className="text-sm text-muted-foreground">Nos pondremos en contacto contigo pronto.</p>
         {confirmedQuoteId && (
-          <a
-            href={`/api/developments/${slug}/quotes/${confirmedQuoteId}/pdf${previewQs}`}
-            style={{ backgroundColor: accent }}
-            className="mt-4 rounded-full px-6 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
-          >
-            Descargar cotización en PDF
-          </a>
+          <div className="mt-4 flex items-center gap-3">
+            <a
+              href={`/${slug}/cotizacion-cliente/${confirmedQuoteId}${previewQs}`}
+              style={{ backgroundColor: accent }}
+              className="rounded-full px-6 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+            >
+              Ver mi cotización
+            </a>
+            <a
+              href={`/api/developments/${slug}/quotes/${confirmedQuoteId}/pdf${previewQs}`}
+              className="rounded-full border border-border px-6 py-2.5 text-sm font-medium transition-colors hover:border-foreground"
+            >
+              Descargar PDF
+            </a>
+          </div>
         )}
       </div>
     );
@@ -386,6 +391,7 @@ export function ConfiguratorWizard({
                 image={model.imageUrls[0]}
                 title={model.name}
                 subtitle={`${model.areaM2} m² · ${model.bedrooms} recámaras`}
+                description={model.description ?? undefined}
                 price={formatMoney(model.basePrice, currency)}
                 selected={modelId === model.id}
                 onSelect={() => {
@@ -400,14 +406,14 @@ export function ConfiguratorWizard({
           </section>
 
           {finishCategories.map((category) => (
-            <section key={category.id} className="flex flex-col gap-2">
-              <h2 className="text-sm font-medium text-muted-foreground">{category.name}</h2>
+            <FinishCategoryAccordion key={category.id} name={category.name} defaultOpen>
               {category.options.map((option) => (
                 <OptionRow
                   key={option.id}
                   color={primary}
                   image={option.imageUrls[0]}
                   title={option.name}
+                  description={option.description ?? undefined}
                   price={`+${formatMoney(option.priceDelta, currency)}`}
                   selected={finishOptionIds.includes(option.id)}
                   multi={category.selectionMode === "MULTIPLE"}
@@ -417,7 +423,7 @@ export function ConfiguratorWizard({
               {category.options.length === 0 && (
                 <p className="text-sm text-muted-foreground">Sin opciones en esta categoría.</p>
               )}
-            </section>
+            </FinishCategoryAccordion>
           ))}
 
           <section className="flex flex-col gap-2">
@@ -428,6 +434,7 @@ export function ConfiguratorWizard({
                 color={primary}
                 image={extra.imageUrls[0]}
                 title={extra.name}
+                description={extra.description ?? undefined}
                 price={`+${formatMoney(extra.priceDelta, currency)}`}
                 selected={extraIds.includes(extra.id)}
                 multi
@@ -607,6 +614,7 @@ function OptionRow({
   image,
   title,
   subtitle,
+  description,
   price,
   selected,
   multi,
@@ -616,6 +624,7 @@ function OptionRow({
   image?: string;
   title: string;
   subtitle?: string;
+  description?: string;
   price?: string;
   selected: boolean;
   multi?: boolean;
@@ -629,11 +638,11 @@ function OptionRow({
       aria-pressed={selected}
       style={selected ? { borderColor: color } : undefined}
       className={cn(
-        "flex items-center justify-between gap-3 rounded-lg border p-3 text-left transition-colors",
+        "flex w-full items-start justify-between gap-3 rounded-lg border p-3 text-left transition-colors",
         !selected && "border-border hover:border-foreground/50",
       )}
     >
-      <span className="flex min-w-0 items-center gap-3">
+      <span className="flex min-w-0 items-start gap-3">
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={image} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover" />
@@ -641,7 +650,7 @@ function OptionRow({
           <span
             style={selected ? { borderColor: color, backgroundColor: color } : undefined}
             className={cn(
-              "flex h-4 w-4 shrink-0 items-center justify-center border",
+              "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center border",
               multi ? "rounded" : "rounded-full",
               !selected && "border-muted-foreground",
             )}
@@ -650,9 +659,50 @@ function OptionRow({
         <span className="min-w-0">
           <span className="block truncate text-sm font-medium">{title}</span>
           {subtitle && <span className="block truncate text-xs text-muted-foreground">{subtitle}</span>}
+          {description && <span className="mt-0.5 block text-xs text-muted-foreground">{description}</span>}
         </span>
       </span>
       {price && <span className="shrink-0 text-sm font-medium">{price}</span>}
     </button>
+  );
+}
+
+function FinishCategoryAccordion({
+  name,
+  defaultOpen,
+  children,
+}: {
+  name: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(!!defaultOpen);
+
+  return (
+    <section className="rounded-lg border border-border">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 p-3 text-left"
+      >
+        <span className="text-sm font-medium">{name}</span>
+        <motion.span
+          animate={{ rotate: open ? "45deg" : "0deg" }}
+          transition={{ duration: 0.2 }}
+          className="text-muted-foreground"
+        >
+          <Plus className="h-4 w-4" />
+        </motion.span>
+      </button>
+      <motion.div
+        initial={false}
+        animate={{ height: open ? "auto" : "0px" }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="overflow-hidden"
+      >
+        <div className="flex flex-col gap-2 border-t border-border p-3">{children}</div>
+      </motion.div>
+    </section>
   );
 }
