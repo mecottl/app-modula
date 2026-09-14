@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, ImageIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type ModelDTO = {
   id: string;
@@ -9,6 +11,7 @@ type ModelDTO = {
   areaM2: number;
   bedrooms: number;
   basePrice: number;
+  imageUrls: string[];
 };
 
 type FinishLevelDTO = {
@@ -16,6 +19,7 @@ type FinishLevelDTO = {
   name: string;
   description: string | null;
   priceDelta: number;
+  imageUrls: string[];
 };
 
 type ExtraDTO = {
@@ -24,6 +28,7 @@ type ExtraDTO = {
   description: string | null;
   priceDelta: number;
   modelIds: string[];
+  imageUrls: string[];
 };
 
 type Breakdown = {
@@ -40,14 +45,24 @@ function formatMoney(value: string | number, currency: string) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency }).format(num);
 }
 
-const STEPS = ["Modelo", "Acabado", "Extras", "Contacto", "Listo"] as const;
-
+/**
+ * Configurador estilo Tesla (issue "copiarle la distribución a Tesla"):
+ * ya no es un asistente por pasos — todas las secciones (modelo,
+ * acabado, extras, contacto) están en un solo panel con scroll a la
+ * derecha, la imagen grande a la izquierda se queda fija y cambia según
+ * lo que se va eligiendo, y una barra inferior fija muestra el resumen
+ * + precio + botón de enviar en todo momento.
+ */
 export function ConfiguratorWizard({
   slug,
   preview,
   originPlan,
+  developmentName,
+  logoUrl,
+  showHeader = true,
   currency,
   ctaText,
+  primaryColor,
   accentColor,
   models,
   finishLevels,
@@ -56,20 +71,24 @@ export function ConfiguratorWizard({
   slug: string;
   preview: boolean;
   originPlan: "A" | "B";
+  developmentName?: string;
+  logoUrl?: string | null;
+  showHeader?: boolean;
   currency: string;
   ctaText: string;
+  primaryColor?: string | null;
   accentColor: string | null;
   models: ModelDTO[];
   finishLevels: FinishLevelDTO[];
   extras: ExtraDTO[];
 }) {
-  const [step, setStep] = useState<number>(0);
   const [modelId, setModelId] = useState<string>(models[0]?.id ?? "");
   const [finishLevelId, setFinishLevelId] = useState<string>("");
   const [extraIds, setExtraIds] = useState<string[]>([]);
   const [breakdown, setBreakdown] = useState<Breakdown | null>(null);
   const [priceError, setPriceError] = useState<string | null>(null);
   const [loadingPrice, setLoadingPrice] = useState(false);
+  const [imageIndex, setImageIndex] = useState(0);
 
   const [promoCodeInput, setPromoCodeInput] = useState("");
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
@@ -86,6 +105,31 @@ export function ConfiguratorWizard({
     () => extras.filter((e) => e.modelIds.includes(modelId)),
     [extras, modelId],
   );
+
+  const selectedModel = useMemo(() => models.find((m) => m.id === modelId) ?? null, [models, modelId]);
+  const selectedFinish = useMemo(
+    () => finishLevels.find((f) => f.id === finishLevelId) ?? null,
+    [finishLevels, finishLevelId],
+  );
+  const selectedExtras = useMemo(
+    () => applicableExtras.filter((e) => extraIds.includes(e.id)),
+    [applicableExtras, extraIds],
+  );
+
+  // El acabado elegido pisa las fotos del modelo si tiene fotos propias
+  // — sin eso, se ven las del modelo base. Varias fotos se navegan como
+  // un carrusel, igual que las fotos del vehículo en Tesla.
+  const mainImages = selectedFinish?.imageUrls.length ? selectedFinish.imageUrls : selectedModel?.imageUrls ?? [];
+
+  // Reinicia el índice del carrusel al cambiar de modelo/acabado, sin un
+  // efecto aparte: se detecta el cambio de clave durante el render
+  // (patrón "ajustar estado cuando cambia una prop" de React).
+  const imageSetKey = `${modelId}:${finishLevelId}`;
+  const [prevImageSetKey, setPrevImageSetKey] = useState(imageSetKey);
+  if (prevImageSetKey !== imageSetKey) {
+    setPrevImageSetKey(imageSetKey);
+    if (imageIndex !== 0) setImageIndex(0);
+  }
 
   const previewQs = preview ? "?preview=1" : "";
 
@@ -106,13 +150,15 @@ export function ConfiguratorWizard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Sin pasos ya no hay un "paso de contacto" explícito — se cuenta la
+  // configuración como completada quien llega a tocar el formulario de
+  // contacto (mismo criterio que antes: llegó al final del recorrido).
   const trackedConfigCompleted = useRef(false);
-  useEffect(() => {
-    if (step !== 3 || trackedConfigCompleted.current) return;
+  function trackConfigCompletedOnce() {
+    if (trackedConfigCompleted.current) return;
     trackedConfigCompleted.current = true;
     trackEvent("CONFIGURACION_COMPLETADA");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
+  }
 
   useEffect(() => {
     if (!modelId) return;
@@ -177,7 +223,6 @@ export function ConfiguratorWizard({
       }
       const data = await res.json();
       setConfirmedTotal(data.total);
-      setStep(4);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Error inesperado");
     } finally {
@@ -185,255 +230,187 @@ export function ConfiguratorWizard({
     }
   }
 
+  // Color primario: acentúa la selección actual (bordes, radios, carrusel).
+  // Color de acento: reservado al botón de llamada a la acción, para que
+  // ambos puedan distinguirse igual que en el panel de marca del dashboard.
+  const primary = primaryColor || "#ffffff";
   const accent = accentColor || "#3d3d3d";
 
+  if (confirmedTotal) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
+        <p className="text-2xl font-semibold">¡Listo! Recibimos tu cotización.</p>
+        <p className="text-muted-foreground">Total cotizado: {formatMoney(confirmedTotal, currency)}</p>
+        <p className="text-sm text-muted-foreground">Nos pondremos en contacto contigo pronto.</p>
+      </div>
+    );
+  }
+
+  const summaryParts = [
+    selectedModel?.name,
+    selectedFinish?.name,
+    selectedExtras.length > 0 ? `${selectedExtras.length} extra${selectedExtras.length > 1 ? "s" : ""}` : null,
+  ].filter(Boolean);
+
+  // El widget embebido (Plan B) no tiene su propio scroll: el iframe se
+  // redimensiona a la altura del contenido y es la página anfitriona la
+  // que hace scroll (ver HeightReporter). Por eso solo la página propia
+  // (Plan A) usa un layout de altura fija estilo Tesla; el widget usa
+  // flujo normal de documento, sin barra inferior "flotante".
+  const fullHeight = showHeader;
+
   return (
-    <div className="flex flex-col gap-6">
-      <ol className="flex flex-wrap items-center gap-2 text-xs" aria-label="Progreso">
-        {STEPS.map((label, i) => (
-          <li key={label} aria-current={i === step ? "step" : undefined} className="flex items-center gap-2">
-            <span
-              className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-medium transition-colors"
-              style={
-                i <= step
-                  ? { backgroundColor: accent, color: "#fff" }
-                  : { backgroundColor: "var(--color-muted)", color: "var(--color-muted-foreground)" }
-              }
-            >
-              {i + 1}
-            </span>
-            <span className={i === step ? "font-medium text-foreground" : "text-muted-foreground"}>{label}</span>
-            {i < STEPS.length - 1 && <span className="mx-1 h-px w-4 bg-border" aria-hidden="true" />}
-          </li>
-        ))}
-      </ol>
-
-      {step === 0 && (
-        <fieldset className="flex flex-col gap-3">
-          <legend className="mb-1 font-medium">Elige un modelo</legend>
-          {models.map((model) => (
-            <label
-              key={model.id}
-              className="flex cursor-pointer flex-col gap-1 rounded-xl border border-border p-4 transition-colors has-[:checked]:border-foreground"
-            >
-              <span className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="model"
-                  value={model.id}
-                  checked={modelId === model.id}
-                  onChange={() => {
-                    setModelId(model.id);
-                    setExtraIds([]);
-                  }}
-                />
-                <span className="font-medium">{model.name}</span>
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {model.areaM2} m² · {model.bedrooms} recámaras · desde{" "}
-                {formatMoney(model.basePrice, currency)}
-              </span>
-            </label>
-          ))}
-          {models.length === 0 && <p className="text-sm text-muted-foreground">Aún no hay modelos disponibles.</p>}
-          <button
-            type="button"
-            disabled={!modelId}
-            onClick={() => setStep(1)}
-            style={{ backgroundColor: accent }}
-            className="mt-2 self-start rounded-full px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            Continuar
-          </button>
-        </fieldset>
+    <div className={cn("flex flex-col", fullHeight ? "h-screen" : "min-h-[480px]")}>
+      {showHeader && (
+        <header className="flex shrink-0 items-center gap-3 border-b border-border px-6 py-3">
+          {logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt="" className="h-7 w-auto" />
+          )}
+          <span className="font-medium">{developmentName}</span>
+        </header>
       )}
 
-      {step === 1 && (
-        <fieldset className="flex flex-col gap-3">
-          <legend className="mb-1 font-medium">Elige un nivel de acabado</legend>
-          <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-border p-4 has-[:checked]:border-foreground">
-            <input
-              type="radio"
-              name="finish"
-              checked={finishLevelId === ""}
-              onChange={() => setFinishLevelId("")}
+      <div className={cn("flex flex-col lg:flex-row", fullHeight ? "flex-1 overflow-hidden" : "flex-1")}>
+        {/* Imagen grande — cambia con la selección actual */}
+        <div
+          className={cn(
+            "relative flex shrink-0 items-center justify-center bg-muted/20 lg:flex-1",
+            fullHeight ? "h-[38vh] lg:h-auto" : "h-[280px] lg:h-auto",
+          )}
+        >
+          {mainImages[imageIndex] ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={mainImages[imageIndex]}
+              alt=""
+              className="h-full w-full object-contain p-6"
             />
-            Estándar (sin costo adicional)
-          </label>
-          {finishLevels.map((fl) => (
-            <label
-              key={fl.id}
-              className="flex cursor-pointer items-center gap-2 rounded-xl border border-border p-4 has-[:checked]:border-foreground"
-            >
-              <input
-                type="radio"
-                name="finish"
-                checked={finishLevelId === fl.id}
-                onChange={() => setFinishLevelId(fl.id)}
-              />
-              {fl.name} (+{formatMoney(fl.priceDelta, currency)})
-            </label>
-          ))}
-          <div className="mt-2 flex gap-3">
-            <button
-              type="button"
-              onClick={() => setStep(0)}
-              className="rounded-full border border-border px-5 py-2.5 text-sm transition-colors hover:border-foreground"
-            >
-              Atrás
-            </button>
-            <button
-              type="button"
-              onClick={() => setStep(2)}
-              style={{ backgroundColor: accent }}
-              className="rounded-full px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
-            >
-              Continuar
-            </button>
-          </div>
-        </fieldset>
-      )}
+          ) : (
+            <ImageIcon className="h-16 w-16 text-muted-foreground" />
+          )}
+          {mainImages.length > 1 && (
+            <div className="absolute bottom-4 flex items-center gap-3">
+              <button
+                type="button"
+                aria-label="Imagen anterior"
+                onClick={() => setImageIndex((i) => (i - 1 + mainImages.length) % mainImages.length)}
+                className="rounded-full border border-border bg-background/80 p-1.5 text-foreground transition-colors hover:border-foreground"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <div className="flex items-center gap-1.5">
+                {mainImages.map((url, i) => (
+                  <button
+                    key={url}
+                    type="button"
+                    aria-label={`Ver imagen ${i + 1}`}
+                    onClick={() => setImageIndex(i)}
+                    style={i === imageIndex ? { backgroundColor: primary } : undefined}
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full transition-colors",
+                      i !== imageIndex && "bg-muted-foreground/40",
+                    )}
+                  />
+                ))}
+              </div>
+              <button
+                type="button"
+                aria-label="Imagen siguiente"
+                onClick={() => setImageIndex((i) => (i + 1) % mainImages.length)}
+                className="rounded-full border border-border bg-background/80 p-1.5 text-foreground transition-colors hover:border-foreground"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </div>
 
-      {step === 2 && (
-        <fieldset className="flex flex-col gap-3">
-          <legend className="mb-1 font-medium">Elige extras</legend>
-          {applicableExtras.map((extra) => (
-            <label
-              key={extra.id}
-              className="flex cursor-pointer items-center gap-2 rounded-xl border border-border p-4 has-[:checked]:border-foreground"
-            >
-              <input
-                type="checkbox"
-                checked={extraIds.includes(extra.id)}
-                onChange={(e) =>
+        {/* Panel de opciones — scroll continuo, sin pasos */}
+        <div
+          className={cn(
+            "flex flex-col gap-8 border-t border-border p-6 lg:w-[420px] lg:flex-none lg:border-l lg:border-t-0 lg:p-8",
+            fullHeight ? "flex-1 overflow-y-auto" : "flex-1",
+          )}
+        >
+          {preview && (
+            <p className="rounded-lg border border-amber-700 bg-amber-950 px-3 py-2 text-xs text-amber-400">
+              Vista previa: solo tú puedes ver esto mientras el desarrollo esté en borrador.
+            </p>
+          )}
+
+          <section className="flex flex-col gap-2">
+            <h2 className="text-sm font-medium text-muted-foreground">Elige un modelo</h2>
+            {models.map((model) => (
+              <OptionRow
+                key={model.id}
+                color={primary}
+                image={model.imageUrls[0]}
+                title={model.name}
+                subtitle={`${model.areaM2} m² · ${model.bedrooms} recámaras`}
+                price={formatMoney(model.basePrice, currency)}
+                selected={modelId === model.id}
+                onSelect={() => {
+                  setModelId(model.id);
+                  setExtraIds([]);
+                }}
+              />
+            ))}
+            {models.length === 0 && (
+              <p className="text-sm text-muted-foreground">Aún no hay modelos disponibles.</p>
+            )}
+          </section>
+
+          <section className="flex flex-col gap-2">
+            <h2 className="text-sm font-medium text-muted-foreground">Nivel de acabado</h2>
+            <OptionRow
+              color={primary}
+              title="Estándar"
+              subtitle="Sin costo adicional"
+              selected={finishLevelId === ""}
+              onSelect={() => setFinishLevelId("")}
+            />
+            {finishLevels.map((fl) => (
+              <OptionRow
+                key={fl.id}
+                color={primary}
+                image={fl.imageUrls[0]}
+                title={fl.name}
+                price={`+${formatMoney(fl.priceDelta, currency)}`}
+                selected={finishLevelId === fl.id}
+                onSelect={() => setFinishLevelId(fl.id)}
+              />
+            ))}
+          </section>
+
+          <section className="flex flex-col gap-2">
+            <h2 className="text-sm font-medium text-muted-foreground">Extras</h2>
+            {applicableExtras.map((extra) => (
+              <OptionRow
+                key={extra.id}
+                color={primary}
+                image={extra.imageUrls[0]}
+                title={extra.name}
+                price={`+${formatMoney(extra.priceDelta, currency)}`}
+                selected={extraIds.includes(extra.id)}
+                multi
+                onSelect={() =>
                   setExtraIds((prev) =>
-                    e.target.checked ? [...prev, extra.id] : prev.filter((id) => id !== extra.id),
+                    prev.includes(extra.id) ? prev.filter((id) => id !== extra.id) : [...prev, extra.id],
                   )
                 }
               />
-              {extra.name} (+{formatMoney(extra.priceDelta, currency)})
-            </label>
-          ))}
-          {applicableExtras.length === 0 && (
-            <p className="text-sm text-muted-foreground">Sin extras disponibles para este modelo.</p>
-          )}
-          <div className="mt-2 flex gap-3">
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="rounded-full border border-border px-5 py-2.5 text-sm transition-colors hover:border-foreground"
-            >
-              Atrás
-            </button>
-            <button
-              type="button"
-              onClick={() => setStep(3)}
-              style={{ backgroundColor: accent }}
-              className="rounded-full px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
-            >
-              Continuar
-            </button>
-          </div>
-        </fieldset>
-      )}
+            ))}
+            {applicableExtras.length === 0 && (
+              <p className="text-sm text-muted-foreground">Sin extras disponibles para este modelo.</p>
+            )}
+          </section>
 
-      {step === 3 && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            submitQuote();
-          }}
-          className="flex flex-col gap-4"
-        >
-          <h2 className="font-medium">Tus datos de contacto</h2>
-          {/* Honeypot: oculto para personas, visible para bots que rellenan todo el formulario */}
-          <label className="absolute -left-[9999px]" aria-hidden="true">
-            No llenar este campo
-            <input
-              type="text"
-              name="website"
-              tabIndex={-1}
-              autoComplete="off"
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            Nombre
-            <input
-              required
-              minLength={2}
-              maxLength={160}
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            Correo
-            <input
-              type="email"
-              required
-              value={customerEmail}
-              onChange={(e) => setCustomerEmail(e.target.value)}
-              className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            Teléfono (opcional)
-            <input
-              type="tel"
-              maxLength={40}
-              value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
-              className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground"
-            />
-          </label>
-          {submitError && (
-            <p role="alert" className="text-sm text-red-400">
-              {submitError}
-            </p>
-          )}
-          <div className="mt-1 flex gap-3">
-            <button
-              type="button"
-              onClick={() => setStep(2)}
-              className="rounded-full border border-border px-5 py-2.5 text-sm transition-colors hover:border-foreground"
-            >
-              Atrás
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{ backgroundColor: accent }}
-              className="rounded-full px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-            >
-              {submitting ? "Enviando…" : ctaText}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {step === 4 && (
-        <div role="status" className="rounded-xl border border-green-800 bg-green-950 p-5">
-          <p className="font-medium text-green-400">¡Listo! Recibimos tu cotización.</p>
-          {confirmedTotal && (
-            <p className="mt-1 text-sm text-green-400">
-              Total cotizado: {formatMoney(confirmedTotal, currency)}
-            </p>
-          )}
-          <p className="mt-2 text-sm text-green-400">Nos pondremos en contacto contigo pronto.</p>
-        </div>
-      )}
-
-      {step < 4 && (
-        <aside aria-live="polite" className="rounded-xl border border-border bg-muted/40 p-5">
-          <h3 className="text-sm font-medium text-muted-foreground">Precio estimado</h3>
-          {loadingPrice && <p className="mt-2 text-sm text-muted-foreground">Calculando…</p>}
-          {!loadingPrice && breakdown && (
-            <div className="mt-1">
-              <p className="text-2xl font-semibold">{formatMoney(breakdown.total, currency)}</p>
-              <ul className="mt-2 flex flex-col gap-0.5 text-xs text-muted-foreground">
+          <section aria-live="polite" className="flex flex-col gap-3 rounded-xl border border-border p-4">
+            <h2 className="text-sm font-medium text-muted-foreground">Precio estimado</h2>
+            {loadingPrice && <p className="text-sm text-muted-foreground">Calculando…</p>}
+            {!loadingPrice && breakdown && (
+              <ul className="flex flex-col gap-0.5 text-xs text-muted-foreground">
                 <li>Base: {formatMoney(breakdown.basePrice, currency)}</li>
                 {Number(breakdown.finishLevelDelta) !== 0 && (
                   <li>Acabado: +{formatMoney(breakdown.finishLevelDelta, currency)}</li>
@@ -447,10 +424,8 @@ export function ConfiguratorWizard({
                   </li>
                 ))}
               </ul>
-            </div>
-          )}
+            )}
 
-          <div className="mt-4 border-t border-border pt-4">
             {appliedPromoCode ? (
               <div className="flex items-center justify-between gap-2 text-sm">
                 <span className="text-green-500">
@@ -498,9 +473,147 @@ export function ConfiguratorWizard({
                 )}
               </div>
             )}
-          </div>
-        </aside>
-      )}
+          </section>
+
+          <form
+            id="quote-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitQuote();
+            }}
+            className="flex flex-col gap-3"
+          >
+            <h2 className="text-sm font-medium text-muted-foreground">Tus datos de contacto</h2>
+            {/* Honeypot: oculto para personas, visible para bots que rellenan todo el formulario */}
+            <label className="absolute -left-[9999px]" aria-hidden="true">
+              No llenar este campo
+              <input
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              Nombre
+              <input
+                required
+                minLength={2}
+                maxLength={160}
+                value={customerName}
+                onFocus={trackConfigCompletedOnce}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              Correo
+              <input
+                type="email"
+                required
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              Teléfono (opcional)
+              <input
+                type="tel"
+                maxLength={40}
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground"
+              />
+            </label>
+            {submitError && (
+              <p role="alert" className="text-sm text-red-400">
+                {submitError}
+              </p>
+            )}
+          </form>
+        </div>
+      </div>
+
+      {/* Barra inferior fija: resumen + precio + enviar, siempre visible */}
+      <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-background px-6 py-4">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{selectedModel?.name ?? "Elige un modelo"}</p>
+          {summaryParts.length > 0 && (
+            <p className="truncate text-xs text-muted-foreground">{summaryParts.join(" · ")}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-lg font-semibold">
+            {breakdown ? formatMoney(breakdown.total, currency) : "—"}
+          </span>
+          <button
+            type="submit"
+            form="quote-form"
+            disabled={submitting || !modelId}
+            style={{ backgroundColor: accent }}
+            className="rounded-full px-6 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {submitting ? "Enviando…" : ctaText}
+          </button>
+        </div>
+      </footer>
     </div>
+  );
+}
+
+function OptionRow({
+  image,
+  title,
+  subtitle,
+  price,
+  selected,
+  multi,
+  color,
+  onSelect,
+}: {
+  image?: string;
+  title: string;
+  subtitle?: string;
+  price?: string;
+  selected: boolean;
+  multi?: boolean;
+  color: string;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      style={selected ? { borderColor: color } : undefined}
+      className={cn(
+        "flex items-center justify-between gap-3 rounded-lg border p-3 text-left transition-colors",
+        !selected && "border-border hover:border-foreground/50",
+      )}
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        {image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={image} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover" />
+        ) : (
+          <span
+            style={selected ? { borderColor: color, backgroundColor: color } : undefined}
+            className={cn(
+              "flex h-4 w-4 shrink-0 items-center justify-center border",
+              multi ? "rounded" : "rounded-full",
+              !selected && "border-muted-foreground",
+            )}
+          />
+        )}
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-medium">{title}</span>
+          {subtitle && <span className="block truncate text-xs text-muted-foreground">{subtitle}</span>}
+        </span>
+      </span>
+      {price && <span className="shrink-0 text-sm font-medium">{price}</span>}
+    </button>
   );
 }

@@ -67,14 +67,16 @@ export default async function WidgetPage({ params }: { params: Promise<{ slug: s
   ]);
 
   return (
-    <main className="px-4 py-4">
+    <main>
       <HeightReporter slug={slug} />
       <ConfiguratorWizard
         slug={slug}
         preview={isPreview}
         originPlan="B"
+        showHeader={false}
         currency={development.currency}
         ctaText={development.ctaText ?? "Cotiza tu casa"}
+        primaryColor={development.primaryColor}
         accentColor={development.accentColor}
         models={models.map((m) => ({
           id: m.id,
@@ -83,12 +85,14 @@ export default async function WidgetPage({ params }: { params: Promise<{ slug: s
           areaM2: m.areaM2.toNumber(),
           bedrooms: m.bedrooms,
           basePrice: m.basePrice.toNumber(),
+          imageUrls: m.imageUrls,
         }))}
         finishLevels={finishLevels.map((f) => ({
           id: f.id,
           name: f.name,
           description: f.description,
           priceDelta: f.priceDelta.toNumber(),
+          imageUrls: f.imageUrls,
         }))}
         extras={extras.map((e) => ({
           id: e.id,
@@ -96,6 +100,7 @@ export default async function WidgetPage({ params }: { params: Promise<{ slug: s
           description: e.description,
           priceDelta: e.priceDelta.toNumber(),
           modelIds: e.modelLinks.map((l) => l.modelId),
+          imageUrls: e.imageUrls,
         }))}
       />
       <p className="mt-4 text-center text-xs text-muted-foreground">
