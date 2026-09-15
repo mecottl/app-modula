@@ -14,6 +14,7 @@ const nav = [
   { href: "#catalogo", label: "Configurar tu catálogo" },
   { href: "#plan-basico", label: "Plan Básico: publicar tu página" },
   { href: "#plan-profesional", label: "Plan Profesional: el widget" },
+  { href: "#dominio-personalizado", label: "Dominio personalizado" },
   { href: "#cotizaciones", label: "Cotizaciones (leads)" },
   { href: "#analitica", label: "Analítica" },
   { href: "#miembros", label: "Miembros y roles" },
@@ -239,6 +240,51 @@ export default function DocsPage() {
                   Si tu cuenta está en Plan Básico, tanto la pestaña Integración como la URL
                   pública del widget muestran un mensaje para subir de plan — el control de
                   acceso se aplica en el servidor, no solo ocultando el botón.
+                </p>
+              </Section>
+
+              <Section id="dominio-personalizado" title="Dominio personalizado">
+                <p>
+                  Exclusivo de Plan Profesional. Sirve tu página propia del configurador (Plan
+                  Básico) bajo un dominio tuyo — ej. <code>cotiza.tuempresa.com</code> — en vez de
+                  la URL de MODULA. Se configura desde{" "}
+                  <strong>Integración → Dominio personalizado</strong>.
+                </p>
+                <div className="flex flex-col gap-5">
+                  <Step number="1" title="Agrega los registros DNS">
+                    En el proveedor donde administras el dominio (Vercel, Cloudflare, Namecheap,
+                    GoDaddy, etc.), agrega un <strong>CNAME</strong> del subdominio elegido (ej.{" "}
+                    <code>cotiza</code>) hacia <code>cname.vercel-dns.com</code>. Si tu dominio lo
+                    compraste directo en Vercel, esto se hace desde{" "}
+                    <code>vercel.com/domains → tu dominio → DNS Records</code> en vez de un
+                    proveedor externo.
+                  </Step>
+                  <Step number="2" title="Conecta el dominio al proyecto en Vercel">
+                    En el proyecto de Vercel, <code>Settings → Domains</code>, agrega el subdominio
+                    completo (ej. <code>cotiza.tuempresa.com</code>). Vercel emite el certificado
+                    HTTPS automáticamente en cuanto el CNAME resuelve — puede tardar desde minutos
+                    hasta un par de horas según el proveedor de DNS.
+                  </Step>
+                  <Step number="3" title="Guarda el dominio en MODULA">
+                    En <strong>Integración → Dominio personalizado</strong>, escribe el mismo
+                    subdominio y guarda. MODULA genera un token único y te muestra el registro{" "}
+                    <strong>TXT</strong> exacto que falta agregar — sin este paso, el dominio no
+                    sirve nada, para que nadie pueda apuntar el dominio de otra desarrolladora.
+                  </Step>
+                  <Step number="4" title="Agrega el registro TXT">
+                    Vuelve al DNS del dominio (mismo lugar del paso 1) y agrega el registro TXT que
+                    te mostró MODULA, con el nombre <code>_modula-verify.&lt;subdominio&gt;</code>.
+                  </Step>
+                  <Step number="5" title="Verifica">
+                    De vuelta en Integración, dale clic a <strong>Verificar</strong>. Si el TXT ya
+                    propagó, el dominio pasa a &quot;Verificado&quot; de inmediato y queda activo.
+                    Si no lo encuentra, espera unos minutos (propagación DNS) e inténtalo de nuevo.
+                  </Step>
+                </div>
+                <p>
+                  Cualquier visitante que entre a ese dominio ve directamente el configurador de
+                  ese desarrollo — el dominio de MODULA (y el resto de tus desarrollos) siguen
+                  funcionando normal, sin verse afectados.
                 </p>
               </Section>
 
