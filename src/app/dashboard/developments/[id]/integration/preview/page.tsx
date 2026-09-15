@@ -17,7 +17,7 @@ export default async function IntegrationPreviewPage({ params }: { params: Promi
       <h3 className="font-medium">Vista previa en vivo</h3>
       <p className="mt-1 text-sm text-muted-foreground">
         Así se ve el widget embebido, sin copiar nada. Se muestra en modo vista previa aunque el
-        entorno de abajo esté en Producción — el snippet público no incluye esta puerta de vista
+        entorno de abajo esté en Producción. El snippet público no incluye esta puerta de vista
         previa.
       </p>
       <div className="mt-3 overflow-hidden rounded border">

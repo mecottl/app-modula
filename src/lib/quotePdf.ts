@@ -109,7 +109,7 @@ export async function generateQuotePdf(params: {
     text(params.customerPhone, { size: 11, gap: 16 });
   }
 
-  page.drawText("Generado con MODULA — esta cotización no constituye un contrato de compraventa.", {
+  page.drawText("Generado con MODULA. Esta cotización no constituye un contrato de compraventa.", {
     x: margin,
     y: margin - 20,
     size: 8,

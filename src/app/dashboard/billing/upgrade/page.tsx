@@ -71,7 +71,7 @@ export default async function UpgradePage() {
         <p className="mt-1 text-sm text-muted-foreground">
           {pendingDowngrade
             ? "Esto cancela la baja programada y te deja en Profesional."
-            : "Se cobra hoy mismo solo la diferencia del periodo restante — no el precio completo de nuevo."}
+            : "Se cobra hoy mismo solo la diferencia del periodo restante, no el precio completo de nuevo."}
         </p>
       </div>
 

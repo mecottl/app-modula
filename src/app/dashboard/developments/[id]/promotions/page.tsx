@@ -43,7 +43,7 @@ export default async function PromotionsPage({
         <div>
           <h2 className="font-medium">Reglas de precio (promociones)</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            El comprador debe ingresar el código en el configurador — no se aplican solas.
+            El comprador debe ingresar el código en el configurador, no se aplican solas.
           </p>
         </div>
         <FormDialog

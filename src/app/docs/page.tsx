@@ -4,7 +4,7 @@ import { Footer } from "@/components/ui/footer-section";
 import { HostingDnsTabs } from "@/components/docs/hosting-dns-tabs";
 
 export const metadata = {
-  title: "Documentación — MODULA",
+  title: "Documentación de MODULA",
   description: "Cómo funciona MODULA y cómo usarlo, para desarrolladoras inmobiliarias.",
 };
 
@@ -68,7 +68,7 @@ export default function DocsPage() {
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Documentación</h1>
             <p className="mt-3 text-muted-foreground">
               Guía completa de cómo funciona MODULA y cómo usarlo desde el dashboard de tu
-              desarrolladora — desde crear tu primer desarrollo hasta recibir tu primera
+              desarrolladora: desde crear tu primer desarrollo hasta recibir tu primera
               cotización.
             </p>
           </div>
@@ -94,7 +94,7 @@ export default function DocsPage() {
                 <p>
                   MODULA es un configurador de vivienda con cotización en tiempo real para
                   desarrolladoras inmobiliarias en preventa. Tu comprador elige modelo, nivel de
-                  acabado y extras, y ve el precio total actualizarse al instante — sin depender
+                  acabado y extras, y ve el precio total actualizarse al instante, sin depender
                   de un asesor disponible. El mismo principio que usa un configurador de autos.
                 </p>
                 <p>
@@ -112,12 +112,12 @@ export default function DocsPage() {
                 </p>
                 <ul className="flex flex-col gap-2">
                   <li>
-                    <strong>Plan Básico</strong> — una página propia que nosotros hospedamos, en{" "}
+                    <strong>Plan Básico</strong>: una página propia que nosotros hospedamos, en{" "}
                     <code>tudominio.com/tu-desarrollo/cotizacion-cliente</code>. No requiere sitio
                     propio ni instalación.
                   </li>
                   <li>
-                    <strong>Plan Profesional</strong> — el mismo configurador embebido como widget
+                    <strong>Plan Profesional</strong>: el mismo configurador embebido como widget
                     (<code>iframe</code>) dentro de tu propio sitio, con tu marca y tu dominio.
                   </li>
                 </ul>
@@ -140,7 +140,7 @@ export default function DocsPage() {
                   </Step>
                   <Step number="2" title="Crea tu primer desarrollo">
                     En <strong>Desarrollos → Nuevo desarrollo</strong> das de alta un proyecto con
-                    solo su nombre. Un desarrollo es un proyecto inmobiliario — puedes tener
+                    solo su nombre. Un desarrollo es un proyecto inmobiliario. Puedes tener
                     varios bajo la misma cuenta. Tu URL pública se genera automáticamente a partir
                     del nombre; la moneda (por defecto MXN) se ajusta después desde{" "}
                     <strong>General → Configuración avanzada</strong>.
@@ -165,26 +165,26 @@ export default function DocsPage() {
 
               <Section id="catalogo" title="Configurar tu catálogo">
                 <p>
-                  Dentro de cada desarrollo, el catálogo se configura en pestañas — los cambios se
+                  Dentro de cada desarrollo, el catálogo se configura en pestañas. Los cambios se
                   guardan de inmediato pero solo son visibles al público cuando el desarrollo está
                   publicado:
                 </p>
                 <ul className="flex flex-col gap-3">
                   <li>
-                    <strong>General y marca</strong> — nombre, descripción, moneda, logo, color
+                    <strong>General y marca</strong>: nombre, descripción, moneda, logo, color
                     primario/acento y el texto del botón de cotizar.
                   </li>
                   <li>
-                    <strong>Catálogo</strong> — tus modelos de vivienda: nombre, m², recámaras y
+                    <strong>Catálogo</strong>: tus modelos de vivienda: nombre, m², recámaras y
                     precio base. Puedes marcar un modelo como inactivo sin borrarlo.
                   </li>
                   <li>
-                    <strong>Acabados y extras</strong> — niveles de acabado (cada uno con un delta
+                    <strong>Acabados y extras</strong>: niveles de acabado (cada uno con un delta
                     de precio sobre el precio base) y extras opcionales, que puedes asociar solo a
                     los modelos donde aplican.
                   </li>
                   <li>
-                    <strong>Reglas de precio</strong> — promociones con vigencia (fecha de inicio
+                    <strong>Reglas de precio</strong>: promociones con vigencia (fecha de inicio
                     y fin) y descuento porcentual o fijo, aplicadas automáticamente por el motor
                     mientras estén vigentes.
                   </li>
@@ -223,23 +223,23 @@ export default function DocsPage() {
                 </p>
                 <ul className="flex flex-col gap-3">
                   <li>
-                    <strong>Entorno — Vista previa</strong>: no valida el dominio de origen, para
+                    <strong>Entorno: Vista previa</strong>: no valida el dominio de origen, para
                     que pruebes libremente antes de publicar el cambio en tu sitio real.
                   </li>
                   <li>
-                    <strong>Entorno — Producción</strong>: valida que la solicitud venga de uno de
+                    <strong>Entorno: Producción</strong>: valida que la solicitud venga de uno de
                     tus <strong>dominios autorizados</strong> (uno por línea). Si alguien copia tu
                     snippet a un sitio no autorizado, el widget no carga ahí.
                   </li>
                   <li>
                     <strong>Token del proyecto</strong>: identifica tu desarrollo ante el widget.
-                    Si sospechas que se filtró, puedes regenerarlo — esto invalida el anterior de
+                    Si sospechas que se filtró, puedes regenerarlo. Esto invalida el anterior de
                     inmediato.
                   </li>
                 </ul>
                 <p>
                   Si tu cuenta está en Plan Básico, tanto la pestaña Integración como la URL
-                  pública del widget muestran un mensaje para subir de plan — el control de
+                  pública del widget muestran un mensaje para subir de plan. El control de
                   acceso se aplica en el servidor, no solo ocultando el botón.
                 </p>
               </Section>
@@ -247,7 +247,7 @@ export default function DocsPage() {
               <Section id="dominio-personalizado" title="Dominio personalizado">
                 <p>
                   Exclusivo de Plan Profesional. Sirve tu página propia del configurador (Plan
-                  Básico) bajo un dominio tuyo — ej. <code>cotiza.tuempresa.com</code> — en vez de
+                  Básico) bajo un dominio tuyo (ej. <code>cotiza.tuempresa.com</code>) en vez de
                   la URL de MODULA. Se configura desde{" "}
                   <strong>Integración → Dominio personalizado</strong>.
                 </p>
@@ -256,7 +256,7 @@ export default function DocsPage() {
                     En <strong>Integración → Dominio personalizado</strong>, escribe el subdominio
                     que vas a usar (ej. <code>cotiza.tuempresa.com</code>) y guarda. MODULA genera
                     un token único y te muestra el registro <strong>TXT</strong> exacto que falta
-                    agregar — de aquí en adelante todo lo demás corre de nuestro lado, tú solo
+                    agregar. De aquí en adelante todo lo demás corre de nuestro lado, tú solo
                     tienes que completar el DNS.
                   </Step>
                   <Step number="2" title="Agrega los registros DNS">
@@ -270,21 +270,21 @@ export default function DocsPage() {
                     De vuelta en Integración, dale clic a <strong>Verificar</strong>. Si el TXT ya
                     propagó, el dominio pasa a &quot;Verificado&quot; de inmediato y queda activo,
                     con su certificado de seguridad (HTTPS) emitido automáticamente en cuanto el
-                    CNAME resuelve — puede tardar desde minutos hasta un par de horas según tu
-                    proveedor de DNS. Si no encuentra el TXT, espera unos minutos e inténtalo de
+                    CNAME resuelve (puede tardar desde minutos hasta un par de horas según tu
+                    proveedor de DNS). Si no encuentra el TXT, espera unos minutos e inténtalo de
                     nuevo.
                   </Step>
                 </div>
                 <p>
                   Cualquier visitante que entre a ese dominio ve directamente el configurador de
-                  ese desarrollo — el dominio de MODULA (y el resto de tus desarrollos) siguen
+                  ese desarrollo. El dominio de MODULA (y el resto de tus desarrollos) siguen
                   funcionando normal, sin verse afectados.
                 </p>
               </Section>
 
               <Section id="cotizaciones" title="Cotizaciones (leads)">
                 <p>
-                  Cada cotización enviada por un comprador —desde Plan Básico o Profesional— llega
+                  Cada cotización enviada por un comprador (desde Plan Básico o Profesional) llega
                   a la bandeja de <strong>Cotizaciones</strong> del desarrollo correspondiente, con
                   el modelo, acabado, extras, precio total, datos de contacto y el plan de origen.
                 </p>
@@ -308,7 +308,7 @@ export default function DocsPage() {
                 <p>
                   Cada desarrollo tiene su propia pestaña de <strong>Analítica</strong> con
                   visitas al configurador, configuraciones completadas y cotizaciones enviadas, más
-                  un ranking de los modelos más cotizados — útil para saber qué combinaciones
+                  un ranking de los modelos más cotizados, útil para saber qué combinaciones
                   interesan más a tus compradores.
                 </p>
               </Section>
@@ -320,15 +320,15 @@ export default function DocsPage() {
                 </p>
                 <ul className="flex flex-col gap-2">
                   <li>
-                    <strong>Administrador</strong> — acceso completo, incluyendo miembros y
+                    <strong>Administrador</strong>: acceso completo, incluyendo miembros y
                     facturación.
                   </li>
                   <li>
-                    <strong>Editor de catálogo</strong> — puede configurar desarrollos y catálogo,
+                    <strong>Editor de catálogo</strong>: puede configurar desarrollos y catálogo,
                     sin acceso a miembros ni facturación.
                   </li>
                   <li>
-                    <strong>Solo lectura</strong> — puede ver la información pero no modificarla.
+                    <strong>Solo lectura</strong>: puede ver la información pero no modificarla.
                   </li>
                 </ul>
                 <p>
@@ -349,7 +349,7 @@ export default function DocsPage() {
                     Ver tu plan y estado actuales, y tu historial de facturas.
                   </li>
                   <li>
-                    <strong>Subir o bajar de plan</strong> en cualquier momento — si ya tienes una
+                    <strong>Subir o bajar de plan</strong> en cualquier momento. Si ya tienes una
                     suscripción activa, el cambio se aplica de inmediato y Stripe cobra o abona
                     solo la diferencia prorrateada del periodo restante, no el precio completo de
                     nuevo.
@@ -365,7 +365,7 @@ export default function DocsPage() {
                 <ul className="flex flex-col gap-3">
                   <li>
                     <strong>Aislamiento entre cuentas</strong>: cada consulta al backend queda
-                    acotada a tu cuenta autenticada — ninguna desarrolladora puede ver o modificar
+                    acotada a tu cuenta autenticada: ninguna desarrolladora puede ver o modificar
                     el catálogo o las cotizaciones de otra.
                   </li>
                   <li>
@@ -393,7 +393,7 @@ export default function DocsPage() {
                       </li>
                       <li>
                         ¿El desarrollo está en <strong>Publicado</strong>? Revísalo en la cabecera
-                        de General — en Borrador solo tú puedes verlo con Vista previa.
+                        de General: en Borrador solo tú puedes verlo con Vista previa.
                       </li>
                       <li>
                         La ficha de General muestra un checklist con estos mismos pasos y enlaces
@@ -410,7 +410,7 @@ export default function DocsPage() {
                       </li>
                       <li>
                         ¿El <strong>Entorno</strong> en Integración está en{" "}
-                        <strong>Producción</strong>? Solo ese modo valida el dominio — Vista previa
+                        <strong>Producción</strong>? Solo ese modo valida el dominio. Vista previa
                         nunca lo bloquea.
                       </li>
                       <li>

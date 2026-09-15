@@ -56,7 +56,7 @@ export function SubscriptionCancellation({
       ) : (
         <>
           <p className="mt-2 text-sm text-muted-foreground">
-            Al cancelar, tu suscripción sigue siendo válida hasta el {periodEndDate} — un mes después de
+            Al cancelar, tu suscripción sigue siendo válida hasta el {periodEndDate}, un mes después de
             tu última facturación. No se te cobrará de nuevo a partir de esa fecha, y no se hace ningún
             reembolso del periodo ya pagado.
           </p>

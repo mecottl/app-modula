@@ -195,7 +195,7 @@ export default async function ModelsPage({
         {models.length === 0 && (
           <EmptyState
             title="Sin modelos aún"
-            description="Agrega tu primer modelo con el botón de arriba — sin al menos uno, el configurador no tiene nada que mostrar."
+            description="Agrega tu primer modelo con el botón de arriba. Sin al menos uno, el configurador no tiene nada que mostrar."
           />
         )}
       </ul>

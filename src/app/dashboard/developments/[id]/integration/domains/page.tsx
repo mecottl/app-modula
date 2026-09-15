@@ -27,7 +27,7 @@ export default async function IntegrationDomainsPage({
         controla la página propia (Plan Básico); esto de aquí controla únicamente el widget
         embebido (Plan Profesional). <strong>Vista previa</strong> no valida el dominio de origen,
         para que pruebes el widget libremente. <strong>Producción</strong> solo sirve el widget si
-        la solicitud viene de uno de los dominios autorizados de abajo — actívalo cuando ya hayas
+        la solicitud viene de uno de los dominios autorizados de abajo. Actívalo cuando ya hayas
         pegado el snippet en tu sitio real.
       </p>
       <form

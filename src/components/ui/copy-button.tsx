@@ -14,7 +14,7 @@ export function CopyButton({ value, label = "Copiar", className }: { value: stri
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error("No se pudo copiar — selecciona el texto manualmente.");
+      toast.error("No se pudo copiar, selecciona el texto manualmente.");
     }
   }
 

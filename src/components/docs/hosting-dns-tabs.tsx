@@ -24,7 +24,7 @@ const PROVIDERS: Provider[] = [
     label: "Cloudflare",
     steps: [
       "Ve a DNS → Records → Add record.",
-      "Tipo CNAME, nombre = tu subdominio, destino = cname.vercel-dns.com. Pon el \"Proxy status\" en DNS only (nube gris) — si queda en modo proxy (nube naranja), Vercel no puede emitir el certificado.",
+      "Tipo CNAME, nombre = tu subdominio, destino = cname.vercel-dns.com. Pon el \"Proxy status\" en DNS only (nube gris): si queda en modo proxy (nube naranja), Vercel no puede emitir el certificado.",
       "Agrega otro registro tipo TXT con el nombre y valor exactos que te dé MODULA.",
     ],
   },

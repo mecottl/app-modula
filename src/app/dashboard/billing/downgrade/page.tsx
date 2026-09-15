@@ -50,7 +50,7 @@ export default async function DowngradePage() {
         </Link>
         <h1 className="mt-2 text-xl font-semibold">Bajar a Plan Básico</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          No se cobra ni se reembolsa nada ahora — el cambio se agenda para cuando termine tu
+          No se cobra ni se reembolsa nada ahora. El cambio se agenda para cuando termine tu
           periodo ya pagado.
         </p>
       </div>

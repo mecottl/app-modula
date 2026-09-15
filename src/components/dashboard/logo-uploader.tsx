@@ -68,7 +68,7 @@ export function LogoUploader({
           <Upload className="h-4 w-4" />
           {pending ? "Subiendo…" : "Subir imagen"}
         </Button>
-        <p className="mt-1.5 text-xs text-muted-foreground">PNG, JPG, WEBP o SVG — máx. 5 MB.</p>
+        <p className="mt-1.5 text-xs text-muted-foreground">PNG, JPG, WEBP o SVG, máx. 5 MB.</p>
       </div>
     </div>
   );

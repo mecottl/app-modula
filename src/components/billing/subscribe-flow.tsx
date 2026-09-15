@@ -69,7 +69,7 @@ export function SubscribeFlow({
   return (
     <div>
       <p className="mb-4 text-sm text-muted-foreground">
-        {planLabels[plan]} — <span className="text-foreground">{planPrices[plan]}</span>
+        {planLabels[plan]}: <span className="text-foreground">{planPrices[plan]}</span>
       </p>
       <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeElementsAppearance }}>
         <CheckoutForm onSuccess={onSuccess} submitLabel={submitLabel} />

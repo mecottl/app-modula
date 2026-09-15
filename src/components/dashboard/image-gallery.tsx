@@ -88,7 +88,7 @@ export function ImageGallery({
         className="hidden"
         onChange={handleFileChange}
       />
-      <p className="text-xs text-muted-foreground">PNG, JPG, WEBP o SVG — máx. 5 MB cada una.</p>
+      <p className="text-xs text-muted-foreground">PNG, JPG, WEBP o SVG, máx. 5 MB cada una.</p>
     </div>
   );
 }

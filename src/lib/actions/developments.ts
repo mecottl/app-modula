@@ -323,7 +323,7 @@ export async function verifyDevelopmentDomain(developmentId: string) {
   } catch {
     backToIntegration(
       developmentId,
-      "No encontramos el registro TXT todavía — puede tardar unos minutos en propagarse. Intenta de nuevo en un momento.",
+      "No encontramos el registro TXT todavía. Puede tardar unos minutos en propagarse. Intenta de nuevo en un momento.",
     );
   }
 

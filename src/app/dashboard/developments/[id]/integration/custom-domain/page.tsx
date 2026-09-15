@@ -25,7 +25,7 @@ export default async function IntegrationCustomDomainPage({
       <h3 className="font-medium">Dominio personalizado</h3>
       <p className="mt-1 text-xs text-muted-foreground">
         Sirve la página propia del configurador (Plan Básico) bajo tu dominio en vez del de MODULA
-        — ej. <code>cotiza.tuempresa.com</code>.
+        (ej. <code>cotiza.tuempresa.com</code>).
       </p>
 
       {development.customDomain ? (

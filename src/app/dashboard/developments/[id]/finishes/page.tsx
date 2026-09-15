@@ -28,8 +28,8 @@ import { ImageGallery } from "@/components/dashboard/image-gallery";
 import { formatMoney } from "@/lib/money";
 
 const selectionModeOptions = [
-  { value: "UNICA", label: "Única — el comprador elige como máximo una opción" },
-  { value: "MULTIPLE", label: "Múltiple — el comprador puede elegir varias" },
+  { value: "UNICA", label: "Única: el comprador elige como máximo una opción" },
+  { value: "MULTIPLE", label: "Múltiple: el comprador puede elegir varias" },
 ];
 
 export const dynamic = "force-dynamic";
@@ -391,7 +391,7 @@ export default async function FinishesPage({
           {extras.length === 0 && (
             <EmptyState
               title="Sin extras aún"
-              description="Son opcionales — agrégalos con el botón de arriba si quieres ofrecer mejoras adicionales por modelo."
+              description="Son opcionales, agrégalos con el botón de arriba si quieres ofrecer mejoras adicionales por modelo."
             />
           )}
         </ul>
