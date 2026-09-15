@@ -19,6 +19,7 @@ const nav = [
   { href: "#miembros", label: "Miembros y roles" },
   { href: "#facturacion", label: "Facturación" },
   { href: "#seguridad", label: "Seguridad y datos" },
+  { href: "#solucion-problemas", label: "Solución de problemas" },
 ];
 
 function Section({
@@ -136,9 +137,11 @@ export default function DocsPage() {
                     directamente con Stripe.
                   </Step>
                   <Step number="2" title="Crea tu primer desarrollo">
-                    En <strong>Desarrollos → Crear nuevo desarrollo</strong> das de alta un
-                    proyecto (nombre, slug para la URL pública, y moneda). Un desarrollo es un
-                    proyecto inmobiliario — puedes tener varios bajo la misma cuenta.
+                    En <strong>Desarrollos → Nuevo desarrollo</strong> das de alta un proyecto con
+                    solo su nombre. Un desarrollo es un proyecto inmobiliario — puedes tener
+                    varios bajo la misma cuenta. Tu URL pública se genera automáticamente a partir
+                    del nombre; la moneda (por defecto MXN) se ajusta después desde{" "}
+                    <strong>General → Configuración avanzada</strong>.
                   </Step>
                   <Step number="3" title="Configura tu catálogo">
                     Modelos, acabados y extras, y opcionalmente promociones (ver la sección{" "}
@@ -337,6 +340,47 @@ export default function DocsPage() {
                     suscripción a MODULA.
                   </li>
                 </ul>
+              </Section>
+
+              <Section id="solucion-problemas" title="Solución de problemas comunes">
+                <div className="flex flex-col gap-5">
+                  <div>
+                    <p className="font-medium text-foreground">Mi configurador no aparece</p>
+                    <ul className="mt-1 flex flex-col gap-1.5">
+                      <li>
+                        ¿Tienes al menos un <strong>modelo activo</strong> en Catálogo? Sin uno, no
+                        hay nada que mostrar.
+                      </li>
+                      <li>
+                        ¿El desarrollo está en <strong>Publicado</strong>? Revísalo en la cabecera
+                        de General — en Borrador solo tú puedes verlo con Vista previa.
+                      </li>
+                      <li>
+                        La ficha de General muestra un checklist con estos mismos pasos y enlaces
+                        directos mientras falte alguno.
+                      </li>
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">Mi widget dice &quot;no autorizado&quot;</p>
+                    <ul className="mt-1 flex flex-col gap-1.5">
+                      <li>
+                        ¿Tu cuenta está en <strong>Plan Profesional</strong>? El widget embebible
+                        es exclusivo de ese plan.
+                      </li>
+                      <li>
+                        ¿El <strong>Entorno</strong> en Integración está en{" "}
+                        <strong>Producción</strong>? Solo ese modo valida el dominio — Vista previa
+                        nunca lo bloquea.
+                      </li>
+                      <li>
+                        ¿El dominio exacto donde pegaste el snippet está en la lista de{" "}
+                        <strong>dominios autorizados</strong> (uno por línea, sin{" "}
+                        <code>https://</code>)?
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </Section>
 
               <div className="border-t border-border pt-8">
