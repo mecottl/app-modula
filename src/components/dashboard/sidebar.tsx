@@ -22,7 +22,6 @@ type NavItem = {
 
 const STATIC_NAV: NavItem[] = [
   { href: "/dashboard/developments", label: "Desarrollos", icon: Building2 },
-  { href: "/dashboard/members", label: "Miembros", icon: Users },
   {
     href: "/dashboard/billing",
     label: "Facturación",
@@ -32,17 +31,9 @@ const STATIC_NAV: NavItem[] = [
       { href: "/dashboard/billing/cards", label: "Tarjetas" },
     ],
   },
+  { href: "/dashboard/members", label: "Miembros", icon: Users },
   { href: "/dashboard/account", label: "Cuenta", icon: Settings },
 ];
-
-/**
- * Árbol de desarrollos dentro de "Desarrollos" (issue "que se vea como
- * un árbol"): cada desarrollo es su propio acordeón, y solo uno puede
- * estar desplegado a la vez (abrir otro cierra el anterior) — mismo
- * principio que un árbol de archivos. Al abrirlo se ven sus pestañas
- * completas (Catálogo, Acabados, etc.), igual que antes se veían solo
- * para el desarrollo que se estuviera viendo.
- */
 function DevelopmentTree({
   developments,
   pathname,
@@ -233,7 +224,7 @@ function SidebarNav({
   onNavigate?: () => void;
 }) {
   return (
-    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
+    <nav className="thin-scrollbar flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
       {STATIC_NAV.map((item) => (
         <NavSection
           key={item.href}

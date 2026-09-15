@@ -103,3 +103,23 @@ body {
   background: var(--color-primary);
   color: var(--color-primary-foreground);
 }
+
+/* Scrollbar delgado y del mismo tono que el resto de la UI, en vez del
+   scrollbar ancho y gris del SO — usado en el árbol del sidebar. */
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+.thin-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 9999px;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-muted-foreground);
+}

@@ -66,8 +66,9 @@ export default async function GeneralPage({
           <Link href="/dashboard/developments" className="text-xs text-muted-foreground hover:text-foreground">
             ← Todos los desarrollos
           </Link>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-baseline gap-3">
             <h1 className="truncate text-2xl font-semibold tracking-tight">{development.name}</h1>
+            <span className="shrink-0 text-sm text-muted-foreground">/{development.slug}</span>
             <span
               className={cn(
                 "shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium",
@@ -79,7 +80,6 @@ export default async function GeneralPage({
               {isPublished ? "Publicado" : "Borrador"}
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">/{development.slug}</p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-3">
           <a
