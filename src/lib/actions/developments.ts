@@ -8,6 +8,7 @@ import { requireSessionAccount, requireDevelopmentForSession } from "@/lib/tenan
 import { slugify } from "@/lib/slug";
 import { generateProjectToken } from "@/lib/tokens";
 import { uploadDevelopmentImage } from "@/lib/supabaseStorage";
+import { addDomainToVercelProject } from "@/lib/vercelDomains";
 
 const createSchema = z.object({
   name: z.string().min(2).max(120),
@@ -224,7 +225,11 @@ export async function unpublishDevelopment(developmentId: string) {
   revalidatePath(`/dashboard/developments/${developmentId}`);
 }
 
-function backToIntegration(developmentId: string, message?: string, kind: "error" | "ok" = "error") {
+function backToIntegration(
+  developmentId: string,
+  message?: string,
+  kind: "error" | "ok" = "error",
+): never {
   const qs = message ? `?${kind}=${encodeURIComponent(message)}` : "";
   redirect(`/dashboard/developments/${developmentId}/integration/custom-domain${qs}`);
 }
@@ -277,8 +282,25 @@ export async function setDevelopmentDomain(developmentId: string, formData: Form
     },
   });
 
+  const vercelResult = await addDomainToVercelProject(parsed.data!);
+
   revalidatePath(`/dashboard/developments/${developmentId}/integration/custom-domain`);
-  backToIntegration(developmentId, "Dominio guardado. Agrega el registro TXT y verifica.", "ok");
+  if (!vercelResult.ok) {
+    // El dominio ya quedó guardado — solo falló conectarlo en Vercel,
+    // así que se avisa pero no se bloquea el flujo: el admin puede
+    // agregarlo a mano en Settings → Domains como respaldo.
+    backToIntegration(
+      developmentId,
+      `Dominio guardado, pero no se pudo conectar en Vercel automáticamente (${vercelResult.error}). Agrégalo a mano en tu proyecto de Vercel.`,
+    );
+  }
+  backToIntegration(
+    developmentId,
+    vercelResult.skipped
+      ? "Dominio guardado. Agrega el registro TXT, conéctalo en Vercel y verifica."
+      : "Dominio guardado y conectado en Vercel. Agrega el registro TXT y verifica.",
+    "ok",
+  );
 }
 
 /**

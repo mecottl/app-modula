@@ -255,9 +255,9 @@ export default function DocsPage() {
                   <Step number="1" title="Guarda el dominio en MODULA">
                     En <strong>Integración → Dominio personalizado</strong>, escribe el subdominio
                     que vas a usar (ej. <code>cotiza.tuempresa.com</code>) y guarda. MODULA genera
-                    un token único y te muestra el registro <strong>TXT</strong> exacto que falta
-                    agregar — sin verificarlo, el dominio no sirve nada, para que nadie pueda
-                    apuntar el dominio de otra desarrolladora.
+                    un token único, te muestra el registro <strong>TXT</strong> exacto que falta
+                    agregar, y conecta el dominio a Vercel automáticamente por ti — ya no hace
+                    falta entrar a Vercel a mano para este paso.
                   </Step>
                   <Step number="2" title="Agrega los registros DNS">
                     Con el TXT del paso anterior a la mano, agrega los registros en el proveedor
@@ -266,16 +266,12 @@ export default function DocsPage() {
                 </div>
                 <HostingDnsTabs />
                 <div className="flex flex-col gap-5">
-                  <Step number="3" title="Conecta el dominio al proyecto en Vercel">
-                    En el proyecto de Vercel, <code>Settings → Domains</code>, agrega el subdominio
-                    completo (ej. <code>cotiza.tuempresa.com</code>). Vercel emite el certificado
-                    HTTPS automáticamente en cuanto el CNAME resuelve — puede tardar desde minutos
-                    hasta un par de horas según el proveedor de DNS.
-                  </Step>
-                  <Step number="4" title="Verifica">
+                  <Step number="3" title="Verifica">
                     De vuelta en Integración, dale clic a <strong>Verificar</strong>. Si el TXT ya
-                    propagó, el dominio pasa a &quot;Verificado&quot; de inmediato y queda activo.
-                    Si no lo encuentra, espera unos minutos (propagación DNS) e inténtalo de nuevo.
+                    propagó, el dominio pasa a &quot;Verificado&quot; de inmediato y queda activo —
+                    Vercel emite el certificado HTTPS solo, en cuanto el CNAME resuelve (puede
+                    tardar desde minutos hasta un par de horas según el proveedor de DNS). Si no
+                    encuentra el TXT, espera unos minutos e inténtalo de nuevo.
                   </Step>
                 </div>
                 <p>
