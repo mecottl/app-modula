@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { motion } from "motion/react";
 import { Building2, ChevronDown, CreditCard, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MenuToggleIcon } from "@/components/ui/menu-toggle-icon";
@@ -98,7 +99,12 @@ function DevelopmentTree({
                 <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isOpen && "rotate-180")} />
               </button>
             </div>
-            {isOpen && (
+            <motion.div
+              initial={false}
+              animate={{ height: isOpen ? "auto" : "0px" }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
               <div className="ml-3 mt-1 flex flex-col gap-1 border-l border-border pl-3">
                 {DEVELOPMENT_TABS.map((tab) => {
                   const href = `/dashboard/developments/${dev.id}/${tab.href}`;
@@ -120,7 +126,7 @@ function DevelopmentTree({
                   );
                 })}
               </div>
-            )}
+            </motion.div>
           </div>
         );
       })}
@@ -182,28 +188,35 @@ function NavSection({
         )}
       </div>
 
-      {hasChildren && open && (
-        <div className="ml-4 mt-1 flex flex-col gap-1.5 border-l border-border pl-3">
-          {customTree ??
-            item.children!.map((child) => {
-              const active = pathname === child.href;
-              return (
-                <Link
-                  key={child.href}
-                  href={child.href}
-                  onClick={onNavigate}
-                  className={cn(
-                    "truncate rounded-md px-2 py-2 text-sm transition-colors",
-                    active
-                      ? "bg-muted text-foreground"
-                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-                  )}
-                >
-                  {child.label}
-                </Link>
-              );
-            })}
-        </div>
+      {hasChildren && (
+        <motion.div
+          initial={false}
+          animate={{ height: open ? "auto" : "0px" }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+          className="overflow-hidden"
+        >
+          <div className="ml-4 mt-1 flex flex-col gap-1.5 border-l border-border pl-3">
+            {customTree ??
+              item.children!.map((child) => {
+                const active = pathname === child.href;
+                return (
+                  <Link
+                    key={child.href}
+                    href={child.href}
+                    onClick={onNavigate}
+                    className={cn(
+                      "truncate rounded-md px-2 py-2 text-sm transition-colors",
+                      active
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                    )}
+                  >
+                    {child.label}
+                  </Link>
+                );
+              })}
+          </div>
+        </motion.div>
       )}
     </div>
   );
