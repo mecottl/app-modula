@@ -10,9 +10,9 @@ export const dynamic = "force-dynamic";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl?: string; error?: string }>;
+  searchParams: Promise<{ callbackUrl?: string; error?: string; ok?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, ok } = await searchParams;
 
   async function login(formData: FormData) {
     "use server";
@@ -45,6 +45,11 @@ export default async function LoginPage({
             <h1 className="text-2xl font-semibold tracking-tight">Inicia sesión en tu cuenta</h1>
             <p className="mt-2 text-sm text-muted-foreground">Entra al dashboard de tu cuenta.</p>
           </div>
+          {ok && (
+            <p role="status" aria-live="polite" className="text-sm text-green-600">
+              {ok}
+            </p>
+          )}
           {error && (
             <p role="alert" aria-live="polite" className="text-sm text-destructive">
               Correo o contraseña incorrectos.
@@ -63,7 +68,15 @@ export default async function LoginPage({
                 className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground"
               />
             </label>
-            <PasswordField />
+            <div className="flex flex-col gap-1">
+              <PasswordField />
+              <Link
+                href="/forgot-password"
+                className="self-end text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
             <button
               type="submit"
               className="mt-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"

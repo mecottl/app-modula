@@ -3,18 +3,29 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
-export function PasswordField() {
+export function PasswordField({
+  name = "password",
+  label = "Contraseña",
+  autoComplete = "current-password",
+  minLength,
+}: {
+  name?: string;
+  label?: string;
+  autoComplete?: "current-password" | "new-password";
+  minLength?: number;
+}) {
   const [visible, setVisible] = useState(false);
 
   return (
     <label className="flex flex-col gap-1 text-sm">
-      Contraseña
+      {label}
       <div className="relative">
         <input
-          name="password"
+          name={name}
           type={visible ? "text" : "password"}
           required
-          autoComplete="current-password"
+          minLength={minLength}
+          autoComplete={autoComplete}
           className="w-full rounded-md border border-border bg-transparent px-3 py-2 pr-10 outline-none focus:border-foreground"
         />
         <button

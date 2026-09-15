@@ -24,6 +24,20 @@ export async function requireSessionAccount(): Promise<SessionAccount> {
   if (!session?.user?.accountId || !session.user.id) {
     throw new TenantAccessError("Sesión no autenticada");
   }
+
+  // Si la contraseña cambió después de que se emitió este JWT (issue
+  // #62), tokenVersion ya no coincide con el valor guardado en el
+  // Member — el token sigue siendo válido para NextAuth (no expiró),
+  // pero se trata como sesión inválida de todas formas, sin esperar a
+  // que expire solo.
+  const member = await prisma.member.findUnique({
+    where: { id: session.user.id },
+    select: { tokenVersion: true },
+  });
+  if (!member || member.tokenVersion !== session.user.tokenVersion) {
+    throw new TenantAccessError("Sesión invalidada, vuelve a iniciar sesión");
+  }
+
   return {
     accountId: session.user.accountId,
     memberId: session.user.id,

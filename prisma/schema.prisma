@@ -112,13 +112,44 @@ model Member {
   email        String     @unique
   passwordHash String
   role         MemberRole @default(SOLO_LECTURA)
+  /// Se incrementa al cambiar la contraseña; el JWT de sesión guarda el
+  /// valor vigente al momento del login y se compara en cada request
+  /// (ver src/auth.config.ts) — así un token ya emitido deja de ser
+  /// válido apenas cambia la contraseña, sin esperar su expiración.
+  tokenVersion Int        @default(0)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  account            Account             @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  verificationTokens VerificationToken[]
 
   @@index([accountId])
   @@map("members")
+}
+
+/// Tokens de un solo uso para recuperar contraseña (#61) y confirmar
+/// cambio de correo (#63) — se guarda el hash, nunca el token en claro,
+/// mismo principio que una contraseña.
+enum VerificationTokenType {
+  PASSWORD_RESET
+  EMAIL_CHANGE
+}
+
+model VerificationToken {
+  id        String                @id @default(cuid())
+  memberId  String
+  type      VerificationTokenType
+  tokenHash String                @unique
+  /// Para EMAIL_CHANGE: el correo nuevo pendiente de confirmar.
+  payload   String?
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime              @default(now())
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+  @@map("verification_tokens")
 }
 
 /// Un desarrollo inmobiliario dentro de una cuenta (1 cuenta -> N desarrollos).

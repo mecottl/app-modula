@@ -16,6 +16,7 @@ export const authConfig = {
       if (user) {
         token.accountId = user.accountId;
         token.role = user.role;
+        token.tokenVersion = user.tokenVersion;
       }
       return token;
     },
@@ -24,6 +25,7 @@ export const authConfig = {
         session.user.id = token.sub as string;
         session.user.accountId = token.accountId as string;
         session.user.role = token.role as string;
+        session.user.tokenVersion = token.tokenVersion as number;
       }
       return session;
     },
