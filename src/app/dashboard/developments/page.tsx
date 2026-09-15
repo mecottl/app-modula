@@ -13,9 +13,9 @@ export const dynamic = "force-dynamic";
 export default async function DevelopmentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; ok?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, ok } = await searchParams;
   const { accountId } = await requireSessionAccount();
   const developments = await prisma.development.findMany({
     where: { accountId },
@@ -34,7 +34,7 @@ export default async function DevelopmentsPage({
 
   return (
     <div className="flex flex-col gap-8">
-      <ToastFromParams error={error} />
+      <ToastFromParams error={error} ok={ok} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold tracking-tight">Tus desarrollos</h1>

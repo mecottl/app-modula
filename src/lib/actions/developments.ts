@@ -350,3 +350,39 @@ export async function removeDevelopmentDomain(developmentId: string) {
   revalidatePath(`/dashboard/developments/${developmentId}/integration/custom-domain`);
   backToIntegration(developmentId, "Dominio personalizado eliminado.", "ok");
 }
+
+/**
+ * Elimina un desarrollo por completo — se lleva en cascada su catálogo
+ * (modelos, acabados, extras, promociones), su integración y, sobre
+ * todo, sus cotizaciones/leads ya recibidos (ver onDelete: Cascade en
+ * schema.prisma). Solo un administrador puede hacerlo, y solo si
+ * escribe el nombre exacto del desarrollo — mismo nivel de fricción
+ * que borrar un repositorio en GitHub, para un borrado que no tiene
+ * vuelta atrás.
+ */
+export async function deleteDevelopment(developmentId: string, formData: FormData) {
+  const { role } = await requireSessionAccount();
+  const development = await requireDevelopmentForSession(developmentId);
+
+  if (role !== "ADMINISTRADOR") {
+    redirect(
+      `/dashboard/developments/${developmentId}/general?error=${encodeURIComponent(
+        "Solo un administrador puede eliminar un desarrollo",
+      )}`,
+    );
+  }
+
+  const confirmName = String(formData.get("confirmName") ?? "");
+  if (confirmName !== development.name) {
+    redirect(
+      `/dashboard/developments/${developmentId}/general?error=${encodeURIComponent(
+        "El nombre no coincide, no se eliminó nada",
+      )}`,
+    );
+  }
+
+  await prisma.development.delete({ where: { id: developmentId } });
+
+  revalidatePath("/dashboard/developments");
+  redirect(`/dashboard/developments?ok=${encodeURIComponent("Desarrollo eliminado.")}`);
+}

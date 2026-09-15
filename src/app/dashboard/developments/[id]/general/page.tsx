@@ -7,9 +7,11 @@ import {
   updateDevelopmentAdvanced,
   publishDevelopment,
   unpublishDevelopment,
+  deleteDevelopment,
 } from "@/lib/actions/developments";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { ValidatedInput, ValidatedTextarea } from "@/components/ui/validated-input";
+import { DeleteDevelopmentForm } from "@/components/dashboard/delete-development-form";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -199,6 +201,20 @@ export default async function GeneralPage({
               Guardar
             </button>
           </form>
+
+          <div className="mt-6 flex flex-col gap-3 border-t border-destructive/30 pt-6">
+            <div>
+              <h3 className="text-sm font-medium text-destructive">Zona de peligro</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Elimina este desarrollo por completo: catálogo, acabados, extras, promociones y
+                todas las cotizaciones ya recibidas. No se puede deshacer.
+              </p>
+            </div>
+            <DeleteDevelopmentForm
+              developmentName={development.name}
+              action={deleteDevelopment.bind(null, development.id)}
+            />
+          </div>
         </details>
       </div>
     </div>
