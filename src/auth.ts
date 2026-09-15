@@ -2,17 +2,21 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { authConfig } from "./auth.config";
 
 /**
  * Autenticación del dashboard administrativo (sección 10 del README):
  * credenciales propias + NextAuth con sesión JWT, en vez de construir
  * un sistema de sesiones/roles desde cero. `accountId` y `role` viajan
  * en el token para que el resto del backend pueda derivar el tenant
- * directamente de la sesión (ver src/lib/tenant.ts).
+ * directamente de la sesión (ver src/lib/tenant.ts). Extiende
+ * `authConfig` (compatible con Edge) agregando el provider de
+ * Credentials, que sí necesita el runtime Node de las rutas/acciones
+ * normales — nunca se usa en middleware.ts.
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   session: { strategy: "jwt" },
-  pages: { signIn: "/login" },
   providers: [
     Credentials({
       credentials: {
@@ -42,21 +46,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    jwt({ token, user }) {
-      if (user) {
-        token.accountId = user.accountId;
-        token.role = user.role;
-      }
-      return token;
-    },
-    session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub as string;
-        session.user.accountId = token.accountId as string;
-        session.user.role = token.role as string;
-      }
-      return session;
-    },
-  },
 });
