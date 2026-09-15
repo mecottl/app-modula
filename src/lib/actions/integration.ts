@@ -7,9 +7,9 @@ import { prisma } from "@/lib/prisma";
 import { requireDevelopmentForSession } from "@/lib/tenant";
 import { generateProjectToken } from "@/lib/tokens";
 
-function back(developmentId: string, message?: string) {
+function back(developmentId: string, path: string, message?: string) {
   const qs = message ? `?ok=${encodeURIComponent(message)}` : "";
-  redirect(`/dashboard/developments/${developmentId}/integration${qs}`);
+  redirect(`/dashboard/developments/${developmentId}/integration/${path}${qs}`);
 }
 
 const settingsSchema = z.object({
@@ -24,7 +24,7 @@ export async function updateIntegrationSettings(developmentId: string, formData:
     environment: formData.get("environment"),
     authorizedDomains: formData.get("authorizedDomains"),
   });
-  if (!parsed.success) back(developmentId);
+  if (!parsed.success) back(developmentId, "domains");
 
   const authorizedDomains = (parsed.data!.authorizedDomains ?? "")
     .split("\n")
@@ -36,8 +36,8 @@ export async function updateIntegrationSettings(developmentId: string, formData:
     data: { environment: parsed.data!.environment, authorizedDomains },
   });
 
-  revalidatePath(`/dashboard/developments/${developmentId}/integration`);
-  back(developmentId, "Guardado.");
+  revalidatePath(`/dashboard/developments/${developmentId}/integration/domains`);
+  back(developmentId, "domains", "Guardado.");
 }
 
 /**
@@ -49,6 +49,6 @@ export async function regenerateIntegrationToken(developmentId: string) {
     where: { developmentId },
     data: { token: generateProjectToken() },
   });
-  revalidatePath(`/dashboard/developments/${developmentId}/integration`);
-  back(developmentId, "Token regenerado. Actualiza el snippet donde esté instalado.");
+  revalidatePath(`/dashboard/developments/${developmentId}/integration/token`);
+  back(developmentId, "token", "Token regenerado. Actualiza el snippet donde esté instalado.");
 }

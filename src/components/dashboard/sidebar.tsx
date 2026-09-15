@@ -36,30 +36,33 @@ const STATIC_NAV: NavItem[] = [
 ];
 
 /**
- * Una pestaña de desarrollo con sus propias secciones (hoy solo
+ * Una pestaña de desarrollo con sus propias sub-páginas (hoy solo
  * Integración: snippet, vista previa, dominios, token, dominio
- * personalizado) — una rama más en el árbol, mismo patrón de acordeón
- * que el resto, pero enlazando a anclas (#id) de esa misma página en
- * vez de rutas distintas.
+ * personalizado — cada una su propia ruta) — una rama más en el
+ * árbol, mismo patrón de acordeón que el resto.
  */
-function TabWithSections({
+function TabWithChildren({
+  devId,
   href,
   label,
-  active,
-  sections,
+  isActiveBranch,
+  items,
+  pathname,
   onNavigate,
 }: {
+  devId: string;
   href: string;
   label: string;
-  active: boolean;
-  sections: readonly { id: string; label: string }[];
+  isActiveBranch: boolean;
+  items: readonly { href: string; label: string }[];
+  pathname: string;
   onNavigate?: () => void;
 }) {
-  const [open, setOpen] = useState(active);
-  const [trackedActive, setTrackedActive] = useState(active);
-  if (active !== trackedActive) {
-    setTrackedActive(active);
-    if (active) setOpen(true);
+  const [open, setOpen] = useState(isActiveBranch);
+  const [trackedActive, setTrackedActive] = useState(isActiveBranch);
+  if (isActiveBranch !== trackedActive) {
+    setTrackedActive(isActiveBranch);
+    if (isActiveBranch) setOpen(true);
   }
 
   return (
@@ -70,7 +73,7 @@ function TabWithSections({
           onClick={onNavigate}
           className={cn(
             "flex-1 truncate rounded-md px-2 py-1.5 text-sm transition-colors",
-            active ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+            "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
           )}
         >
           {label}
@@ -92,16 +95,25 @@ function TabWithSections({
         className="overflow-hidden"
       >
         <div className="ml-3 mt-1 flex flex-col gap-1 border-l border-border pl-3">
-          {sections.map((section) => (
-            <Link
-              key={section.id}
-              href={`${href}#${section.id}`}
-              onClick={onNavigate}
-              className="truncate rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-            >
-              {section.label}
-            </Link>
-          ))}
+          {items.map((child) => {
+            const childHref = `/dashboard/developments/${devId}/${child.href}`;
+            const childActive = pathname === childHref;
+            return (
+              <Link
+                key={child.href}
+                href={childHref}
+                onClick={onNavigate}
+                className={cn(
+                  "truncate rounded-md px-2 py-1 text-xs transition-colors",
+                  childActive
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                )}
+              >
+                {child.label}
+              </Link>
+            );
+          })}
         </div>
       </motion.div>
     </div>
@@ -175,9 +187,9 @@ function DevelopmentTree({
                 {DEVELOPMENT_TABS.map((tab) => {
                   const href = `/dashboard/developments/${dev.id}/${tab.href}`;
                   const active = pathname === href;
-                  const sections = "sections" in tab ? tab.sections : null;
+                  const children = "children" in tab ? tab.children : null;
 
-                  if (!sections) {
+                  if (!children) {
                     return (
                       <Link
                         key={tab.href}
@@ -195,13 +207,16 @@ function DevelopmentTree({
                     );
                   }
 
+                  const isActiveBranch = pathname.startsWith(href);
                   return (
-                    <TabWithSections
+                    <TabWithChildren
                       key={tab.href}
-                      href={href}
+                      devId={dev.id}
+                      href={`/dashboard/developments/${dev.id}/${children[0].href}`}
                       label={tab.label}
-                      active={active}
-                      sections={sections}
+                      isActiveBranch={isActiveBranch}
+                      items={children}
+                      pathname={pathname}
                       onNavigate={onNavigate}
                     />
                   );

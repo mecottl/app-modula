@@ -9,12 +9,12 @@ export const DEVELOPMENT_TABS = [
   {
     href: "integration",
     label: "Integración",
-    sections: [
-      { id: "snippet", label: "Snippet de instalación" },
-      { id: "vista-previa", label: "Vista previa en vivo" },
-      { id: "dominios-autorizados", label: "Entorno y dominios autorizados" },
-      { id: "token", label: "Token del proyecto" },
-      { id: "dominio-personalizado", label: "Dominio personalizado" },
+    children: [
+      { href: "integration/snippet", label: "Snippet de instalación" },
+      { href: "integration/preview", label: "Vista previa en vivo" },
+      { href: "integration/domains", label: "Entorno y dominios autorizados" },
+      { href: "integration/token", label: "Token del proyecto" },
+      { href: "integration/custom-domain", label: "Dominio personalizado" },
     ],
   },
 ] as const;

@@ -226,7 +226,7 @@ export async function unpublishDevelopment(developmentId: string) {
 
 function backToIntegration(developmentId: string, message?: string, kind: "error" | "ok" = "error") {
   const qs = message ? `?${kind}=${encodeURIComponent(message)}` : "";
-  redirect(`/dashboard/developments/${developmentId}/integration${qs}`);
+  redirect(`/dashboard/developments/${developmentId}/integration/custom-domain${qs}`);
 }
 
 // Hostname simple: letras/dígitos/guiones por segmento, separados por
@@ -277,7 +277,7 @@ export async function setDevelopmentDomain(developmentId: string, formData: Form
     },
   });
 
-  revalidatePath(`/dashboard/developments/${developmentId}/integration`);
+  revalidatePath(`/dashboard/developments/${developmentId}/integration/custom-domain`);
   backToIntegration(developmentId, "Dominio guardado. Agrega el registro TXT y verifica.", "ok");
 }
 
@@ -315,7 +315,7 @@ export async function verifyDevelopmentDomain(developmentId: string) {
     data: { customDomainVerifiedAt: new Date() },
   });
 
-  revalidatePath(`/dashboard/developments/${developmentId}/integration`);
+  revalidatePath(`/dashboard/developments/${developmentId}/integration/custom-domain`);
   backToIntegration(developmentId, "Dominio verificado.", "ok");
 }
 
@@ -325,6 +325,6 @@ export async function removeDevelopmentDomain(developmentId: string) {
     where: { id: developmentId },
     data: { customDomain: null, customDomainToken: null, customDomainVerifiedAt: null },
   });
-  revalidatePath(`/dashboard/developments/${developmentId}/integration`);
+  revalidatePath(`/dashboard/developments/${developmentId}/integration/custom-domain`);
   backToIntegration(developmentId, "Dominio personalizado eliminado.", "ok");
 }
