@@ -34,6 +34,80 @@ const STATIC_NAV: NavItem[] = [
   { href: "/dashboard/members", label: "Miembros", icon: Users },
   { href: "/dashboard/account", label: "Cuenta", icon: Settings },
 ];
+
+/**
+ * Una pestaña de desarrollo con sus propias secciones (hoy solo
+ * Integración: snippet, vista previa, dominios, token, dominio
+ * personalizado) — una rama más en el árbol, mismo patrón de acordeón
+ * que el resto, pero enlazando a anclas (#id) de esa misma página en
+ * vez de rutas distintas.
+ */
+function TabWithSections({
+  href,
+  label,
+  active,
+  sections,
+  onNavigate,
+}: {
+  href: string;
+  label: string;
+  active: boolean;
+  sections: readonly { id: string; label: string }[];
+  onNavigate?: () => void;
+}) {
+  const [open, setOpen] = useState(active);
+  const [trackedActive, setTrackedActive] = useState(active);
+  if (active !== trackedActive) {
+    setTrackedActive(active);
+    if (active) setOpen(true);
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-1">
+        <Link
+          href={href}
+          onClick={onNavigate}
+          className={cn(
+            "flex-1 truncate rounded-md px-2 py-1.5 text-sm transition-colors",
+            active ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+          )}
+        >
+          {label}
+        </Link>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-label={open ? `Contraer ${label}` : `Expandir ${label}`}
+          aria-expanded={open}
+          className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+        >
+          {open ? <X className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+        </button>
+      </div>
+      <motion.div
+        initial={false}
+        animate={{ height: open ? "auto" : "0px" }}
+        transition={{ duration: 0.2, ease: "easeInOut" }}
+        className="overflow-hidden"
+      >
+        <div className="ml-3 mt-1 flex flex-col gap-1 border-l border-border pl-3">
+          {sections.map((section) => (
+            <Link
+              key={section.id}
+              href={`${href}#${section.id}`}
+              onClick={onNavigate}
+              className="truncate rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+            >
+              {section.label}
+            </Link>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 function DevelopmentTree({
   developments,
   pathname,
@@ -101,20 +175,35 @@ function DevelopmentTree({
                 {DEVELOPMENT_TABS.map((tab) => {
                   const href = `/dashboard/developments/${dev.id}/${tab.href}`;
                   const active = pathname === href;
+                  const sections = "sections" in tab ? tab.sections : null;
+
+                  if (!sections) {
+                    return (
+                      <Link
+                        key={tab.href}
+                        href={href}
+                        onClick={onNavigate}
+                        className={cn(
+                          "truncate rounded-md px-2 py-1.5 text-sm transition-colors",
+                          active
+                            ? "bg-muted text-foreground"
+                            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                        )}
+                      >
+                        {tab.label}
+                      </Link>
+                    );
+                  }
+
                   return (
-                    <Link
+                    <TabWithSections
                       key={tab.href}
                       href={href}
-                      onClick={onNavigate}
-                      className={cn(
-                        "truncate rounded-md px-2 py-1.5 text-sm transition-colors",
-                        active
-                          ? "bg-muted text-foreground"
-                          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-                      )}
-                    >
-                      {tab.label}
-                    </Link>
+                      label={tab.label}
+                      active={active}
+                      sections={sections}
+                      onNavigate={onNavigate}
+                    />
                   );
                 })}
               </div>

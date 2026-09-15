@@ -77,7 +77,7 @@ export default async function IntegrationPage({
         </p>
       </div>
 
-      <section>
+      <section id="snippet" className="scroll-mt-4">
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-medium">Snippet de instalación</h3>
           <CopyButton value={snippet} label="Copiar snippet" />
@@ -85,7 +85,7 @@ export default async function IntegrationPage({
         <pre className="mt-2 overflow-x-auto rounded border bg-muted p-3 text-xs">{snippet}</pre>
       </section>
 
-      <section>
+      <section id="vista-previa" className="scroll-mt-4">
         <h3 className="font-medium">Vista previa en vivo</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           Así se ve el widget embebido, sin copiar nada. Se muestra en modo vista previa aunque el
@@ -97,7 +97,7 @@ export default async function IntegrationPage({
         </div>
       </section>
 
-      <section className="rounded border p-4">
+      <section id="dominios-autorizados" className="scroll-mt-4 rounded border p-4">
         <h3 className="font-medium">Entorno y dominios autorizados</h3>
         <p className="mt-1 text-xs text-muted-foreground">
           Esto es independiente del estado &quot;Publicado/Borrador&quot; del desarrollo (arriba):
@@ -137,7 +137,7 @@ export default async function IntegrationPage({
         </form>
       </section>
 
-      <section className="rounded border p-4">
+      <section id="token" className="scroll-mt-4 rounded border p-4">
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-medium">Token del proyecto</h3>
           <CopyButton value={settings.token} label="Copiar token" />
@@ -153,7 +153,7 @@ export default async function IntegrationPage({
         </p>
       </section>
 
-      <section className="rounded border p-4">
+      <section id="dominio-personalizado" className="scroll-mt-4 rounded border p-4">
         <h3 className="font-medium">Dominio personalizado</h3>
         <p className="mt-1 text-xs text-muted-foreground">
           Sirve la página propia del configurador (Plan Básico) bajo tu dominio en vez del de
