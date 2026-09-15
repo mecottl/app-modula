@@ -7,21 +7,21 @@ import { confirmSubscriptionActivation } from "@/lib/actions/billing";
 
 export const dynamic = "force-dynamic";
 
+const PLAN_LABELS: Record<string, string> = { BASICO: "Plan Básico", PROFESIONAL: "Plan Profesional" };
+
 async function getSubscriptionDetails(subscriptionId: string) {
   try {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
-      expand: ["items.data.price.product", "customer"],
+      expand: ["customer"],
     });
     const price = subscription.items.data[0]?.price;
-    const product = price?.product;
-    const productName = typeof product === "object" && product && "name" in product ? product.name : null;
     const amount = price?.unit_amount != null ? (price.unit_amount / 100).toLocaleString("es-MX") : null;
     const currency = price?.currency?.toUpperCase();
     const interval = price?.recurring?.interval === "month" ? "mes" : price?.recurring?.interval;
     const customer = subscription.customer;
     const customerEmail = typeof customer === "object" && customer && "email" in customer ? customer.email : null;
 
-    return { productName, amount, currency, interval, customerEmail };
+    return { amount, currency, interval, customerEmail };
   } catch {
     return null;
   }
@@ -49,11 +49,14 @@ export default async function CheckoutSuccessPage() {
 
         <h1 className="mt-6 text-2xl font-semibold tracking-tight">¡Pago realizado con éxito!</h1>
 
-        {details?.productName && details.amount ? (
+        {details?.amount ? (
           <p className="mt-3 text-sm text-muted-foreground">
-            Confirmamos tu suscripción a <span className="text-foreground">{details.productName}</span>
-            {": "}
-            {details.amount} {details.currency}/{details.interval ?? "mes"}.
+            Confirmamos tu suscripción a{" "}
+            <span className="text-foreground">{PLAN_LABELS[account.plan] ?? account.plan}</span>:{" "}
+            <span className="whitespace-nowrap">
+              {details.amount} {details.currency}/{details.interval ?? "mes"}
+            </span>
+            .
             {details.customerEmail && (
               <>
                 {" "}
