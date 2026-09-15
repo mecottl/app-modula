@@ -30,11 +30,17 @@ export async function addDomainToVercelProject(
   if (res.ok) return { ok: true };
 
   const data = await res.json().catch(() => null);
-  const message: string = data?.message ?? `Vercel respondió con el estado ${res.status}`;
+  // La API de Vercel anida el error bajo `error` (código HTTP real:
+  // 409, no 400 como sugiere la doc genérica) — probado contra la API
+  // real con un dominio ya conectado.
+  const code: string | undefined = data?.error?.code;
+  const errorProjectId: string | undefined = data?.error?.projectId;
+  const message: string = data?.error?.message ?? `Vercel respondió con el estado ${res.status}`;
 
-  // Ya está conectado a ESTE proyecto (ej. se guardó dos veces, o se
-  // reintenta tras un fallo parcial) — no es un error real.
-  if (res.status === 400 && /already/i.test(message)) {
+  // Ya está conectado a ESTE MISMO proyecto (ej. se guardó dos veces,
+  // o se reintenta tras un fallo parcial) — no es un error real. Si
+  // está en uso por OTRO proyecto, sí se reporta como error.
+  if (code === "domain_already_in_use" && errorProjectId === projectId) {
     return { ok: true };
   }
 
