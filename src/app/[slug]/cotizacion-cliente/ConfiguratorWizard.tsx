@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ImageIcon, Plus } from "lucide-react";
 import { motion } from "motion/react";
-import { cn } from "@/lib/utils";
+import { cn, getContrastText } from "@/lib/utils";
 import { formatMoney } from "@/lib/money";
 
 type ModelDTO = {
@@ -261,6 +261,7 @@ export function ConfiguratorWizard({
   // ambos puedan distinguirse igual que en el panel de marca del dashboard.
   const primary = primaryColor || "#ffffff";
   const accent = accentColor || "#3d3d3d";
+  const accentText = getContrastText(accent);
 
   if (confirmedTotal) {
     return (
@@ -272,8 +273,8 @@ export function ConfiguratorWizard({
           <div className="mt-4 flex items-center gap-3">
             <a
               href={`/${slug}/cotizacion-cliente/${confirmedQuoteId}${previewQs}`}
-              style={{ backgroundColor: accent }}
-              className="rounded-full px-6 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: accent, color: accentText }}
+              className="rounded-full px-6 py-2.5 text-sm font-medium transition-opacity hover:opacity-90"
             >
               Ver mi cotización
             </a>
@@ -599,8 +600,8 @@ export function ConfiguratorWizard({
             type="submit"
             form="quote-form"
             disabled={submitting || !modelId}
-            style={{ backgroundColor: accent }}
-            className="rounded-full px-6 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: accent, color: accentText }}
+            className="rounded-full px-6 py-2.5 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {submitting ? "Enviando…" : ctaText}
           </button>
