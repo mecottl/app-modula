@@ -23,7 +23,6 @@ export default async function DevelopmentsPage({
     select: {
       id: true,
       name: true,
-      slug: true,
       status: true,
       currency: true,
       models: {
@@ -82,7 +81,6 @@ export default async function DevelopmentsPage({
           developments={developments.map((d) => ({
             id: d.id,
             name: d.name,
-            slug: d.slug,
             status: d.status,
             currency: d.currency,
             models: d.models.map((m) => ({

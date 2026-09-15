@@ -10,7 +10,6 @@ import { formatMoney } from "@/lib/money";
 type DevelopmentRow = {
   id: string;
   name: string;
-  slug: string;
   status: "BORRADOR" | "PUBLICADO";
   currency: string;
   models: { id: string; name: string; basePrice: string }[];
@@ -50,9 +49,8 @@ function DevelopmentAccordionItem({ development }: { development: DevelopmentRow
           <div>
             <p className="font-medium">{development.name}</p>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              /{development.slug}{" "}
               <span className={development.status === "PUBLICADO" ? "text-green-400" : "text-amber-400"}>
-                · {development.status === "PUBLICADO" ? "Publicado" : "Borrador"}
+                {development.status === "PUBLICADO" ? "Publicado" : "Borrador"}
               </span>
             </p>
           </div>

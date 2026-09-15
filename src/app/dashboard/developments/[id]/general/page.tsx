@@ -68,7 +68,6 @@ export default async function GeneralPage({
           </Link>
           <div className="flex flex-wrap items-baseline gap-3">
             <h1 className="truncate text-2xl font-semibold tracking-tight">{development.name}</h1>
-            <span className="shrink-0 text-sm text-muted-foreground">/{development.slug}</span>
             <span
               className={cn(
                 "shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium",
