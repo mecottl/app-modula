@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
-import { Building2, ChevronDown, CreditCard, Users } from "lucide-react";
+import { Building2, ChevronDown, CreditCard, Settings, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MenuToggleIcon } from "@/components/ui/menu-toggle-icon";
 import { getCurrentTheme } from "@/lib/theme";
@@ -32,6 +32,7 @@ const STATIC_NAV: NavItem[] = [
       { href: "/dashboard/billing/cards", label: "Tarjetas" },
     ],
   },
+  { href: "/dashboard/account", label: "Cuenta", icon: Settings },
 ];
 
 /**
@@ -96,7 +97,7 @@ function DevelopmentTree({
                 aria-expanded={isOpen}
                 className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
               >
-                <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isOpen && "rotate-180")} />
+                {isOpen ? <X className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
               </button>
             </div>
             <motion.div
@@ -183,7 +184,7 @@ function NavSection({
             aria-expanded={open}
             className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
           >
-            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
+            {open ? <X className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </button>
         )}
       </div>
