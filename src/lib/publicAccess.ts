@@ -23,3 +23,17 @@ export async function resolvePublicDevelopment(slug: string, preview: boolean) {
 
   return null;
 }
+
+/**
+ * Resuelve un desarrollo por su dominio personalizado (issue #29,
+ * ver setDevelopmentDomain/verifyDevelopmentDomain en
+ * actions/developments.ts) — solo dominios ya verificados por TXT, para
+ * no servir contenido bajo un dominio que alguien escribió sin
+ * demostrar que lo controla.
+ */
+export async function resolveDevelopmentByHost(host: string | null) {
+  if (!host) return null;
+  return prisma.development.findFirst({
+    where: { customDomain: host.toLowerCase(), customDomainVerifiedAt: { not: null } },
+  });
+}

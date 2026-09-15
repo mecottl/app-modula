@@ -3,6 +3,11 @@ import { requireDevelopmentForSession } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { getBaseUrl } from "@/lib/baseUrl";
 import { updateIntegrationSettings, regenerateIntegrationToken } from "@/lib/actions/integration";
+import {
+  setDevelopmentDomain,
+  verifyDevelopmentDomain,
+  removeDevelopmentDomain,
+} from "@/lib/actions/developments";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Select } from "@/components/ui/select";
@@ -15,10 +20,10 @@ export default async function IntegrationPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ ok?: string }>;
+  searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
   const { id } = await params;
-  const { ok } = await searchParams;
+  const { ok, error } = await searchParams;
   const development = await requireDevelopmentForSession(id);
 
   const account = await prisma.account.findUniqueOrThrow({ where: { id: development.accountId } });
@@ -63,7 +68,7 @@ export default async function IntegrationPage({
 
   return (
     <div className="flex flex-col gap-8">
-      <ToastFromParams ok={ok} />
+      <ToastFromParams ok={ok} error={error} />
       <div>
         <h2 className="font-medium">Integración (Plan Profesional widget embebible)</h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -146,6 +151,73 @@ export default async function IntegrationPage({
         <p className="mt-1 text-xs text-amber-400">
           Regenerar invalida el token anterior de inmediato. Hazlo solo si se filtró.
         </p>
+      </section>
+
+      <section className="rounded border p-4">
+        <h3 className="font-medium">Dominio personalizado</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Sirve la página propia del configurador (Plan Básico) bajo tu dominio en vez del de
+          MODULA — ej. <code>cotiza.tuempresa.com</code>.
+        </p>
+
+        {development.customDomain ? (
+          <div className="mt-3 flex flex-col gap-3">
+            <p className="text-sm">
+              <span className="font-mono">{development.customDomain}</span>{" "}
+              {development.customDomainVerifiedAt ? (
+                <span className="text-green-400">· Verificado</span>
+              ) : (
+                <span className="text-amber-400">· Sin verificar</span>
+              )}
+            </p>
+
+            {!development.customDomainVerifiedAt && development.customDomainToken && (
+              <div className="rounded bg-muted p-3 text-xs">
+                <p className="text-muted-foreground">
+                  Agrega este registro TXT en el DNS de tu dominio, y también un CNAME de{" "}
+                  <span className="font-mono">{development.customDomain}</span> hacia{" "}
+                  <span className="font-mono">cname.vercel-dns.com</span>:
+                </p>
+                <p className="mt-2 font-mono">
+                  TXT _modula-verify.{development.customDomain} → {development.customDomainToken}
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              {!development.customDomainVerifiedAt && (
+                <form action={verifyDevelopmentDomain.bind(null, id)}>
+                  <button type="submit" className="rounded border px-4 py-2 text-sm">
+                    Verificar
+                  </button>
+                </form>
+              )}
+              <form action={removeDevelopmentDomain.bind(null, id)}>
+                <button type="submit" className="text-sm text-red-400 underline underline-offset-4">
+                  Quitar dominio
+                </button>
+              </form>
+            </div>
+          </div>
+        ) : (
+          <form
+            action={setDevelopmentDomain.bind(null, id)}
+            className="mt-3 flex flex-col gap-3 sm:max-w-md"
+          >
+            <input
+              name="customDomain"
+              placeholder="cotiza.tuempresa.com"
+              required
+              className="rounded border px-3 py-2 text-sm"
+            />
+            <button
+              type="submit"
+              className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground"
+            >
+              Guardar dominio
+            </button>
+          </form>
+        )}
       </section>
     </div>
   );

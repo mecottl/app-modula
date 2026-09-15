@@ -135,6 +135,9 @@ model Development {
   accentColor    String?
   ctaText        String?
   webhookUrl     String?
+  customDomain           String?   @unique
+  customDomainToken      String?
+  customDomainVerifiedAt DateTime?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 

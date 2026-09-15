@@ -223,3 +223,108 @@ export async function unpublishDevelopment(developmentId: string) {
   });
   revalidatePath(`/dashboard/developments/${developmentId}`);
 }
+
+function backToIntegration(developmentId: string, message?: string, kind: "error" | "ok" = "error") {
+  const qs = message ? `?${kind}=${encodeURIComponent(message)}` : "";
+  redirect(`/dashboard/developments/${developmentId}/integration${qs}`);
+}
+
+// Hostname simple: letras/dígitos/guiones por segmento, separados por
+// puntos, sin protocolo ni ruta — lo que el usuario pega en su DNS.
+const domainSchema = z
+  .string()
+  .min(3)
+  .max(255)
+  .regex(/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i);
+
+/**
+ * Dominio personalizado para servir el configurador público (Plan A)
+ * bajo el dominio propio de la desarrolladora en vez del de MODULA
+ * (issue #29). Exclusivo de Plan Profesional, mismo gate que
+ * Integración. Guardar un dominio nuevo genera un token de
+ * verificación y borra cualquier verificación previa — hay que
+ * volver a probar que se controla el dominio antes de servir nada ahí
+ * (ver verifyDevelopmentDomain).
+ */
+export async function setDevelopmentDomain(developmentId: string, formData: FormData) {
+  const development = await requireDevelopmentForSession(developmentId);
+  const account = await prisma.account.findUniqueOrThrow({ where: { id: development.accountId } });
+  if (account.plan !== "PROFESIONAL") {
+    backToIntegration(developmentId, "Dominio personalizado es exclusivo del Plan Profesional");
+  }
+
+  const raw = String(formData.get("customDomain") ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/$/, "");
+  const parsed = domainSchema.safeParse(raw);
+  if (!parsed.success) {
+    backToIntegration(developmentId, "Ingresa un dominio válido, ej. cotiza.tuempresa.com");
+  }
+
+  const existing = await prisma.development.findUnique({ where: { customDomain: parsed.data! } });
+  if (existing && existing.id !== developmentId) {
+    backToIntegration(developmentId, "Ese dominio ya está en uso por otro desarrollo");
+  }
+
+  await prisma.development.update({
+    where: { id: developmentId },
+    data: {
+      customDomain: parsed.data!,
+      customDomainToken: generateProjectToken(),
+      customDomainVerifiedAt: null,
+    },
+  });
+
+  revalidatePath(`/dashboard/developments/${developmentId}/integration`);
+  backToIntegration(developmentId, "Dominio guardado. Agrega el registro TXT y verifica.", "ok");
+}
+
+/**
+ * Confirma, vía un registro TXT en el DNS del dominio, que quien lo
+ * configuró de verdad lo controla — sin esto, cualquiera podría
+ * escribir el dominio de un tercero y MODULA empezaría a servir
+ * contenido ahí (resolveDevelopmentByHost en src/lib/publicAccess.ts
+ * solo considera dominios con customDomainVerifiedAt).
+ */
+export async function verifyDevelopmentDomain(developmentId: string) {
+  const development = await requireDevelopmentForSession(developmentId);
+  if (!development.customDomain || !development.customDomainToken) {
+    backToIntegration(developmentId, "Primero guarda un dominio");
+  }
+
+  const dns = await import("node:dns/promises");
+  let records: string[][] = [];
+  try {
+    records = await dns.resolveTxt(`_modula-verify.${development.customDomain}`);
+  } catch {
+    backToIntegration(
+      developmentId,
+      "No encontramos el registro TXT todavía — puede tardar unos minutos en propagarse. Intenta de nuevo en un momento.",
+    );
+  }
+
+  const found = records.some((chunks) => chunks.join("") === development.customDomainToken);
+  if (!found) {
+    backToIntegration(developmentId, "El registro TXT no coincide con el token esperado");
+  }
+
+  await prisma.development.update({
+    where: { id: developmentId },
+    data: { customDomainVerifiedAt: new Date() },
+  });
+
+  revalidatePath(`/dashboard/developments/${developmentId}/integration`);
+  backToIntegration(developmentId, "Dominio verificado.", "ok");
+}
+
+export async function removeDevelopmentDomain(developmentId: string) {
+  await requireDevelopmentForSession(developmentId);
+  await prisma.development.update({
+    where: { id: developmentId },
+    data: { customDomain: null, customDomainToken: null, customDomainVerifiedAt: null },
+  });
+  revalidatePath(`/dashboard/developments/${developmentId}/integration`);
+  backToIntegration(developmentId, "Dominio personalizado eliminado.", "ok");
+}

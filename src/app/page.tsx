@@ -1,8 +1,13 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { FAQ } from "@/components/ui/faq-tabs";
 import { Footer } from "@/components/ui/footer-section";
 import { Header } from "@/components/ui/header-2";
 import { Starfield } from "@/components/ui/starfield-1";
+import { resolveDevelopmentByHost } from "@/lib/publicAccess";
+import { ConfiguratorPage } from "@/app/[slug]/cotizacion-cliente/ConfiguratorPage";
+
+export const dynamic = "force-dynamic";
 
 // Antes cada sección tenía su propio glow (SectionGlow), reiniciado y
 // recortado por el `overflow-hidden` de esa sección: al hacer scroll se
@@ -152,7 +157,23 @@ const faqData = {
   ],
 };
 
-export default function Home() {
+/**
+ * Sirve el dominio personalizado de un desarrollo (issue #29) cuando el
+ * Host de la request coincide con uno ya verificado — cualquier otro
+ * caso (el propio dominio de MODULA, localhost, *.vercel.app) cae al
+ * landing normal, sin riesgo para el dominio principal.
+ */
+export default async function Home() {
+  const host = (await headers()).get("host")?.split(":")[0] ?? null;
+  const development = await resolveDevelopmentByHost(host);
+  if (development) {
+    return <ConfiguratorPage development={development} preview={false} />;
+  }
+
+  return <Landing />;
+}
+
+function Landing() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
