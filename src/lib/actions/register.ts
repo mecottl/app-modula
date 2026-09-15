@@ -1,9 +1,11 @@
 "use server";
 
+import { headers } from "next/headers";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { signIn } from "@/auth";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const step1Schema = z.object({
   companyName: z.string().min(2).max(120),
@@ -17,7 +19,8 @@ export type CreateAccountError =
   | "invalid_name"
   | "invalid_email"
   | "invalid_password"
-  | "email_taken";
+  | "email_taken"
+  | "rate_limited";
 
 export type CreateAccountResult = { success: true } | { success: false; error: CreateAccountError };
 
@@ -30,6 +33,12 @@ export type CreateAccountResult = { success: true } | { success: false; error: C
  * plan de forma optimista aquí.
  */
 export async function createAccount(formData: FormData): Promise<CreateAccountResult> {
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const rate = checkRateLimit(`register:${ip}`, 5, 10 * 60_000);
+  if (!rate.allowed) {
+    return { success: false, error: "rate_limited" };
+  }
+
   const parsed = step1Schema.safeParse({
     companyName: formData.get("companyName"),
     name: formData.get("name"),

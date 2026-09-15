@@ -3,10 +3,11 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { calculateQuotePrice, PricingError } from "@/lib/pricing";
 import { resolvePublicDevelopment } from "@/lib/publicAccess";
-import { notifyNewQuote } from "@/lib/notifications";
+import { notifyNewQuote, notifyQuoteConfirmation } from "@/lib/notifications";
 import { logAnalyticsEvent } from "@/lib/analytics";
 import { sendQuoteWebhook } from "@/lib/webhooks";
 import { checkRateLimit, getClientIp, tooManyRequests } from "@/lib/rateLimit";
+import { getBaseUrl } from "@/lib/baseUrl";
 
 const bodySchema = z.object({
   modelId: z.string().min(1),
@@ -122,6 +123,18 @@ export async function POST(
   if (development.webhookUrl) {
     await sendQuoteWebhook(development.webhookUrl, quote);
   }
+
+  await notifyQuoteConfirmation({
+    developmentName: development.name,
+    developmentSlug: development.slug,
+    quoteId: quote.id,
+    modelName: model?.name ?? parsed.data.modelId,
+    total: breakdown.total,
+    currency: development.currency,
+    customerName: parsed.data.customerName,
+    customerEmail: parsed.data.customerEmail,
+    baseUrl: await getBaseUrl(),
+  });
 
   return NextResponse.json({ id: quote.id, total: breakdown.total }, { status: 201 });
 }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MailWarning, UserRoundX, KeyRound, Building2, CircleAlert } from "lucide-react";
+import { MailWarning, UserRoundX, KeyRound, Building2, CircleAlert, Clock } from "lucide-react";
 import { PasswordField } from "@/app/login/password-field";
 import { createAccount, type CreateAccountError } from "@/lib/actions/register";
 import { SubscribeFlow } from "@/components/billing/subscribe-flow";
@@ -33,6 +33,11 @@ const registerErrors: Record<CreateAccountError, { icon: typeof CircleAlert; tit
     icon: MailWarning,
     title: "Ese correo ya tiene una cuenta",
     description: "Inicia sesión en vez de crear una cuenta nueva.",
+  },
+  rate_limited: {
+    icon: Clock,
+    title: "Demasiados intentos",
+    description: "Espera unos minutos antes de volver a intentarlo.",
   },
 };
 

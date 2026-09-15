@@ -5,6 +5,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSessionAccount } from "@/lib/tenant";
 import { stripe, STRIPE_PRICE_IDS, planFromPriceId } from "@/lib/stripe";
+import { notifyAccountWelcome } from "@/lib/notifications";
+import { getBaseUrl } from "@/lib/baseUrl";
 
 const planSchema = z.enum(["BASICO", "PROFESIONAL"]);
 
@@ -254,7 +256,7 @@ export async function startSubscriptionForAccount(plan: "BASICO" | "PROFESIONAL"
  * de vida (renovación, cancelación, pagos fallidos).
  */
 export async function confirmSubscriptionActivation() {
-  const { accountId } = await requireSessionAccount();
+  const { accountId, memberId } = await requireSessionAccount();
   const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
   if (!account.stripeSubscriptionId) return null;
 
@@ -264,10 +266,27 @@ export async function confirmSubscriptionActivation() {
   const billingStatus =
     subscription.status === "active" || subscription.status === "trialing" ? "ACTIVO" : undefined;
 
+  const wasActive = account.billingStatus === "ACTIVO";
+
   await prisma.account.update({
     where: { id: accountId },
     data: { plan: plan ?? undefined, billingStatus },
   });
+
+  // Bienvenida solo en la transición a ACTIVO, no en cada recarga de
+  // /checkout/success (esta acción se llama ahí cada vez que se monta).
+  if (billingStatus === "ACTIVO" && !wasActive) {
+    const member = await prisma.member.findUnique({ where: { id: memberId } });
+    if (member) {
+      await notifyAccountWelcome({
+        memberEmail: member.email,
+        memberName: member.name,
+        accountName: account.name,
+        plan: plan ?? account.plan,
+        baseUrl: await getBaseUrl(),
+      });
+    }
+  }
 
   return { plan, billingStatus };
 }
