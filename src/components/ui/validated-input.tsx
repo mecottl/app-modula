@@ -22,6 +22,7 @@ export function ValidatedInput({
   className,
   onBlur,
   onChange,
+  maxLength,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & {
   label: string;
@@ -31,6 +32,7 @@ export function ValidatedInput({
   const id = useId();
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
+  const [length, setLength] = useState(() => String(props.defaultValue ?? props.value ?? "").length);
 
   function validate(el: HTMLInputElement) {
     setError(el.validity.valid ? null : errorMessage || el.validationMessage);
@@ -41,6 +43,7 @@ export function ValidatedInput({
       {label}
       <input
         id={id}
+        maxLength={maxLength}
         {...props}
         onBlur={(e) => {
           setTouched(true);
@@ -49,18 +52,26 @@ export function ValidatedInput({
         }}
         onChange={(e) => {
           if (touched) validate(e.currentTarget);
+          if (maxLength) setLength(e.currentTarget.value.length);
           onChange?.(e);
         }}
         aria-invalid={Boolean(error)}
         className={cn(inputBase, error && "border-red-500 focus:border-red-500", className)}
       />
-      {error ? (
-        <span role="alert" className="text-xs text-red-400">
-          {error}
-        </span>
-      ) : (
-        hint && <span className="text-xs text-muted-foreground">{hint}</span>
-      )}
+      <div className="flex items-center justify-between gap-2">
+        {error ? (
+          <span role="alert" className="text-xs text-red-400">
+            {error}
+          </span>
+        ) : (
+          hint && <span className="text-xs text-muted-foreground">{hint}</span>
+        )}
+        {maxLength && (
+          <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+            {length}/{maxLength}
+          </span>
+        )}
+      </div>
     </label>
   );
 }
@@ -72,6 +83,7 @@ export function ValidatedTextarea({
   className,
   onBlur,
   onChange,
+  maxLength,
   ...props
 }: TextareaHTMLAttributes<HTMLTextAreaElement> & {
   label: string;
@@ -81,6 +93,7 @@ export function ValidatedTextarea({
   const id = useId();
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
+  const [length, setLength] = useState(() => String(props.defaultValue ?? props.value ?? "").length);
 
   function validate(el: HTMLTextAreaElement) {
     setError(el.validity.valid ? null : errorMessage || el.validationMessage);
@@ -91,6 +104,7 @@ export function ValidatedTextarea({
       {label}
       <textarea
         id={id}
+        maxLength={maxLength}
         {...props}
         onBlur={(e) => {
           setTouched(true);
@@ -99,18 +113,26 @@ export function ValidatedTextarea({
         }}
         onChange={(e) => {
           if (touched) validate(e.currentTarget);
+          if (maxLength) setLength(e.currentTarget.value.length);
           onChange?.(e);
         }}
         aria-invalid={Boolean(error)}
         className={cn(inputBase, error && "border-red-500 focus:border-red-500", className)}
       />
-      {error ? (
-        <span role="alert" className="text-xs text-red-400">
-          {error}
-        </span>
-      ) : (
-        hint && <span className="text-xs text-muted-foreground">{hint}</span>
-      )}
+      <div className="flex items-center justify-between gap-2">
+        {error ? (
+          <span role="alert" className="text-xs text-red-400">
+            {error}
+          </span>
+        ) : (
+          hint && <span className="text-xs text-muted-foreground">{hint}</span>
+        )}
+        {maxLength && (
+          <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+            {length}/{maxLength}
+          </span>
+        )}
+      </div>
     </label>
   );
 }

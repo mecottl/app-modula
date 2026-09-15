@@ -21,11 +21,13 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FormDialog } from "@/components/ui/form-dialog";
 import { Button } from "@/components/ui/button";
 import { ValidatedInput, ValidatedTextarea } from "@/components/ui/validated-input";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Select } from "@/components/ui/select";
 import { MoneyInput } from "@/components/ui/money-input";
 import { ModelChipPicker } from "@/components/dashboard/model-chip-picker";
 import { ImageGallery } from "@/components/dashboard/image-gallery";
 import { formatMoney } from "@/lib/money";
+import { MAX_CATALOG_IMAGES } from "@/lib/planLimits";
 
 const selectionModeOptions = [
   { value: "UNICA", label: "Única: el comprador elige como máximo una opción" },
@@ -89,12 +91,9 @@ export default async function FinishesPage({
             <form action={createFinishCategory.bind(null, id)} className="flex flex-col gap-4">
               <ValidatedInput label="Nombre" name="name" required maxLength={120} autoFocus />
               <Select label="Selección" name="selectionMode" defaultValue="UNICA" options={selectionModeOptions} />
-              <button
-                type="submit"
-                className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-              >
+              <SubmitButton className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
                 Crear
-              </button>
+              </SubmitButton>
             </form>
           </FormDialog>
         </div>
@@ -127,12 +126,9 @@ export default async function FinishesPage({
                       <ValidatedInput label="Nombre" name="name" required maxLength={120} autoFocus />
                       <ValidatedTextarea label="Descripción" name="description" maxLength={2000} rows={2} />
                       <MoneyInput label="Delta de precio" name="priceDelta" required defaultValue={0} />
-                      <button
-                        type="submit"
-                        className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-                      >
+                      <SubmitButton className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
                         Crear
-                      </button>
+                      </SubmitButton>
                     </form>
                   </FormDialog>
                   <FormDialog
@@ -164,20 +160,17 @@ export default async function FinishesPage({
                         defaultValue={category.selectionMode}
                         options={selectionModeOptions}
                       />
-                      <button
-                        type="submit"
-                        className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-                      >
+                      <SubmitButton className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
                         Guardar
-                      </button>
+                      </SubmitButton>
                     </form>
                     <form
                       action={deleteFinishCategory.bind(null, id, category.id)}
                       className="mt-4 border-t border-border pt-4"
                     >
-                      <button type="submit" className="text-sm text-red-400 underline underline-offset-4">
+                      <SubmitButton className="text-sm text-red-400 underline underline-offset-4">
                         Eliminar categoría
-                      </button>
+                      </SubmitButton>
                     </form>
                   </FormDialog>
                 </div>
@@ -221,6 +214,7 @@ export default async function FinishesPage({
                         images={option.imageUrls}
                         addAction={addFinishLevelImage.bind(null, id, option.id)}
                         removeAction={removeFinishLevelImage.bind(null, id, option.id)}
+                        max={MAX_CATALOG_IMAGES}
                       />
                       <form
                         action={updateFinishLevel.bind(null, id, option.id)}
@@ -246,20 +240,17 @@ export default async function FinishesPage({
                           required
                           defaultValue={option.priceDelta.toString()}
                         />
-                        <button
-                          type="submit"
-                          className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-                        >
+                        <SubmitButton className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
                           Guardar
-                        </button>
+                        </SubmitButton>
                       </form>
                       <form
                         action={deleteFinishLevel.bind(null, id, option.id)}
                         className="mt-1 border-t border-border pt-4"
                       >
-                        <button type="submit" className="text-sm text-red-400 underline underline-offset-4">
+                        <SubmitButton className="text-sm text-red-400 underline underline-offset-4">
                           Eliminar
-                        </button>
+                        </SubmitButton>
                       </form>
                     </FormDialog>
                   </li>
@@ -298,12 +289,9 @@ export default async function FinishesPage({
               <ValidatedTextarea label="Descripción" name="description" maxLength={2000} rows={2} />
               <MoneyInput label="Delta de precio" name="priceDelta" required defaultValue={0} />
               <ModelChipPicker models={models} selectedIds={new Set()} />
-              <button
-                type="submit"
-                className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-              >
+              <SubmitButton className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
                 Crear
-              </button>
+              </SubmitButton>
             </form>
           </FormDialog>
         </div>
@@ -349,6 +337,7 @@ export default async function FinishesPage({
                     images={extra.imageUrls}
                     addAction={addExtraImage.bind(null, id, extra.id)}
                     removeAction={removeExtraImage.bind(null, id, extra.id)}
+                    max={MAX_CATALOG_IMAGES}
                   />
                   <form action={updateExtra.bind(null, id, extra.id)} className="mt-4 flex flex-col gap-4">
                     <ValidatedInput
@@ -372,17 +361,14 @@ export default async function FinishesPage({
                       defaultValue={extra.priceDelta.toString()}
                     />
                     <ModelChipPicker models={models} selectedIds={linkedModelIds} />
-                    <button
-                      type="submit"
-                      className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-                    >
+                    <SubmitButton className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
                       Guardar
-                    </button>
+                    </SubmitButton>
                   </form>
                   <form action={deleteExtra.bind(null, id, extra.id)} className="mt-1 border-t border-border pt-4">
-                    <button type="submit" className="text-sm text-red-400 underline underline-offset-4">
+                    <SubmitButton className="text-sm text-red-400 underline underline-offset-4">
                       Eliminar
-                    </button>
+                    </SubmitButton>
                   </form>
                 </FormDialog>
               </li>

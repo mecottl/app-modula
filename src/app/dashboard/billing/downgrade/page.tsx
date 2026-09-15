@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { getPendingDowngrade } from "@/lib/billingHelpers";
 import { changePlan } from "@/lib/actions/billing";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -80,12 +81,9 @@ export default async function DowngradePage() {
       <div className="flex flex-wrap gap-3">
         <form action={changePlan}>
           <input type="hidden" name="plan" value="BASICO" />
-          <button
-            type="submit"
-            className="rounded-full border border-border px-6 py-3 text-sm font-medium transition-colors hover:border-foreground"
-          >
+          <SubmitButton className="rounded-full border border-border px-6 py-3 text-sm font-medium transition-colors hover:border-foreground">
             Confirmar baja para el {periodEnd}
-          </button>
+          </SubmitButton>
         </form>
         <Link
           href="/dashboard/billing"

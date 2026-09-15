@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { updateQuoteStatus, deleteQuoteData } from "@/lib/actions/quotes";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { formatMoney } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
@@ -99,15 +100,13 @@ export default async function QuotesPage({
                   className="py-1"
                   options={Object.entries(statusLabels).map(([value, label]) => ({ value, label }))}
                 />
-                <button type="submit" className="rounded border px-2 py-1 text-sm">
-                  Actualizar
-                </button>
+                <SubmitButton className="rounded border px-2 py-1 text-sm">Actualizar</SubmitButton>
               </form>
             </div>
             <form action={deleteQuoteData.bind(null, id, quote.id)} className="mt-2">
-              <button type="submit" className="text-xs text-red-400 underline">
+              <SubmitButton className="text-xs text-red-400 underline">
                 Eliminar datos del lead (solicitud del titular)
-              </button>
+              </SubmitButton>
             </form>
           </li>
         ))}

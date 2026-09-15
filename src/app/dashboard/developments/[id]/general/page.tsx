@@ -12,6 +12,7 @@ import {
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { ValidatedInput, ValidatedTextarea } from "@/components/ui/validated-input";
 import { DeleteDevelopmentForm } from "@/components/dashboard/delete-development-form";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -93,23 +94,19 @@ export default async function GeneralPage({
           </a>
           {isPublished ? (
             <form action={unpublishDevelopment.bind(null, development.id)}>
-              <button
-                type="submit"
-                className="rounded-full border border-border px-4 py-2 text-sm transition-colors hover:border-foreground"
-              >
+              <SubmitButton className="rounded-full border border-border px-4 py-2 text-sm transition-colors hover:border-foreground">
                 Volver a borrador
-              </button>
+              </SubmitButton>
             </form>
           ) : (
             <form action={publishDevelopment.bind(null, development.id)}>
-              <button
-                type="submit"
+              <SubmitButton
                 disabled={!hasModel}
                 title={hasModel ? undefined : "Agrega al menos un modelo activo antes de publicar"}
                 className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Publicar
-              </button>
+              </SubmitButton>
             </form>
           )}
         </div>
@@ -161,12 +158,9 @@ export default async function GeneralPage({
               defaultValue={development.description ?? ""}
               rows={3}
             />
-            <button
-              type="submit"
-              className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-            >
+            <SubmitButton className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
               Guardar
-            </button>
+            </SubmitButton>
           </form>
         </section>
 
@@ -194,12 +188,9 @@ export default async function GeneralPage({
               hint="Cada cotización nueva se enviará también como POST a esta URL."
               errorMessage="Ingresa una URL válida (https://…)"
             />
-            <button
-              type="submit"
-              className="self-start rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:border-foreground"
-            >
+            <SubmitButton className="self-start rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:border-foreground">
               Guardar
-            </button>
+            </SubmitButton>
           </form>
 
           <div className="mt-6 flex flex-col gap-3 border-t border-destructive/30 pt-6">

@@ -5,6 +5,7 @@ import {
   removeDevelopmentDomain,
 } from "@/lib/actions/developments";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -55,15 +56,13 @@ export default async function IntegrationCustomDomainPage({
           <div className="flex gap-2">
             {!development.customDomainVerifiedAt && (
               <form action={verifyDevelopmentDomain.bind(null, id)}>
-                <button type="submit" className="rounded border px-4 py-2 text-sm">
-                  Verificar
-                </button>
+                <SubmitButton className="rounded border px-4 py-2 text-sm">Verificar</SubmitButton>
               </form>
             )}
             <form action={removeDevelopmentDomain.bind(null, id)}>
-              <button type="submit" className="text-sm text-red-400 underline underline-offset-4">
+              <SubmitButton className="text-sm text-red-400 underline underline-offset-4">
                 Quitar dominio
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>
@@ -78,12 +77,9 @@ export default async function IntegrationCustomDomainPage({
             required
             className="rounded border px-3 py-2 text-sm"
           />
-          <button
-            type="submit"
-            className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground"
-          >
+          <SubmitButton className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
             Guardar dominio
-          </button>
+          </SubmitButton>
         </form>
       )}
     </section>

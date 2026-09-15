@@ -4,6 +4,7 @@ import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { LogoUploader } from "@/components/dashboard/logo-uploader";
 import { ColorInput } from "@/components/ui/color-input";
 import { ValidatedInput } from "@/components/ui/validated-input";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -53,12 +54,9 @@ export default async function BrandPage({
               <ColorInput name="accentColor" label="Color de acento" defaultValue={development.accentColor} />
             </div>
           </div>
-          <button
-            type="submit"
-            className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-          >
+          <SubmitButton className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
             Guardar
-          </button>
+          </SubmitButton>
         </form>
       </section>
     </div>

@@ -7,6 +7,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireDevelopmentForSession } from "@/lib/tenant";
 import { uploadCatalogImage } from "@/lib/supabaseStorage";
+import { MAX_CATALOG_IMAGES } from "@/lib/planLimits";
 
 function back(developmentId: string, error?: string) {
   const qs = error ? `?error=${encodeURIComponent(error)}` : "";
@@ -142,6 +143,11 @@ export async function addFinishLevelImage(
     throw new Error("Selecciona una imagen");
   }
 
+  const existing = await prisma.finishLevel.findUniqueOrThrow({ where: { id: finishLevelId, developmentId } });
+  if (existing.imageUrls.length >= MAX_CATALOG_IMAGES) {
+    throw new Error(`Máximo ${MAX_CATALOG_IMAGES} imágenes por opción`);
+  }
+
   const url = await uploadCatalogImage(developmentId, "finishes", finishLevelId, file);
   const finishLevel = await prisma.finishLevel.update({
     where: { id: finishLevelId, developmentId },
@@ -250,6 +256,11 @@ export async function addExtraImage(developmentId: string, extraId: string, form
   const file = formData.get("image");
   if (!(file instanceof File) || file.size === 0) {
     throw new Error("Selecciona una imagen");
+  }
+
+  const existing = await prisma.extra.findUniqueOrThrow({ where: { id: extraId, developmentId } });
+  if (existing.imageUrls.length >= MAX_CATALOG_IMAGES) {
+    throw new Error(`Máximo ${MAX_CATALOG_IMAGES} imágenes por extra`);
   }
 
   const url = await uploadCatalogImage(developmentId, "extras", extraId, file);

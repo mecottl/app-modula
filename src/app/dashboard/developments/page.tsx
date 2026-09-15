@@ -1,11 +1,14 @@
+import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requireSessionAccount } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { createDevelopment } from "@/lib/actions/developments";
+import { MAX_DEVELOPMENTS_BY_PLAN } from "@/lib/planLimits";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FormDialog } from "@/components/ui/form-dialog";
 import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { DevelopmentAccordion } from "@/components/dashboard/development-accordion";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +20,8 @@ export default async function DevelopmentsPage({
 }) {
   const { error, ok } = await searchParams;
   const { accountId } = await requireSessionAccount();
+  const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId }, select: { plan: true } });
+  const maxDevelopments = MAX_DEVELOPMENTS_BY_PLAN[account.plan];
   const developments = await prisma.development.findMany({
     where: { accountId },
     orderBy: { createdAt: "desc" },
@@ -37,36 +42,47 @@ export default async function DevelopmentsPage({
       <ToastFromParams error={error} ok={ok} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold tracking-tight">Tus desarrollos</h1>
-        <FormDialog
-          title="Crear nuevo desarrollo"
-          description="Puedes ajustar moneda y otros datos avanzados después, desde General."
-          trigger={
-            <Button size="sm" className="gap-2 rounded-full">
-              <Plus className="h-4 w-4" />
-              Nuevo desarrollo
-            </Button>
-          }
-        >
-          <form action={createDevelopment} className="flex flex-col gap-4">
-            <label className="flex flex-col gap-1.5 text-sm">
-              Nombre
-              <input
-                name="name"
-                required
-                maxLength={120}
-                autoFocus
-                className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground"
-              />
-            </label>
-            <button
-              type="submit"
-              className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-            >
-              Crear
-            </button>
-          </form>
-        </FormDialog>
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">Tus desarrollos</h1>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {developments.length} de {maxDevelopments} desarrollos de tu plan
+          </p>
+        </div>
+        {developments.length >= maxDevelopments ? (
+          <Link
+            href="/dashboard/billing"
+            className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:border-foreground"
+          >
+            Sube de plan para crear más
+          </Link>
+        ) : (
+          <FormDialog
+            title="Crear nuevo desarrollo"
+            description="Puedes ajustar moneda y otros datos avanzados después, desde General."
+            trigger={
+              <Button size="sm" className="gap-2 rounded-full">
+                <Plus className="h-4 w-4" />
+                Nuevo desarrollo
+              </Button>
+            }
+          >
+            <form action={createDevelopment} className="flex flex-col gap-4">
+              <label className="flex flex-col gap-1.5 text-sm">
+                Nombre
+                <input
+                  name="name"
+                  required
+                  maxLength={120}
+                  autoFocus
+                  className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground"
+                />
+              </label>
+              <SubmitButton className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
+                Crear
+              </SubmitButton>
+            </form>
+          </FormDialog>
+        )}
       </div>
 
       {developments.length === 0 ? (

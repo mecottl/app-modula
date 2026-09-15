@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { requireDevelopmentForSession } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { updateIntegrationSettings } from "@/lib/actions/integration";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -23,12 +25,17 @@ export default async function IntegrationDomainsPage({
       <ToastFromParams ok={ok} error={error} />
       <h3 className="font-medium">Entorno y dominios autorizados</h3>
       <p className="mt-1 text-xs text-muted-foreground">
-        Esto es independiente del estado &quot;Publicado/Borrador&quot; del desarrollo: ese
-        controla la página propia (Plan Básico); esto de aquí controla únicamente el widget
-        embebido (Plan Profesional). <strong>Vista previa</strong> no valida el dominio de origen,
-        para que pruebes el widget libremente. <strong>Producción</strong> solo sirve el widget si
-        la solicitud viene de uno de los dominios autorizados de abajo. Actívalo cuando ya hayas
-        pegado el snippet en tu sitio real.
+        Controla el widget embebido, no la página pública (ese estado se maneja en{" "}
+        <Link href="../general" className="underline underline-offset-4 hover:text-foreground">
+          General
+        </Link>
+        ). Deja <strong>Vista previa</strong> mientras pruebas el widget; cambia a{" "}
+        <strong>Producción</strong> cuando ya hayas pegado el snippet en tu sitio real — desde ese
+        momento el widget solo carga en los dominios que autorices abajo. Más detalle en{" "}
+        <Link href="/docs#plan-profesional" className="underline underline-offset-4 hover:text-foreground">
+          la documentación
+        </Link>
+        .
       </p>
       <form
         action={updateIntegrationSettings.bind(null, id)}
@@ -53,9 +60,9 @@ export default async function IntegrationDomainsPage({
             className="rounded border px-3 py-2 font-mono text-xs"
           />
         </label>
-        <button type="submit" className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
+        <SubmitButton className="self-start rounded bg-primary px-4 py-2 text-sm text-primary-foreground">
           Guardar
-        </button>
+        </SubmitButton>
       </form>
     </section>
   );

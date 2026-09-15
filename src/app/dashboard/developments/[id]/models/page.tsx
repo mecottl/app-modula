@@ -8,8 +8,10 @@ import { FormDialog } from "@/components/ui/form-dialog";
 import { Button } from "@/components/ui/button";
 import { ValidatedInput, ValidatedTextarea } from "@/components/ui/validated-input";
 import { MoneyInput } from "@/components/ui/money-input";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { ImageGallery } from "@/components/dashboard/image-gallery";
 import { formatMoney } from "@/lib/money";
+import { MAX_CATALOG_IMAGES } from "@/lib/planLimits";
 
 export const dynamic = "force-dynamic";
 
@@ -73,12 +75,9 @@ export default async function ModelsPage({
               <input name="active" type="checkbox" defaultChecked />
               Activo (visible en el configurador)
             </label>
-            <button
-              type="submit"
-              className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-            >
+            <SubmitButton className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
               Crear
-            </button>
+            </SubmitButton>
           </form>
         </FormDialog>
       </div>
@@ -126,6 +125,7 @@ export default async function ModelsPage({
                   images={model.imageUrls}
                   addAction={addModelImage.bind(null, id, model.id)}
                   removeAction={removeModelImage.bind(null, id, model.id)}
+                  max={MAX_CATALOG_IMAGES}
                 />
                 <form action={updateAction} className="mt-4 flex flex-col gap-4">
                   <ValidatedInput
@@ -175,18 +175,15 @@ export default async function ModelsPage({
                     Activo (visible en el configurador)
                   </label>
                   <div className="mt-1 flex items-center justify-between">
-                    <button
-                      type="submit"
-                      className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-                    >
+                    <SubmitButton className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
                       Guardar
-                    </button>
+                    </SubmitButton>
                   </div>
                 </form>
                 <form action={deleteAction} className="mt-1 border-t border-border pt-4">
-                  <button type="submit" className="text-sm text-red-400 underline underline-offset-4">
+                  <SubmitButton className="text-sm text-red-400 underline underline-offset-4">
                     Eliminar modelo
-                  </button>
+                  </SubmitButton>
                 </form>
               </FormDialog>
             </li>

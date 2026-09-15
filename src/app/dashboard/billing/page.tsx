@@ -5,6 +5,7 @@ import { stripe } from "@/lib/stripe";
 import { changePlan } from "@/lib/actions/billing";
 import { getPendingDowngrade } from "@/lib/billingHelpers";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 const invoiceStatusLabels: Record<string, string> = {
   paid: "Pagada",
@@ -96,12 +97,9 @@ export default async function BillingPage({
             {pendingDowngrade ? (
               <form action={changePlan}>
                 <input type="hidden" name="plan" value="PROFESIONAL" />
-                <button
-                  type="submit"
-                  className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-                >
+                <SubmitButton className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
                   Cancelar baja programada
-                </button>
+                </SubmitButton>
               </form>
             ) : (
               account.plan !== "PROFESIONAL" && (

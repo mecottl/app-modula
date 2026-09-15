@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ImageIcon, Plus } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { cn, getContrastText } from "@/lib/utils";
 import { formatMoney } from "@/lib/money";
 
@@ -324,12 +324,18 @@ export function ConfiguratorWizard({
           )}
         >
           {mainImages[imageIndex] ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={mainImages[imageIndex]}
-              alt=""
-              className="h-full w-full object-contain p-6"
-            />
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={mainImages[imageIndex]}
+                src={mainImages[imageIndex]}
+                alt=""
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="h-full w-full object-contain p-6"
+              />
+            </AnimatePresence>
           ) : (
             <ImageIcon className="h-16 w-16 text-muted-foreground" />
           )}

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { regenerateIntegrationToken } from "@/lib/actions/integration";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { CopyButton } from "@/components/ui/copy-button";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -27,9 +28,7 @@ export default async function IntegrationTokenPage({
       </div>
       <p className="mt-1 break-all font-mono text-xs text-muted-foreground">{settings.token}</p>
       <form action={regenerateIntegrationToken.bind(null, id)} className="mt-3">
-        <button type="submit" className="rounded border px-4 py-2 text-sm">
-          Regenerar token
-        </button>
+        <SubmitButton className="rounded border px-4 py-2 text-sm">Regenerar token</SubmitButton>
       </form>
       <p className="mt-1 text-xs text-amber-400">
         Regenerar invalida el token anterior de inmediato. Hazlo solo si se filtró.

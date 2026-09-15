@@ -8,6 +8,7 @@ import {
 } from "@/lib/actions/account";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { ValidatedInput } from "@/components/ui/validated-input";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -39,12 +40,9 @@ export default async function AccountPage({
         <h2 className="font-medium">Nombre</h2>
         <form action={updateAccountName} className="flex flex-col gap-4">
           <ValidatedInput label="Nombre" name="name" required maxLength={120} defaultValue={member.name} />
-          <button
-            type="submit"
-            className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-          >
+          <SubmitButton className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
             Guardar
-          </button>
+          </SubmitButton>
         </form>
       </section>
 
@@ -62,20 +60,17 @@ export default async function AccountPage({
               desde el enlace que te mandamos a esa dirección.
             </p>
             <form action={cancelEmailChange}>
-              <button type="submit" className="text-sm text-destructive underline underline-offset-4">
+              <SubmitButton className="text-sm text-destructive underline underline-offset-4">
                 Cancelar cambio
-              </button>
+              </SubmitButton>
             </form>
           </div>
         ) : (
           <form action={requestEmailChange} className="flex flex-col gap-4">
             <ValidatedInput label="Correo nuevo" name="email" type="email" required placeholder={member.email} />
-            <button
-              type="submit"
-              className="self-start rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:border-foreground"
-            >
+            <SubmitButton className="self-start rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:border-foreground">
               Pedir cambio
-            </button>
+            </SubmitButton>
           </form>
         )}
       </section>
@@ -92,12 +87,9 @@ export default async function AccountPage({
             required
             minLength={8}
           />
-          <button
-            type="submit"
-            className="self-start rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:border-foreground"
-          >
+          <SubmitButton className="self-start rounded-full border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:border-foreground">
             Actualizar contraseña
-          </button>
+          </SubmitButton>
         </form>
       </section>
     </div>

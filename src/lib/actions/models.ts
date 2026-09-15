@@ -7,6 +7,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireDevelopmentForSession } from "@/lib/tenant";
 import { uploadCatalogImage } from "@/lib/supabaseStorage";
+import { MAX_CATALOG_IMAGES } from "@/lib/planLimits";
 
 const modelSchema = z.object({
   name: z.string().min(1).max(120),
@@ -91,6 +92,11 @@ export async function addModelImage(developmentId: string, modelId: string, form
   const file = formData.get("image");
   if (!(file instanceof File) || file.size === 0) {
     throw new Error("Selecciona una imagen");
+  }
+
+  const existing = await prisma.model.findUniqueOrThrow({ where: { id: modelId, developmentId } });
+  if (existing.imageUrls.length >= MAX_CATALOG_IMAGES) {
+    throw new Error(`Máximo ${MAX_CATALOG_IMAGES} imágenes por modelo`);
   }
 
   const url = await uploadCatalogImage(developmentId, "models", modelId, file);

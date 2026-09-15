@@ -8,6 +8,7 @@ import { FormDialog } from "@/components/ui/form-dialog";
 import { Button } from "@/components/ui/button";
 import { ValidatedInput } from "@/components/ui/validated-input";
 import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 const promotionTypeOptions = [
   { value: "PORCENTAJE", label: "Porcentaje (%)" },
@@ -88,12 +89,9 @@ export default async function PromotionsPage({
               <input name="active" type="checkbox" defaultChecked />
               Activa
             </label>
-            <button
-              type="submit"
-              className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-            >
+            <SubmitButton className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
               Crear
-            </button>
+            </SubmitButton>
           </form>
         </FormDialog>
       </div>
@@ -177,17 +175,14 @@ export default async function PromotionsPage({
                   <input name="active" type="checkbox" defaultChecked={promo.active} />
                   Activa
                 </label>
-                <button
-                  type="submit"
-                  className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-                >
+                <SubmitButton className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
                   Guardar
-                </button>
+                </SubmitButton>
               </form>
               <form action={deletePromotion.bind(null, id, promo.id)} className="mt-1 border-t border-border pt-4">
-                <button type="submit" className="text-sm text-red-400 underline underline-offset-4">
+                <SubmitButton className="text-sm text-red-400 underline underline-offset-4">
                   Eliminar
-                </button>
+                </SubmitButton>
               </form>
             </FormDialog>
           </li>

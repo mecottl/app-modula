@@ -6,6 +6,7 @@ import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { FormDialog } from "@/components/ui/form-dialog";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 const inputClass =
   "rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-foreground";
@@ -65,12 +66,9 @@ export default async function MembersPage({
                 { value: "SOLO_LECTURA", label: "Solo lectura" },
               ]}
             />
-            <button
-              type="submit"
-              className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-            >
+            <SubmitButton className="self-start rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
               Invitar
-            </button>
+            </SubmitButton>
           </form>
         </FormDialog>
       </div>
@@ -91,9 +89,7 @@ export default async function MembersPage({
             </div>
             {m.id !== memberId && (
               <form action={removeMember.bind(null, m.id)}>
-                <button type="submit" className="text-xs text-red-400 underline underline-offset-4">
-                  Quitar
-                </button>
+                <SubmitButton className="text-xs text-red-400 underline underline-offset-4">Quitar</SubmitButton>
               </form>
             )}
           </li>

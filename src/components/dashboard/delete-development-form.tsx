@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 /**
  * Confirmación de borrado escribiendo el nombre exacto (issue "agrega
@@ -29,13 +30,12 @@ export function DeleteDevelopmentForm({
           className="rounded-md border border-border bg-transparent px-3 py-2 outline-none focus:border-destructive"
         />
       </label>
-      <button
-        type="submit"
+      <SubmitButton
         disabled={value !== developmentName}
         className="self-start rounded-full border border-destructive/50 px-5 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-40"
       >
         Eliminar desarrollo
-      </button>
+      </SubmitButton>
     </form>
   );
 }

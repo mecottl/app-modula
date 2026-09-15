@@ -9,6 +9,7 @@ import { slugify } from "@/lib/slug";
 import { generateProjectToken } from "@/lib/tokens";
 import { uploadDevelopmentImage } from "@/lib/supabaseStorage";
 import { addDomainToVercelProject } from "@/lib/vercelDomains";
+import { MAX_DEVELOPMENTS_BY_PLAN } from "@/lib/planLimits";
 
 const createSchema = z.object({
   name: z.string().min(2).max(120),
@@ -18,6 +19,17 @@ const createSchema = z.object({
 
 export async function createDevelopment(formData: FormData) {
   const { accountId } = await requireSessionAccount();
+
+  const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
+  const developmentCount = await prisma.development.count({ where: { accountId } });
+  const maxDevelopments = MAX_DEVELOPMENTS_BY_PLAN[account.plan];
+  if (developmentCount >= maxDevelopments) {
+    redirect(
+      `/dashboard/developments?error=${encodeURIComponent(
+        `Llegaste al límite de ${maxDevelopments} desarrollos de tu plan. Sube de plan para crear más.`,
+      )}`,
+    );
+  }
 
   const parsed = createSchema.safeParse({
     name: formData.get("name"),
