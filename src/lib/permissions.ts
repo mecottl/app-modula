@@ -1,11 +1,35 @@
 /** Claves de permiso válidas para un Role (issue #72). */
 export const PERMISSIONS = [
-  { key: "catalog.write", label: "Editar catálogo (general, marca, modelos, acabados, extras, promociones)" },
-  { key: "quotes.manage", label: "Gestionar cotizaciones (cambiar estado, eliminar datos de un lead)" },
-  { key: "integration.manage", label: "Integración (snippet, entorno, dominios, token)" },
-  { key: "development.delete", label: "Eliminar un desarrollo completo" },
-  { key: "members.manage", label: "Miembros y roles (invitar/quitar miembros, crear/editar roles)" },
-  { key: "billing.manage", label: "Facturación (plan, tarjetas)" },
+  {
+    key: "catalog.write",
+    label: "Editar catálogo",
+    description: "General, marca, modelos, acabados, extras y promociones.",
+  },
+  {
+    key: "quotes.manage",
+    label: "Gestionar cotizaciones",
+    description: "Cambiar estado y eliminar datos de un lead.",
+  },
+  {
+    key: "integration.manage",
+    label: "Integración",
+    description: "Snippet, entorno, dominios autorizados y token.",
+  },
+  {
+    key: "development.delete",
+    label: "Eliminar desarrollo",
+    description: "Borra un desarrollo completo: catálogo, cotizaciones, todo.",
+  },
+  {
+    key: "members.manage",
+    label: "Miembros y roles",
+    description: "Invitar/quitar miembros, crear/editar/eliminar roles.",
+  },
+  {
+    key: "billing.manage",
+    label: "Facturación",
+    description: "Cambiar de plan y gestionar tarjetas guardadas.",
+  },
 ] as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[number]["key"];
