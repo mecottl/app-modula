@@ -9,7 +9,7 @@ import { SubscriptionCancellation } from "@/components/billing/subscription-canc
 export const dynamic = "force-dynamic";
 
 export default async function CardsPage() {
-  const { accountId, role } = await requireSessionAccount();
+  const { accountId, permissions } = await requireSessionAccount();
   const { cards, defaultId } = await listPaymentMethods();
 
   const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
@@ -30,7 +30,7 @@ export default async function CardsPage() {
         </p>
       </div>
 
-      {role === "ADMINISTRADOR" ? (
+      {permissions.includes("billing.manage") ? (
         <>
           <CardsManager initialCards={cards} initialDefaultId={defaultId} />
           {cancelInfo && (
@@ -41,7 +41,7 @@ export default async function CardsPage() {
           )}
         </>
       ) : (
-        <p className="text-sm text-muted-foreground">Solo un administrador puede gestionar las tarjetas.</p>
+        <p className="text-sm text-muted-foreground">Tu rol no tiene permiso para gestionar las tarjetas.</p>
       )}
     </div>
   );

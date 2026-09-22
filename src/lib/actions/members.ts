@@ -7,7 +7,7 @@ import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
-import { requireSessionAccount } from "@/lib/tenant";
+import { requirePermission } from "@/lib/tenant";
 import { logger } from "@/lib/logger";
 import { captureException } from "@/lib/errorReporting";
 import { renderEmailHtml } from "@/lib/emailTemplate";
@@ -19,12 +19,24 @@ function back(message?: string, kind: "error" | "ok" = "error") {
   redirect(`/dashboard/members${qs}`);
 }
 
-async function requireAdmin() {
-  const session = await requireSessionAccount();
-  if (session.role !== "ADMINISTRADOR") {
-    throw new MembersAccessError("Solo un administrador puede gestionar miembros");
+async function requireManageMembers() {
+  try {
+    return await requirePermission("members.manage");
+  } catch {
+    throw new MembersAccessError("Tu rol no tiene permiso para gestionar miembros");
   }
-  return session;
+}
+
+/**
+ * "Último administrador" ya no es un valor de enum fijo (issue #72) —
+ * es cualquier miembro cuyo rol incluya members.manage, el permiso que
+ * deja invitar/quitar gente y crear/editar roles. Sin al menos uno, la
+ * cuenta queda sin nadie que pueda arreglar los permisos después.
+ */
+async function countMembersManageHolders(accountId: string) {
+  return prisma.member.count({
+    where: { accountId, role: { permissions: { has: "members.manage" } } },
+  });
 }
 
 function generateTempPassword(): string {
@@ -66,13 +78,13 @@ async function sendInviteEmail(email: string, name: string, tempPassword: string
 const inviteSchema = z.object({
   name: z.string().min(2).max(120),
   email: z.string().email(),
-  role: z.enum(["ADMINISTRADOR", "EDITOR_CATALOGO", "SOLO_LECTURA"]),
+  roleId: z.string().min(1),
 });
 
 export async function inviteMember(formData: FormData) {
   let accountId: string;
   try {
-    ({ accountId } = await requireAdmin());
+    ({ accountId } = await requireManageMembers());
   } catch (error) {
     if (error instanceof MembersAccessError) back(error.message);
     throw error;
@@ -81,9 +93,12 @@ export async function inviteMember(formData: FormData) {
   const parsed = inviteSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
-    role: formData.get("role"),
+    roleId: formData.get("roleId"),
   });
   if (!parsed.success) back("Revisa los campos del formulario");
+
+  const role = await prisma.role.findFirst({ where: { id: parsed.data!.roleId, accountId } });
+  if (!role) back("Rol inválido");
 
   const existing = await prisma.member.findUnique({ where: { email: parsed.data!.email } });
   if (existing) back("Ese correo ya tiene una cuenta");
@@ -96,7 +111,7 @@ export async function inviteMember(formData: FormData) {
       accountId,
       name: parsed.data!.name,
       email: parsed.data!.email,
-      role: parsed.data!.role,
+      roleId: parsed.data!.roleId,
       passwordHash,
     },
   });
@@ -111,7 +126,7 @@ export async function removeMember(memberId: string) {
   let accountId: string;
   let requesterId: string;
   try {
-    ({ accountId, memberId: requesterId } = await requireAdmin());
+    ({ accountId, memberId: requesterId } = await requireManageMembers());
   } catch (error) {
     if (error instanceof MembersAccessError) back(error.message);
     throw error;
@@ -119,12 +134,15 @@ export async function removeMember(memberId: string) {
 
   if (memberId === requesterId) back("No puedes quitarte a ti mismo");
 
-  const target = await prisma.member.findFirst({ where: { id: memberId, accountId } });
+  const target = await prisma.member.findFirst({
+    where: { id: memberId, accountId },
+    include: { role: { select: { permissions: true } } },
+  });
   if (!target) back("Miembro no encontrado");
 
-  if (target!.role === "ADMINISTRADOR") {
-    const adminCount = await prisma.member.count({ where: { accountId, role: "ADMINISTRADOR" } });
-    if (adminCount <= 1) back("Debe quedar al menos un administrador");
+  if (target!.role.permissions.includes("members.manage")) {
+    const holders = await countMembersManageHolders(accountId);
+    if (holders <= 1) back("Debe quedar al menos un miembro que pueda gestionar miembros y roles");
   }
 
   await prisma.member.delete({ where: { id: memberId, accountId } });

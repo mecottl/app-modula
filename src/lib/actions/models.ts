@@ -24,7 +24,7 @@ function backToModels(developmentId: string, error?: string) {
 }
 
 export async function createModel(developmentId: string, formData: FormData) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
 
   const parsed = modelSchema.safeParse({
     name: formData.get("name"),
@@ -53,7 +53,7 @@ export async function createModel(developmentId: string, formData: FormData) {
 }
 
 export async function updateModel(developmentId: string, modelId: string, formData: FormData) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
 
   const parsed = modelSchema.safeParse({
     name: formData.get("name"),
@@ -87,7 +87,7 @@ export async function updateModel(developmentId: string, modelId: string, formDa
  * desarrollo (un modelo puede mostrar varias fotos/renders).
  */
 export async function addModelImage(developmentId: string, modelId: string, formData: FormData) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
 
   const file = formData.get("image");
   if (!(file instanceof File) || file.size === 0) {
@@ -110,7 +110,7 @@ export async function addModelImage(developmentId: string, modelId: string, form
 }
 
 export async function removeModelImage(developmentId: string, modelId: string, url: string) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
 
   const model = await prisma.model.findUniqueOrThrow({ where: { id: modelId, developmentId } });
   const imageUrls = model.imageUrls.filter((u) => u !== url);
@@ -121,7 +121,7 @@ export async function removeModelImage(developmentId: string, modelId: string, u
 }
 
 export async function deleteModel(developmentId: string, modelId: string) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
 
   try {
     await prisma.model.delete({ where: { id: modelId, developmentId } });

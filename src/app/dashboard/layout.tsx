@@ -7,7 +7,7 @@ import { AppToaster } from "@/components/dashboard/app-toaster";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { accountId } = await requireSessionAccount();
+  const { accountId, permissions } = await requireSessionAccount();
   const developments = await prisma.development.findMany({
     where: { accountId },
     select: { id: true, name: true },
@@ -38,7 +38,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <>
       <div className="flex min-h-screen">
-        <Sidebar developments={developments} footer={sidebarFooter} />
+        <Sidebar developments={developments} footer={sidebarFooter} canManageMembers={permissions.includes("members.manage")} />
         <main className="min-w-0 flex-1 px-4 py-8 sm:px-8 lg:px-10">
           <div className="mx-auto max-w-5xl">{children}</div>
         </main>

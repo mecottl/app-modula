@@ -18,7 +18,7 @@ const settingsSchema = z.object({
 });
 
 export async function updateIntegrationSettings(developmentId: string, formData: FormData) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "integration.manage");
 
   const parsed = settingsSchema.safeParse({
     environment: formData.get("environment"),
@@ -44,7 +44,7 @@ export async function updateIntegrationSettings(developmentId: string, formData:
  * Regenera el token del proyecto, invalidando el anterior (sección 9.4).
  */
 export async function regenerateIntegrationToken(developmentId: string) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "integration.manage");
   await prisma.integrationSettings.update({
     where: { developmentId },
     data: { token: generateProjectToken() },

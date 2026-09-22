@@ -57,7 +57,8 @@ export default async function BillingPage({
   searchParams: Promise<{ error?: string; ok?: string; checkout?: string }>;
 }) {
   const { error, ok, checkout } = await searchParams;
-  const { accountId, role } = await requireSessionAccount();
+  const { accountId, permissions } = await requireSessionAccount();
+  const canManageBilling = permissions.includes("billing.manage");
   const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
   const hasActiveSubscription = Boolean(account.stripeSubscriptionId) && account.billingStatus === "ACTIVO";
   const invoices =
@@ -92,7 +93,7 @@ export default async function BillingPage({
           </p>
         )}
 
-        {role === "ADMINISTRADOR" && hasActiveSubscription && (
+        {canManageBilling && hasActiveSubscription && (
           <div className="mt-5 flex flex-wrap gap-3">
             {pendingDowngrade ? (
               <form action={changePlan}>
@@ -121,8 +122,8 @@ export default async function BillingPage({
             )}
           </div>
         )}
-        {role !== "ADMINISTRADOR" && (
-          <p className="mt-3 text-xs text-muted-foreground">Solo un administrador puede cambiar el plan.</p>
+        {!canManageBilling && (
+          <p className="mt-3 text-xs text-muted-foreground">Tu rol no tiene permiso para cambiar el plan.</p>
         )}
       </section>
 

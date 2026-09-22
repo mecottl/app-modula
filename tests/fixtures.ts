@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { generateProjectToken } from "@/lib/tokens";
+import { DEFAULT_ROLE_SEEDS } from "@/lib/permissions";
 
 /**
  * Crea un tenant de prueba completo y aislado (cuenta + desarrollo +
@@ -9,16 +10,18 @@ import { generateProjectToken } from "@/lib/tokens";
  */
 export async function createTestTenant(label: string) {
   const account = await prisma.account.create({
-    data: { name: `[test] Cuenta ${label}` },
+    data: { name: `[test] Cuenta ${label}`, roles: { create: DEFAULT_ROLE_SEEDS } },
+    include: { roles: true },
   });
+  const adminRole = account.roles.find((r) => r.name === "Administrador")!;
 
   const member = await prisma.member.create({
     data: {
       accountId: account.id,
+      roleId: adminRole.id,
       name: `[test] Admin ${label}`,
       email: `test-${label}-${account.id}@example.com`,
       passwordHash: "not-used-in-tests",
-      role: "ADMINISTRADOR",
     },
   });
 

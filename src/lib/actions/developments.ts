@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireSessionAccount, requireDevelopmentForSession } from "@/lib/tenant";
+import { requirePermission, requireDevelopmentForSession, TenantAccessError } from "@/lib/tenant";
 import { slugify } from "@/lib/slug";
 import { generateProjectToken } from "@/lib/tokens";
 import { uploadDevelopmentImage } from "@/lib/supabaseStorage";
@@ -18,7 +18,15 @@ const createSchema = z.object({
 });
 
 export async function createDevelopment(formData: FormData) {
-  const { accountId } = await requireSessionAccount();
+  let accountId: string;
+  try {
+    ({ accountId } = await requirePermission("catalog.write"));
+  } catch (error) {
+    if (error instanceof TenantAccessError) {
+      redirect(`/dashboard/developments?error=${encodeURIComponent("Tu rol no tiene permiso para crear desarrollos")}`);
+    }
+    throw error;
+  }
 
   const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
   const developmentCount = await prisma.development.count({ where: { accountId } });
@@ -80,7 +88,7 @@ const generalSchema = z.object({
 });
 
 export async function updateDevelopmentGeneral(developmentId: string, formData: FormData) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
 
   const parsed = generalSchema.safeParse({
     name: formData.get("name"),
@@ -119,7 +127,7 @@ const brandSchema = z.object({
 });
 
 export async function updateDevelopmentBrand(developmentId: string, formData: FormData) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
 
   const parsed = brandSchema.safeParse({
     ctaText: formData.get("ctaText"),
@@ -160,7 +168,7 @@ const advancedSchema = z.object({
 });
 
 export async function updateDevelopmentAdvanced(developmentId: string, formData: FormData) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
 
   const parsed = advancedSchema.safeParse({
     currency: formData.get("currency"),
@@ -193,7 +201,7 @@ export async function updateDevelopmentAdvanced(developmentId: string, formData:
  * (issue "botón de subir imagen en vez de pegar URL").
  */
 export async function uploadDevelopmentLogo(developmentId: string, formData: FormData) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
 
   const file = formData.get("logo");
   if (!(file instanceof File) || file.size === 0) {
@@ -208,7 +216,7 @@ export async function uploadDevelopmentLogo(developmentId: string, formData: For
 }
 
 export async function publishDevelopment(developmentId: string) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
 
   const activeModels = await prisma.model.count({
     where: { developmentId, active: true },
@@ -229,7 +237,7 @@ export async function publishDevelopment(developmentId: string) {
 }
 
 export async function unpublishDevelopment(developmentId: string) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
   await prisma.development.update({
     where: { id: developmentId },
     data: { status: "BORRADOR" },
@@ -264,7 +272,7 @@ const domainSchema = z
  * (ver verifyDevelopmentDomain).
  */
 export async function setDevelopmentDomain(developmentId: string, formData: FormData) {
-  const development = await requireDevelopmentForSession(developmentId);
+  const development = await requireDevelopmentForSession(developmentId, "integration.manage");
   const account = await prisma.account.findUniqueOrThrow({ where: { id: development.accountId } });
   if (account.plan !== "PROFESIONAL") {
     backToIntegration(developmentId, "Dominio personalizado es exclusivo del Plan Profesional");
@@ -323,7 +331,7 @@ export async function setDevelopmentDomain(developmentId: string, formData: Form
  * solo considera dominios con customDomainVerifiedAt).
  */
 export async function verifyDevelopmentDomain(developmentId: string) {
-  const development = await requireDevelopmentForSession(developmentId);
+  const development = await requireDevelopmentForSession(developmentId, "integration.manage");
   if (!development.customDomain || !development.customDomainToken) {
     backToIntegration(developmentId, "Primero guarda un dominio");
   }
@@ -354,7 +362,7 @@ export async function verifyDevelopmentDomain(developmentId: string) {
 }
 
 export async function removeDevelopmentDomain(developmentId: string) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "integration.manage");
   await prisma.development.update({
     where: { id: developmentId },
     data: { customDomain: null, customDomainToken: null, customDomainVerifiedAt: null },
@@ -373,16 +381,7 @@ export async function removeDevelopmentDomain(developmentId: string) {
  * vuelta atrás.
  */
 export async function deleteDevelopment(developmentId: string, formData: FormData) {
-  const { role } = await requireSessionAccount();
-  const development = await requireDevelopmentForSession(developmentId);
-
-  if (role !== "ADMINISTRADOR") {
-    redirect(
-      `/dashboard/developments/${developmentId}/general?error=${encodeURIComponent(
-        "Solo un administrador puede eliminar un desarrollo",
-      )}`,
-    );
-  }
+  const development = await requireDevelopmentForSession(developmentId, "development.delete");
 
   const confirmName = String(formData.get("confirmName") ?? "");
   if (confirmName !== development.name) {

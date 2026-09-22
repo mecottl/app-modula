@@ -36,12 +36,6 @@ enum BillingStatus {
   CANCELADO
 }
 
-enum MemberRole {
-  ADMINISTRADOR
-  EDITOR_CATALOGO
-  SOLO_LECTURA
-}
-
 enum DevelopmentStatus {
   BORRADOR
   PUBLICADO
@@ -99,31 +93,54 @@ model Account {
 
   developments Development[]
   members      Member[]
+  roles        Role[]
 
   @@map("accounts")
+}
+
+/// Rol personalizado por cuenta (issue #72): el admin define el nombre y
+/// qué permisos incluye (ver src/lib/permissions.ts para las claves
+/// válidas), en vez de un enum fijo de 3 valores. Cada cuenta parte de 3
+/// roles semilla (Administrador/Editor de catálogo/Solo lectura,
+/// editables como cualquier otro) creados en el registro.
+model Role {
+  id          String   @id @default(cuid())
+  accountId   String
+  name        String
+  permissions String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  account Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  members Member[]
+
+  @@index([accountId])
+  @@map("roles")
 }
 
 /// Usuario del dashboard, miembro del equipo de una desarrolladora.
 /// Es también la entidad de autenticación (credenciales locales).
 model Member {
-  id           String     @id @default(cuid())
+  id           String   @id @default(cuid())
   accountId    String
+  roleId       String
   name         String
-  email        String     @unique
+  email        String   @unique
   passwordHash String
-  role         MemberRole @default(SOLO_LECTURA)
   /// Se incrementa al cambiar la contraseña; el JWT de sesión guarda el
   /// valor vigente al momento del login y se compara en cada request
   /// (ver src/auth.config.ts) — así un token ya emitido deja de ser
   /// válido apenas cambia la contraseña, sin esperar su expiración.
-  tokenVersion Int        @default(0)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  tokenVersion Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   account            Account             @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  role               Role                @relation(fields: [roleId], references: [id])
   verificationTokens VerificationToken[]
 
   @@index([accountId])
+  @@index([roleId])
   @@map("members")
 }
 

@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import type { PermissionKey } from "@/lib/permissions";
 
 export class TenantAccessError extends Error {
   constructor(message = "No autorizado para este recurso") {
@@ -11,13 +12,22 @@ export class TenantAccessError extends Error {
 export interface SessionAccount {
   accountId: string;
   memberId: string;
-  role: string;
+  roleId: string;
+  roleName: string;
+  permissions: PermissionKey[];
 }
 
 /**
  * Resuelve la cuenta (tenant) de la sesión autenticada del dashboard.
  * Nunca confía en un `accountId`/`developmentId` enviado por el cliente:
  * siempre deriva del contexto de autenticación (ver README.md sección 9.1).
+ *
+ * Los permisos (issue #72) se leen frescos de la base en cada request en
+ * vez de viajar en el JWT: como los roles son editables por el admin en
+ * cualquier momento, hornear permisos en el token los dejaría
+ * desactualizados hasta el próximo login — el mismo problema que
+ * tokenVersion ya resuelve para la sesión completa, así que se aprovecha
+ * la misma consulta.
  */
 export async function requireSessionAccount(): Promise<SessionAccount> {
   const session = await auth();
@@ -32,7 +42,7 @@ export async function requireSessionAccount(): Promise<SessionAccount> {
   // que expire solo.
   const member = await prisma.member.findUnique({
     where: { id: session.user.id },
-    select: { tokenVersion: true },
+    select: { tokenVersion: true, roleId: true, role: { select: { name: true, permissions: true } } },
   });
   if (!member || member.tokenVersion !== session.user.tokenVersion) {
     throw new TenantAccessError("Sesión invalidada, vuelve a iniciar sesión");
@@ -41,8 +51,19 @@ export async function requireSessionAccount(): Promise<SessionAccount> {
   return {
     accountId: session.user.accountId,
     memberId: session.user.id,
-    role: session.user.role,
+    roleId: member.roleId,
+    roleName: member.role.name,
+    permissions: member.role.permissions as PermissionKey[],
   };
+}
+
+/** Igual que `requireSessionAccount`, pero exige además un permiso puntual. */
+export async function requirePermission(permission: PermissionKey): Promise<SessionAccount> {
+  const session = await requireSessionAccount();
+  if (!session.permissions.includes(permission)) {
+    throw new TenantAccessError("Tu rol no tiene permiso para esta acción");
+  }
+  return session;
 }
 
 /**
@@ -50,10 +71,10 @@ export async function requireSessionAccount(): Promise<SessionAccount> {
  * sesión autenticada y devuelve el desarrollo. Lanza `TenantAccessError`
  * si no pertenece, en lugar de dejar que la consulta cruce cuentas.
  */
-export async function requireDevelopmentForSession(developmentId: string) {
-  const { accountId } = await requireSessionAccount();
+export async function requireDevelopmentForSession(developmentId: string, permission?: PermissionKey) {
+  const session = permission ? await requirePermission(permission) : await requireSessionAccount();
   const development = await prisma.development.findFirst({
-    where: { id: developmentId, accountId },
+    where: { id: developmentId, accountId: session.accountId },
   });
   if (!development) {
     throw new TenantAccessError("El desarrollo no pertenece a la cuenta autenticada");

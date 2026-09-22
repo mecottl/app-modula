@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireSessionAccount } from "@/lib/tenant";
+import { requirePermission, requireSessionAccount, TenantAccessError } from "@/lib/tenant";
 import { stripe, STRIPE_PRICE_IDS, planFromPriceId } from "@/lib/stripe";
 import { notifyAccountWelcome } from "@/lib/notifications";
 import { getBaseUrl } from "@/lib/baseUrl";
@@ -17,9 +17,14 @@ const planSchema = z.enum(["BASICO", "PROFESIONAL"]);
  * startSubscriptionForAccount, con la ventana de pago propia.
  */
 export async function changePlan(formData: FormData) {
-  const { accountId, role } = await requireSessionAccount();
-  if (role !== "ADMINISTRADOR") {
-    redirect(`/dashboard/billing?error=${encodeURIComponent("Solo un administrador puede cambiar el plan")}`);
+  let accountId: string;
+  try {
+    ({ accountId } = await requirePermission("billing.manage"));
+  } catch (error) {
+    if (error instanceof TenantAccessError) {
+      redirect(`/dashboard/billing?error=${encodeURIComponent("Tu rol no tiene permiso para cambiar el plan")}`);
+    }
+    throw error;
   }
 
   const parsed = planSchema.safeParse(formData.get("plan"));
@@ -159,10 +164,7 @@ export async function changePlan(formData: FormData) {
  * formulario de tarjeta.
  */
 export async function startSubscriptionForAccount(plan: "BASICO" | "PROFESIONAL") {
-  const { accountId, role } = await requireSessionAccount();
-  if (role !== "ADMINISTRADOR") {
-    throw new Error("Solo un administrador puede contratar un plan");
-  }
+  const { accountId } = await requirePermission("billing.manage");
 
   const priceId = STRIPE_PRICE_IDS[plan];
   if (!priceId) {
@@ -209,8 +211,10 @@ export async function startSubscriptionForAccount(plan: "BASICO" | "PROFESIONAL"
   // para que Stripe no tenga que volver a pedirlo.
   let customerId = account.stripeCustomerId;
   if (!customerId) {
-    const admin = await prisma.member.findFirst({ where: { accountId, role: "ADMINISTRADOR" } });
-    const customer = await stripe.customers.create({ email: admin?.email, metadata: { accountId } });
+    const billingContact = await prisma.member.findFirst({
+      where: { accountId, role: { permissions: { has: "billing.manage" } } },
+    });
+    const customer = await stripe.customers.create({ email: billingContact?.email, metadata: { accountId } });
     customerId = customer.id;
   }
 
@@ -301,10 +305,7 @@ export async function confirmSubscriptionActivation() {
  * al llegar esa fecha.
  */
 export async function cancelSubscriptionAtPeriodEnd() {
-  const { accountId, role } = await requireSessionAccount();
-  if (role !== "ADMINISTRADOR") {
-    throw new Error("Solo un administrador puede cancelar la suscripción");
-  }
+  const { accountId } = await requirePermission("billing.manage");
 
   const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
   if (!account.stripeSubscriptionId) {
@@ -333,10 +334,7 @@ export async function cancelSubscriptionAtPeriodEnd() {
  * igual, nunca se interrumpió.
  */
 export async function resumeSubscription() {
-  const { accountId, role } = await requireSessionAccount();
-  if (role !== "ADMINISTRADOR") {
-    throw new Error("Solo un administrador puede reactivar la suscripción");
-  }
+  const { accountId } = await requirePermission("billing.manage");
 
   const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
   if (!account.stripeSubscriptionId) {

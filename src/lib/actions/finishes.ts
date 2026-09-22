@@ -20,7 +20,7 @@ const finishCategorySchema = z.object({
 });
 
 export async function createFinishCategory(developmentId: string, formData: FormData) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
   const parsed = finishCategorySchema.safeParse({
     name: formData.get("name"),
     selectionMode: formData.get("selectionMode"),
@@ -45,7 +45,7 @@ export async function updateFinishCategory(
   finishCategoryId: string,
   formData: FormData,
 ) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
   const parsed = finishCategorySchema.safeParse({
     name: formData.get("name"),
     selectionMode: formData.get("selectionMode"),
@@ -61,7 +61,7 @@ export async function updateFinishCategory(
 }
 
 export async function deleteFinishCategory(developmentId: string, finishCategoryId: string) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
   try {
     await prisma.finishCategory.delete({ where: { id: finishCategoryId, developmentId } });
   } catch {
@@ -85,7 +85,7 @@ export async function createFinishLevel(
   finishCategoryId: string,
   formData: FormData,
 ) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
   const parsed = finishLevelSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
@@ -111,7 +111,7 @@ export async function updateFinishLevel(
   finishLevelId: string,
   formData: FormData,
 ) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
   const parsed = finishLevelSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
@@ -136,7 +136,7 @@ export async function addFinishLevelImage(
   finishLevelId: string,
   formData: FormData,
 ) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
 
   const file = formData.get("image");
   if (!(file instanceof File) || file.size === 0) {
@@ -159,7 +159,7 @@ export async function addFinishLevelImage(
 }
 
 export async function removeFinishLevelImage(developmentId: string, finishLevelId: string, url: string) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
 
   const finishLevel = await prisma.finishLevel.findUniqueOrThrow({
     where: { id: finishLevelId, developmentId },
@@ -172,7 +172,7 @@ export async function removeFinishLevelImage(developmentId: string, finishLevelI
 }
 
 export async function deleteFinishLevel(developmentId: string, finishLevelId: string) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
   // Las cotizaciones guardan `finishOptionIds` como arreglo de ids sin
   // relación referencial (mismo patrón que `extraIds`), así que borrar
   // una opción no está bloqueado por cotizaciones existentes — solo deja
@@ -193,7 +193,7 @@ function parseModelIds(formData: FormData): string[] {
 }
 
 export async function createExtra(developmentId: string, formData: FormData) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
   const parsed = extraSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
@@ -217,7 +217,7 @@ export async function createExtra(developmentId: string, formData: FormData) {
 }
 
 export async function updateExtra(developmentId: string, extraId: string, formData: FormData) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
   const parsed = extraSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
@@ -251,7 +251,7 @@ export async function updateExtra(developmentId: string, extraId: string, formDa
 }
 
 export async function addExtraImage(developmentId: string, extraId: string, formData: FormData) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
 
   const file = formData.get("image");
   if (!(file instanceof File) || file.size === 0) {
@@ -274,7 +274,7 @@ export async function addExtraImage(developmentId: string, extraId: string, form
 }
 
 export async function removeExtraImage(developmentId: string, extraId: string, url: string) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
 
   const extra = await prisma.extra.findUniqueOrThrow({ where: { id: extraId, developmentId } });
   const imageUrls = extra.imageUrls.filter((u) => u !== url);
@@ -285,7 +285,7 @@ export async function removeExtraImage(developmentId: string, extraId: string, u
 }
 
 export async function deleteExtra(developmentId: string, extraId: string) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
   await prisma.extra.delete({ where: { id: extraId, developmentId } });
   revalidatePath(`/dashboard/developments/${developmentId}/finishes`);
   back(developmentId);

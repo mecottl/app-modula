@@ -1,15 +1,17 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { requireSessionAccount } from "@/lib/tenant";
+import { requirePermission, requireSessionAccount } from "@/lib/tenant";
 import { stripe } from "@/lib/stripe";
 
 async function requireStripeCustomerId(accountId: string) {
   const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
   if (account.stripeCustomerId) return account.stripeCustomerId;
 
-  const admin = await prisma.member.findFirst({ where: { accountId, role: "ADMINISTRADOR" } });
-  const customer = await stripe.customers.create({ email: admin?.email, metadata: { accountId } });
+  const billingContact = await prisma.member.findFirst({
+    where: { accountId, role: { permissions: { has: "billing.manage" } } },
+  });
+  const customer = await stripe.customers.create({ email: billingContact?.email, metadata: { accountId } });
   await prisma.account.update({ where: { id: accountId }, data: { stripeCustomerId: customer.id } });
   return customer.id;
 }
@@ -22,10 +24,7 @@ async function requireStripeCustomerId(accountId: string) {
  * `client_secret` devuelto (src/components/billing/cards-manager.tsx).
  */
 export async function createSetupIntent() {
-  const { accountId, role } = await requireSessionAccount();
-  if (role !== "ADMINISTRADOR") {
-    throw new Error("Solo un administrador puede gestionar tarjetas");
-  }
+  const { accountId } = await requirePermission("billing.manage");
 
   const customerId = await requireStripeCustomerId(accountId);
   const setupIntent = await stripe.setupIntents.create({
@@ -77,10 +76,7 @@ export async function listPaymentMethods() {
 }
 
 export async function setDefaultPaymentMethod(paymentMethodId: string) {
-  const { accountId, role } = await requireSessionAccount();
-  if (role !== "ADMINISTRADOR") {
-    throw new Error("Solo un administrador puede gestionar tarjetas");
-  }
+  const { accountId } = await requirePermission("billing.manage");
 
   const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
   if (!account.stripeCustomerId) {
@@ -110,10 +106,7 @@ export async function setDefaultPaymentMethod(paymentMethodId: string) {
  * a moroso sin que el administrador lo haya decidido explícitamente.
  */
 export async function removePaymentMethod(paymentMethodId: string) {
-  const { accountId, role } = await requireSessionAccount();
-  if (role !== "ADMINISTRADOR") {
-    throw new Error("Solo un administrador puede gestionar tarjetas");
-  }
+  const { accountId } = await requirePermission("billing.manage");
 
   const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId } });
   if (!account.stripeCustomerId) {

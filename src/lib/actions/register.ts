@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { signIn } from "@/auth";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { DEFAULT_ROLE_SEEDS } from "@/lib/permissions";
 
 const step1Schema = z.object({
   companyName: z.string().min(2).max(120),
@@ -26,8 +27,8 @@ export type CreateAccountResult = { success: true } | { success: false; error: C
 
 /**
  * Paso 1 del registro (src/app/register/register-wizard.tsx, paso 1 de
- * 2): crea la Account + el primer Member (ADMINISTRADOR) e inicia
- * sesión. El plan y el pago se eligen en el paso 2, en la misma
+ * 2): crea la Account + sus 3 roles semilla (DEFAULT_ROLE_SEEDS) + el
+ * primer Member con el rol Administrador, e inicia sesión. El plan y el pago se eligen en el paso 2, en la misma
  * pantalla, con la ventana de tarjeta embebida
  * (src/components/billing/subscribe-flow.tsx) — nunca se activa un
  * plan de forma optimista aquí.
@@ -67,13 +68,16 @@ export async function createAccount(formData: FormData): Promise<CreateAccountRe
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  await prisma.account.create({
+  const account = await prisma.account.create({
     data: {
       name: companyName,
-      members: {
-        create: { name, email, passwordHash, role: "ADMINISTRADOR" },
-      },
+      roles: { create: DEFAULT_ROLE_SEEDS },
     },
+    include: { roles: true },
+  });
+  const adminRole = account.roles.find((r) => r.name === "Administrador")!;
+  await prisma.member.create({
+    data: { accountId: account.id, roleId: adminRole.id, name, email, passwordHash },
   });
 
   await signIn("credentials", { email, password, redirect: false });

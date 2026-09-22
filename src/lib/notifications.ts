@@ -32,7 +32,7 @@ export async function notifyNewQuote(params: {
 }) {
   const account = await prisma.account.findFirst({
     where: { developments: { some: { id: params.developmentId } } },
-    include: { members: { where: { role: "ADMINISTRADOR" } } },
+    include: { members: { where: { role: { permissions: { has: "quotes.manage" } } } } },
   });
   const recipients = account?.members.map((m) => m.email) ?? [];
 

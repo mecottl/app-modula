@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
+import { DEFAULT_ROLE_SEEDS } from "../src/lib/permissions";
 
 const prisma = new PrismaClient();
 
@@ -12,15 +13,13 @@ async function main() {
       name: "Desarrolladora Demo",
       plan: "BASICO",
       billingStatus: "TRIAL",
-      members: {
-        create: {
-          name: "Admin Demo",
-          email: "admin@demo.com",
-          passwordHash,
-          role: "ADMINISTRADOR",
-        },
-      },
+      roles: { create: DEFAULT_ROLE_SEEDS },
     },
+    include: { roles: true },
+  });
+  const adminRole = account.roles.find((r) => r.name === "Administrador")!;
+  await prisma.member.create({
+    data: { accountId: account.id, roleId: adminRole.id, name: "Admin Demo", email: "admin@demo.com", passwordHash },
   });
 
   const development = await prisma.development.create({

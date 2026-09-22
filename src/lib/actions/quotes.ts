@@ -9,7 +9,7 @@ import { requireDevelopmentForSession } from "@/lib/tenant";
 const statusSchema = z.enum(["NUEVA", "CONTACTADA", "CERRADA"]);
 
 export async function updateQuoteStatus(developmentId: string, quoteId: string, formData: FormData) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "quotes.manage");
   const parsed = statusSchema.safeParse(formData.get("status"));
   if (parsed.success) {
     await prisma.quote.update({
@@ -28,7 +28,7 @@ export async function updateQuoteStatus(developmentId: string, quoteId: string, 
  * legal para hacerlo.
  */
 export async function deleteQuoteData(developmentId: string, quoteId: string) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "quotes.manage");
   await prisma.quote.delete({ where: { id: quoteId, developmentId } });
   revalidatePath(`/dashboard/developments/${developmentId}/quotes`);
   redirect(`/dashboard/developments/${developmentId}/quotes`);

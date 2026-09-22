@@ -28,7 +28,7 @@ const promotionSchema = z.object({
 });
 
 export async function createPromotion(developmentId: string, formData: FormData) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
   const parsed = promotionSchema.safeParse({
     name: formData.get("name"),
     code: formData.get("code"),
@@ -63,7 +63,7 @@ export async function updatePromotion(
   promotionId: string,
   formData: FormData,
 ) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
   const parsed = promotionSchema.safeParse({
     name: formData.get("name"),
     code: formData.get("code"),
@@ -95,7 +95,7 @@ export async function updatePromotion(
 }
 
 export async function deletePromotion(developmentId: string, promotionId: string) {
-  await requireDevelopmentForSession(developmentId);
+  await requireDevelopmentForSession(developmentId, "catalog.write");
   await prisma.promotion.delete({ where: { id: promotionId, developmentId } });
   revalidatePath(`/dashboard/developments/${developmentId}/promotions`);
   back(developmentId);

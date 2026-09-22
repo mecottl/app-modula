@@ -19,7 +19,8 @@ export default async function DevelopmentsPage({
   searchParams: Promise<{ error?: string; ok?: string }>;
 }) {
   const { error, ok } = await searchParams;
-  const { accountId } = await requireSessionAccount();
+  const { accountId, permissions } = await requireSessionAccount();
+  const canCreate = permissions.includes("catalog.write");
   const account = await prisma.account.findUniqueOrThrow({ where: { id: accountId }, select: { plan: true } });
   const maxDevelopments = MAX_DEVELOPMENTS_BY_PLAN[account.plan];
   const developments = await prisma.development.findMany({
@@ -48,7 +49,7 @@ export default async function DevelopmentsPage({
             {developments.length} de {maxDevelopments} desarrollos de tu plan
           </p>
         </div>
-        {developments.length >= maxDevelopments ? (
+        {!canCreate ? null : developments.length >= maxDevelopments ? (
           <Link
             href="/dashboard/billing"
             className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:border-foreground"

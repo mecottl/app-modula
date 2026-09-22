@@ -19,8 +19,8 @@ export const dynamic = "force-dynamic";
  * entonces, antes de confirmar.
  */
 export default async function DowngradePage() {
-  const { accountId, role } = await requireSessionAccount();
-  if (role !== "ADMINISTRADOR") {
+  const { accountId, permissions } = await requireSessionAccount();
+  if (!permissions.includes("billing.manage")) {
     redirect("/dashboard/billing");
   }
 

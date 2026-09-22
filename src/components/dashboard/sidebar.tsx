@@ -20,20 +20,32 @@ type NavItem = {
   children?: NavChild[];
 };
 
-const STATIC_NAV: NavItem[] = [
-  { href: "/dashboard/developments", label: "Desarrollos", icon: Building2 },
-  {
-    href: "/dashboard/billing",
-    label: "Facturación",
-    icon: CreditCard,
-    children: [
-      { href: "/dashboard/billing", label: "Resumen" },
-      { href: "/dashboard/billing/cards", label: "Tarjetas" },
-    ],
-  },
-  { href: "/dashboard/members", label: "Miembros", icon: Users },
-  { href: "/dashboard/account", label: "Cuenta", icon: Settings },
-];
+function staticNav(canManageMembers: boolean): NavItem[] {
+  return [
+    { href: "/dashboard/developments", label: "Desarrollos", icon: Building2 },
+    {
+      href: "/dashboard/billing",
+      label: "Facturación",
+      icon: CreditCard,
+      children: [
+        { href: "/dashboard/billing", label: "Resumen" },
+        { href: "/dashboard/billing/cards", label: "Tarjetas" },
+      ],
+    },
+    {
+      href: "/dashboard/members",
+      label: "Miembros",
+      icon: Users,
+      children: canManageMembers
+        ? [
+            { href: "/dashboard/members", label: "Miembros" },
+            { href: "/dashboard/members/roles", label: "Roles" },
+          ]
+        : undefined,
+    },
+    { href: "/dashboard/account", label: "Cuenta", icon: Settings },
+  ];
+}
 
 /**
  * Una pestaña de desarrollo con sus propias sub-páginas (hoy solo
@@ -321,15 +333,17 @@ function NavSection({
 function SidebarNav({
   pathname,
   developments,
+  canManageMembers,
   onNavigate,
 }: {
   pathname: string;
   developments: DevelopmentRow[];
+  canManageMembers: boolean;
   onNavigate?: () => void;
 }) {
   return (
     <nav className="thin-scrollbar flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
-      {STATIC_NAV.map((item) => (
+      {staticNav(canManageMembers).map((item) => (
         <NavSection
           key={item.href}
           item={item}
@@ -346,7 +360,15 @@ function SidebarNav({
   );
 }
 
-export function Sidebar({ developments, footer }: { developments: DevelopmentRow[]; footer?: ReactNode }) {
+export function Sidebar({
+  developments,
+  footer,
+  canManageMembers,
+}: {
+  developments: DevelopmentRow[];
+  footer?: ReactNode;
+  canManageMembers: boolean;
+}) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [logoSrc, setLogoSrc] = useState("/LOGO-BLANCO.svg");
@@ -385,7 +407,12 @@ export function Sidebar({ developments, footer }: { developments: DevelopmentRow
             onClick={() => setMobileOpen(false)}
           />
           <div className="relative flex h-full w-72 flex-col border-r border-border bg-background">
-            <SidebarNav pathname={pathname} developments={developments} onNavigate={() => setMobileOpen(false)} />
+            <SidebarNav
+              pathname={pathname}
+              developments={developments}
+              canManageMembers={canManageMembers}
+              onNavigate={() => setMobileOpen(false)}
+            />
             {footer && <div className="border-t border-border p-3">{footer}</div>}
           </div>
         </div>
@@ -397,7 +424,7 @@ export function Sidebar({ developments, footer }: { developments: DevelopmentRow
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={logoSrc} alt="MODULA" className="h-4 w-auto" />
         </Link>
-        <SidebarNav pathname={pathname} developments={developments} />
+        <SidebarNav pathname={pathname} developments={developments} canManageMembers={canManageMembers} />
         {footer && <div className="border-t border-border p-3">{footer}</div>}
       </aside>
     </>

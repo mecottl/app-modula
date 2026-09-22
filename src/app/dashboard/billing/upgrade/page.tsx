@@ -18,8 +18,8 @@ export const dynamic = "force-dynamic";
  * confirmar, en vez de un botón de un solo clic.
  */
 export default async function UpgradePage() {
-  const { accountId, role } = await requireSessionAccount();
-  if (role !== "ADMINISTRADOR") {
+  const { accountId, permissions } = await requireSessionAccount();
+  if (!permissions.includes("billing.manage")) {
     redirect("/dashboard/billing");
   }
 

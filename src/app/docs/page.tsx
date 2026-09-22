@@ -315,26 +315,18 @@ export default function DocsPage() {
 
               <Section id="miembros" title="Miembros y roles">
                 <p>
-                  Desde <strong>Miembros</strong> invitas a tu equipo a la misma cuenta, con uno de
-                  tres roles:
+                  Desde <strong>Miembros</strong> invitas a tu equipo a la misma cuenta, cada uno con
+                  un rol. Tu cuenta empieza con 3 roles ya creados (Administrador, Editor de
+                  catálogo, Solo lectura), pero desde <strong>Roles</strong> puedes editarlos o crear
+                  los que necesites, marcando exactamente qué puede hacer cada uno: editar
+                  catálogo, gestionar cotizaciones, integración, eliminar desarrollos, gestionar
+                  miembros y roles, o facturación.
                 </p>
-                <ul className="flex flex-col gap-2">
-                  <li>
-                    <strong>Administrador</strong>: acceso completo, incluyendo miembros y
-                    facturación.
-                  </li>
-                  <li>
-                    <strong>Editor de catálogo</strong>: puede configurar desarrollos y catálogo,
-                    sin acceso a miembros ni facturación.
-                  </li>
-                  <li>
-                    <strong>Solo lectura</strong>: puede ver la información pero no modificarla.
-                  </li>
-                </ul>
                 <p>
                   Al invitar a alguien se le crea una cuenta con una contraseña temporal, enviada
-                  por correo. Solo un administrador puede invitar o quitar miembros, y siempre debe
-                  quedar al menos un administrador en la cuenta.
+                  por correo. Solo quien tenga el permiso de miembros y roles puede invitar/quitar
+                  gente o tocar los roles, y siempre debe quedar al menos un miembro con ese
+                  permiso en la cuenta.
                 </p>
               </Section>
 
