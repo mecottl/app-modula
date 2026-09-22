@@ -6,6 +6,7 @@ import { changePlan } from "@/lib/actions/billing";
 import { getPendingDowngrade } from "@/lib/billingHelpers";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 const invoiceStatusLabels: Record<string, string> = {
   paid: "Pagada",
@@ -129,7 +130,10 @@ export default async function BillingPage({
 
       <section className="rounded-xl border border-border p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-medium">Método de pago y suscripción</h2>
+          <h2 className="flex items-center gap-1.5 font-medium">
+            Método de pago y suscripción
+            <InfoTooltip text="Agrega o quita tarjetas, cambia la predeterminada, o cancela tu suscripción." />
+          </h2>
           <Link
             href="/dashboard/billing/cards"
             className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
@@ -137,9 +141,6 @@ export default async function BillingPage({
             Gestionar →
           </Link>
         </div>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Agrega o quita tarjetas, cambia la predeterminada, o cancela tu suscripción.
-        </p>
       </section>
 
       <section className="rounded-xl border border-border p-6">

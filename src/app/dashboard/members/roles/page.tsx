@@ -1,4 +1,4 @@
-import { Info, Pencil, Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { requirePermission } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { createRole, updateRole, deleteRole } from "@/lib/actions/roles";
@@ -8,6 +8,7 @@ import { FormDialog } from "@/components/ui/form-dialog";
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { ValidatedInput } from "@/components/ui/validated-input";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export const dynamic = "force-dynamic";
 
@@ -20,15 +21,7 @@ function PermissionCheckboxes({ selected }: { selected?: PermissionKey[] }) {
         <label key={p.key} className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="permissions" value={p.key} defaultChecked={selectedSet.has(p.key)} />
           {p.label}
-          <span className="group relative inline-flex">
-            <Info className="h-3.5 w-3.5 text-muted-foreground" />
-            <span
-              role="tooltip"
-              className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 w-56 -translate-x-1/2 scale-95 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground opacity-0 shadow-md transition-[opacity,transform] duration-150 group-hover:scale-100 group-hover:opacity-100"
-            >
-              {p.description}
-            </span>
-          </span>
+          <InfoTooltip text={p.description} />
         </label>
       ))}
     </fieldset>

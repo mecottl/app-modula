@@ -6,6 +6,7 @@ import {
 } from "@/lib/actions/developments";
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export const dynamic = "force-dynamic";
 
@@ -23,11 +24,10 @@ export default async function IntegrationCustomDomainPage({
   return (
     <section className="rounded border p-4">
       <ToastFromParams ok={ok} error={error} />
-      <h3 className="font-medium">Dominio personalizado</h3>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Sirve la página propia del configurador (Plan Básico) bajo tu dominio en vez del de MODULA
-        (ej. <code>cotiza.tuempresa.com</code>).
-      </p>
+      <h3 className="flex items-center gap-1.5 font-medium">
+        Dominio personalizado
+        <InfoTooltip text="Sirve la página propia del configurador (Plan Básico) bajo tu dominio en vez del de MODULA (ej. cotiza.tuempresa.com)." />
+      </h3>
 
       {development.customDomain ? (
         <div className="mt-3 flex flex-col gap-3">

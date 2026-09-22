@@ -28,6 +28,7 @@ import { ModelChipPicker } from "@/components/dashboard/model-chip-picker";
 import { ImageGallery } from "@/components/dashboard/image-gallery";
 import { formatMoney } from "@/lib/money";
 import { MAX_CATALOG_IMAGES } from "@/lib/planLimits";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 const selectionModeOptions = [
   { value: "UNICA", label: "Única: el comprador elige como máximo una opción" },
@@ -73,11 +74,10 @@ export default async function FinishesPage({
       <section className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-medium">Categorías de acabado</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Cada categoría (ej. fachada principal, carpintería) tiene sus propias opciones, y tú
-              decides si el comprador elige solo una o varias.
-            </p>
+            <h2 className="flex items-center gap-1.5 font-medium">
+              Categorías de acabado
+              <InfoTooltip text="Cada categoría (ej. fachada principal, carpintería) tiene sus propias opciones, y tú decides si el comprador elige solo una o varias." />
+            </h2>
           </div>
           <FormDialog
             title="Agregar categoría de acabado"

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ValidatedInput } from "@/components/ui/validated-input";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 const promotionTypeOptions = [
   { value: "PORCENTAJE", label: "Porcentaje (%)" },
@@ -42,10 +43,10 @@ export default async function PromotionsPage({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="font-medium">Reglas de precio (promociones)</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            El comprador debe ingresar el código en el configurador, no se aplican solas.
-          </p>
+          <h2 className="flex items-center gap-1.5 font-medium">
+            Reglas de precio (promociones)
+            <InfoTooltip text="El comprador debe ingresar el código en el configurador, no se aplican solas." />
+          </h2>
         </div>
         <FormDialog
           title="Agregar promoción"

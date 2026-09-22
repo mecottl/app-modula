@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireDevelopmentForSession } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 /**
  * Integración (Plan Profesional) pasó de una sola página con varias
@@ -42,11 +43,10 @@ export default async function IntegrationLayout({
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="font-medium">Integración (Plan Profesional widget embebible)</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Copia este snippet en el sitio de la desarrolladora para embeber el configurador vía{" "}
-          <code>iframe</code>.
-        </p>
+        <h2 className="flex items-center gap-1.5 font-medium">
+          Integración (Plan Profesional widget embebible)
+          <InfoTooltip text="Copia este snippet en el sitio de la desarrolladora para embeber el configurador vía iframe." />
+        </h2>
       </div>
       {children}
     </div>

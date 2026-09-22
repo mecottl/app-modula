@@ -7,6 +7,7 @@ import { stripe } from "@/lib/stripe";
 import { getPendingDowngrade } from "@/lib/billingHelpers";
 import { changePlan } from "@/lib/actions/billing";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export const dynamic = "force-dynamic";
 
@@ -49,11 +50,10 @@ export default async function DowngradePage() {
         <Link href="/dashboard/billing" className="text-sm text-muted-foreground underline">
           ← Facturación
         </Link>
-        <h1 className="mt-2 text-xl font-semibold">Bajar a Plan Básico</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          No se cobra ni se reembolsa nada ahora. El cambio se agenda para cuando termine tu
-          periodo ya pagado.
-        </p>
+        <h1 className="mt-2 flex items-center gap-1.5 text-xl font-semibold">
+          Bajar a Plan Básico
+          <InfoTooltip text="No se cobra ni se reembolsa nada ahora. El cambio se agenda para cuando termine tu periodo ya pagado." />
+        </h1>
       </div>
 
       <section className="rounded-xl border border-border p-6">

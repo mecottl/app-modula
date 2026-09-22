@@ -5,6 +5,7 @@ import { listPaymentMethods } from "@/lib/actions/paymentMethods";
 import { getSubscriptionCancelInfo } from "@/lib/billingHelpers";
 import { CardsManager } from "@/components/billing/cards-manager";
 import { SubscriptionCancellation } from "@/components/billing/subscription-cancellation";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export const dynamic = "force-dynamic";
 
@@ -24,10 +25,10 @@ export default async function CardsPage() {
         <Link href="/dashboard/billing" className="text-xs text-muted-foreground hover:text-foreground">
           ← Facturación
         </Link>
-        <h1 className="mt-1 text-xl font-semibold tracking-tight">Tarjetas guardadas</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Se usan para cobrar tu suscripción cada mes. La predeterminada es la que se intenta primero.
-        </p>
+        <h1 className="mt-1 flex items-center gap-1.5 text-xl font-semibold tracking-tight">
+          Tarjetas guardadas
+          <InfoTooltip text="Se usan para cobrar tu suscripción cada mes. La predeterminada es la que se intenta primero." />
+        </h1>
       </div>
 
       {permissions.includes("billing.manage") ? (

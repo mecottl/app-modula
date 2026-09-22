@@ -5,6 +5,7 @@ import { LogoUploader } from "@/components/dashboard/logo-uploader";
 import { ColorInput } from "@/components/ui/color-input";
 import { ValidatedInput } from "@/components/ui/validated-input";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export const dynamic = "force-dynamic";
 
@@ -27,10 +28,10 @@ export default async function BrandPage({
 
       <section className="flex flex-col gap-4">
         <div>
-          <h2 className="font-medium">Marca</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Lo que ve el comprador en la página pública y el widget.
-          </p>
+          <h2 className="flex items-center gap-1.5 font-medium">
+            Marca
+            <InfoTooltip text="Lo que ve el comprador en la página pública y el widget." />
+          </h2>
         </div>
 
         <label className="flex flex-col gap-1 text-sm">

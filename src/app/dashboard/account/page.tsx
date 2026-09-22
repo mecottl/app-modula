@@ -9,6 +9,7 @@ import {
 import { ToastFromParams } from "@/components/ui/toast-from-params";
 import { ValidatedInput } from "@/components/ui/validated-input";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export const dynamic = "force-dynamic";
 
@@ -30,10 +31,10 @@ export default async function AccountPage({
       <ToastFromParams ok={ok} error={error} />
 
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Tu cuenta</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Estos datos son personales, de tu usuario, no de la desarrolladora.
-        </p>
+        <h1 className="flex items-center gap-1.5 text-xl font-semibold tracking-tight">
+          Tu cuenta
+          <InfoTooltip text="Estos datos son personales, de tu usuario, no de la desarrolladora." />
+        </h1>
       </div>
 
       <section className="flex flex-col gap-4">
