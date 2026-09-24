@@ -93,14 +93,14 @@ export default function DocsPage() {
               <Section id="que-es" title="¿Qué es MODULA?">
                 <p>
                   MODULA es un configurador de vivienda con cotización en tiempo real para
-                  desarrolladoras inmobiliarias en preventa. Tu comprador elige modelo, nivel de
-                  acabado y extras, y ve el precio total actualizarse al instante, sin depender
+                  desarrolladoras inmobiliarias en preventa. Tu comprador elige modelo y las
+                  opciones de tu catálogo (acabados, extras y lo que definas), y ve el precio total actualizarse al instante, sin depender
                   de un asesor disponible. El mismo principio que usa un configurador de autos.
                 </p>
                 <p>
                   Cada envío del formulario de cotización queda registrado como un lead
-                  calificado, con el detalle exacto de la configuración elegida: modelo, acabado,
-                  extras y precio total en el momento del envío.
+                  calificado, con el detalle exacto de la configuración elegida: modelo, opciones
+                  elegidas y precio total en el momento del envío.
                 </p>
               </Section>
 
@@ -122,7 +122,7 @@ export default function DocsPage() {
                   </li>
                 </ul>
                 <p>
-                  Nunca duplicas configuración entre planes: modelos, acabados, extras y
+                  Nunca duplicas configuración entre planes: modelos, categorías de opciones y
                   promociones se editan en un solo lugar y se reflejan igual en ambos.
                 </p>
               </Section>
@@ -146,7 +146,7 @@ export default function DocsPage() {
                     <strong>General → Configuración avanzada</strong>.
                   </Step>
                   <Step number="3" title="Configura tu catálogo">
-                    Modelos, acabados y extras, y opcionalmente promociones (ver la sección{" "}
+                    Modelos y categorías de opciones, y opcionalmente promociones (ver la sección{" "}
                     <a href="#catalogo" className="underline underline-offset-4">
                       Configurar tu catálogo
                     </a>
@@ -179,9 +179,12 @@ export default function DocsPage() {
                     precio base. Puedes marcar un modelo como inactivo sin borrarlo.
                   </li>
                   <li>
-                    <strong>Acabados y extras</strong>: niveles de acabado (cada uno con un delta
-                    de precio sobre el precio base) y extras opcionales, que puedes asociar solo a
-                    los modelos donde aplican.
+                    <strong>Categorías</strong>: un árbol de hasta 5 niveles con categorías,
+                    subcategorías y opciones. En cada nivel eliges si el comprador elige una o
+                    elige varias. El precio solo va en las opciones finales (un delta sobre el
+                    precio base), nunca en las categorías. Cualquier nodo puede limitarse a
+                    &ldquo;solo para estos modelos&rdquo;, y esa restricción aplica a todo lo que
+                    cuelga de él.
                   </li>
                   <li>
                     <strong>Reglas de precio</strong>: promociones con vigencia (fecha de inicio
@@ -191,7 +194,7 @@ export default function DocsPage() {
                 </ul>
                 <p>
                   El precio final que ve el comprador siempre es:{" "}
-                  <code>precio base del modelo + delta del acabado + suma de extras − promoción vigente</code>.
+                  <code>precio base del modelo + suma de las opciones elegidas − código de promoción</code>.
                 </p>
               </Section>
 
@@ -199,7 +202,7 @@ export default function DocsPage() {
                 <p>
                   El Plan Básico entrega tu configurador como una página propia que nosotros
                   hospedamos, sin que tengas que instalar nada. El flujo del comprador es: elegir
-                  modelo → elegir acabado → elegir extras → ver el precio total en vivo → dejar
+                  modelo → elegir opciones por categoría → ver el precio total en vivo → dejar
                   sus datos de contacto.
                 </p>
                 <p>
@@ -286,7 +289,7 @@ export default function DocsPage() {
                 <p>
                   Cada cotización enviada por un comprador (desde Plan Básico o Profesional) llega
                   a la bandeja de <strong>Cotizaciones</strong> del desarrollo correspondiente, con
-                  el modelo, acabado, extras, precio total, datos de contacto y el plan de origen.
+                  el modelo, las opciones elegidas, el precio total, datos de contacto y el plan de origen.
                 </p>
                 <ul className="flex flex-col gap-3">
                   <li>

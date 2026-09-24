@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { describeOptions } from "@/lib/catalog";
 import { prisma } from "@/lib/prisma";
 import { calculateQuotePrice, PricingError } from "@/lib/pricing";
 import { resolvePublicDevelopment } from "@/lib/publicAccess";
@@ -11,6 +12,7 @@ import { getBaseUrl } from "@/lib/baseUrl";
 
 const bodySchema = z.object({
   modelId: z.string().min(1),
+  optionIds: z.array(z.string().min(1)).default([]),
   finishOptionIds: z.array(z.string().min(1)).default([]),
   extraIds: z.array(z.string().min(1)).default([]),
   promoCode: z.string().min(1).max(40).optional(),
@@ -61,13 +63,20 @@ export async function POST(
     return NextResponse.json({ id: "ok", total: "0" }, { status: 201 });
   }
 
+  const selectedIds = [
+    ...new Set([
+      ...parsed.data.optionIds,
+      ...parsed.data.finishOptionIds,
+      ...parsed.data.extraIds,
+    ]),
+  ];
+
   let breakdown;
   try {
     breakdown = await calculateQuotePrice({
       developmentId: development.id,
       modelId: parsed.data.modelId,
-      finishOptionIds: parsed.data.finishOptionIds,
-      extraIds: parsed.data.extraIds,
+      optionIds: selectedIds,
       promoCode: parsed.data.promoCode,
     });
   } catch (error) {
@@ -77,22 +86,17 @@ export async function POST(
     throw error;
   }
 
-  const [model, finishOptions, extras] = await Promise.all([
+  const [model, options] = await Promise.all([
     prisma.model.findUnique({ where: { id: parsed.data.modelId } }),
-    parsed.data.finishOptionIds.length
-      ? prisma.finishLevel.findMany({ where: { id: { in: parsed.data.finishOptionIds } } })
-      : Promise.resolve([]),
-    parsed.data.extraIds.length
-      ? prisma.extra.findMany({ where: { id: { in: parsed.data.extraIds } } })
-      : Promise.resolve([]),
+    describeOptions(development.id, selectedIds),
   ]);
 
   const quote = await prisma.quote.create({
     data: {
       developmentId: development.id,
       modelId: parsed.data.modelId,
-      finishOptionIds: parsed.data.finishOptionIds,
-      extraIds: parsed.data.extraIds,
+      finishOptionIds: selectedIds,
+      extraIds: [],
       total: breakdown.total,
       customerName: parsed.data.customerName,
       customerEmail: parsed.data.customerEmail,
@@ -112,8 +116,7 @@ export async function POST(
     developmentId: development.id,
     developmentName: development.name,
     modelName: model?.name ?? parsed.data.modelId,
-    finishNames: finishOptions.map((f) => f.name),
-    extraNames: extras.map((e) => e.name),
+    optionLabels: options.map((o) => o.label),
     breakdown,
     customerName: parsed.data.customerName,
     customerEmail: parsed.data.customerEmail,

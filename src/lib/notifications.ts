@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { PriceBreakdown } from "@/lib/pricing";
 import { logger } from "@/lib/logger";
 import { captureException } from "@/lib/errorReporting";
-import { renderEmailHtml } from "@/lib/emailTemplate";
+import { escapeHtml, renderEmailHtml } from "@/lib/emailTemplate";
 import { formatMoney } from "@/lib/money";
 
 const PLAN_LABELS: Record<string, string> = { BASICO: "Básico", PROFESIONAL: "Profesional" };
@@ -23,8 +23,7 @@ export async function notifyNewQuote(params: {
   developmentId: string;
   developmentName: string;
   modelName: string;
-  finishNames?: string[];
-  extraNames: string[];
+  optionLabels: string[];
   breakdown: PriceBreakdown;
   customerName: string;
   customerEmail: string;
@@ -39,8 +38,7 @@ export async function notifyNewQuote(params: {
   const subject = `Nueva cotización: ${params.developmentName}`;
   const lines = [
     `Modelo: ${params.modelName}`,
-    params.finishNames?.length ? `Acabados: ${params.finishNames.join(", ")}` : null,
-    params.extraNames.length ? `Extras: ${params.extraNames.join(", ")}` : null,
+    params.optionLabels.length ? `Opciones: ${params.optionLabels.join("; ")}` : null,
     `Total: ${params.breakdown.total}`,
     `Cliente: ${params.customerName} · ${params.customerEmail}${
       params.customerPhone ? ` · ${params.customerPhone}` : ""
@@ -49,13 +47,12 @@ export async function notifyNewQuote(params: {
   const text = lines.join("\n");
   const html = renderEmailHtml({
     bodyHtml: `
-      <p style="margin:0 0 12px;font-size:16px;font-weight:600;">Nueva cotización en ${params.developmentName}</p>
-      <p style="margin:0 0 4px;">Modelo: ${params.modelName}</p>
-      ${params.finishNames?.length ? `<p style="margin:0 0 4px;">Acabados: ${params.finishNames.join(", ")}</p>` : ""}
-      ${params.extraNames.length ? `<p style="margin:0 0 4px;">Extras: ${params.extraNames.join(", ")}</p>` : ""}
-      <p style="margin:0 0 4px;">Total: ${params.breakdown.total}</p>
-      <p style="margin:12px 0 0;">Cliente: ${params.customerName}, ${params.customerEmail}${
-        params.customerPhone ? `, ${params.customerPhone}` : ""
+      <p style="margin:0 0 12px;font-size:16px;font-weight:600;">Nueva cotización en ${escapeHtml(params.developmentName)}</p>
+      <p style="margin:0 0 4px;">Modelo: ${escapeHtml(params.modelName)}</p>
+      ${params.optionLabels.length ? `<p style="margin:0 0 4px;">Opciones: ${escapeHtml(params.optionLabels.join("; "))}</p>` : ""}
+      <p style="margin:0 0 4px;">Total: ${escapeHtml(String(params.breakdown.total))}</p>
+      <p style="margin:12px 0 0;">Cliente: ${escapeHtml(params.customerName)}, ${escapeHtml(params.customerEmail)}${
+        params.customerPhone ? `, ${escapeHtml(params.customerPhone)}` : ""
       }</p>
     `,
   });
@@ -118,10 +115,10 @@ export async function notifyQuoteConfirmation(params: {
   const totalFormatted = formatMoney(params.total, params.currency);
 
   const html = renderEmailHtml({
-    preheader: `Tu cotización de ${params.developmentName} por ${totalFormatted}`,
+    preheader: `Tu cotización de ${escapeHtml(params.developmentName)} por ${escapeHtml(totalFormatted)}`,
     bodyHtml: `
-      <p style="margin:0 0 12px;font-size:16px;font-weight:600;">¡Gracias, ${params.customerName}!</p>
-      <p style="margin:0 0 12px;">Recibimos tu cotización de <strong>${params.modelName}</strong> en ${params.developmentName}, por un total de <strong>${totalFormatted}</strong>.</p>
+      <p style="margin:0 0 12px;font-size:16px;font-weight:600;">¡Gracias, ${escapeHtml(params.customerName)}!</p>
+      <p style="margin:0 0 12px;">Recibimos tu cotización de <strong>${escapeHtml(params.modelName)}</strong> en ${escapeHtml(params.developmentName)}, por un total de <strong>${escapeHtml(totalFormatted)}</strong>.</p>
       <p style="margin:0;">Nos pondremos en contacto contigo pronto. Puedes revisar el detalle completo de tu cotización cuando quieras:</p>
     `,
     ctaLabel: "Ver mi cotización",
@@ -165,8 +162,8 @@ export async function notifyAccountWelcome(params: {
   const planLabel = PLAN_LABELS[params.plan] ?? params.plan;
   const html = renderEmailHtml({
     bodyHtml: `
-      <p style="margin:0 0 12px;font-size:16px;font-weight:600;">¡Bienvenido a MODULA, ${params.memberName}!</p>
-      <p style="margin:0 0 12px;">Tu cuenta ${params.accountName} ya está activa en Plan ${planLabel}. Puedes empezar a configurar tu catálogo cuando quieras.</p>
+      <p style="margin:0 0 12px;font-size:16px;font-weight:600;">¡Bienvenido a MODULA, ${escapeHtml(params.memberName)}!</p>
+      <p style="margin:0 0 12px;">Tu cuenta ${escapeHtml(params.accountName)} ya está activa en Plan ${escapeHtml(planLabel)}. Puedes empezar a configurar tu catálogo cuando quieras.</p>
     `,
     ctaLabel: "Ir al dashboard",
     ctaUrl: `${params.baseUrl}/dashboard`,

@@ -1,4 +1,5 @@
 import type { Quote } from "@prisma/client";
+import { quoteOptionIds } from "@/lib/catalog";
 import { logger } from "@/lib/logger";
 import { captureException } from "@/lib/errorReporting";
 
@@ -14,6 +15,7 @@ export async function sendQuoteWebhook(webhookUrl: string, quote: Quote) {
     modelId: quote.modelId,
     finishOptionIds: quote.finishOptionIds,
     extraIds: quote.extraIds,
+    optionIds: quoteOptionIds(quote),
     total: quote.total.toString(),
     customerName: quote.customerName,
     customerEmail: quote.customerEmail,

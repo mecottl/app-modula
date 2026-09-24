@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 
-type FakeSession = { user: { id: string; accountId: string; role: string } } | null;
+type FakeSession = { user: { id: string; accountId: string; role: string; tokenVersion: number } } | null;
 
 // Ver tests/tenant.test.ts para por qué se mockea con un tipo propio en
 // vez de reutilizar el tipo (sobrecargado) real de `auth`.
@@ -16,14 +16,14 @@ vi.mock("next/navigation", () => ({
 import { prisma } from "@/lib/prisma";
 import { TenantAccessError } from "@/lib/tenant";
 import { updateModel, deleteModel } from "@/lib/actions/models";
-import { updateFinishLevel } from "@/lib/actions/finishes";
+import { updateCatalogNode } from "@/lib/actions/catalog";
 import { updatePromotion } from "@/lib/actions/promotions";
 import { updateQuoteStatus, deleteQuoteData } from "@/lib/actions/quotes";
 import { updateDevelopmentGeneral } from "@/lib/actions/developments";
 import { createTestTenant, deleteTestTenant } from "./fixtures";
 
 function sessionFor(accountId: string, memberId: string): FakeSession {
-  return { user: { id: memberId, accountId, role: "ADMINISTRADOR" } };
+  return { user: { id: memberId, accountId, role: "ADMINISTRADOR", tokenVersion: 0 } };
 }
 
 function formData(fields: Record<string, string>) {
@@ -88,20 +88,20 @@ describe("aislamiento multi-tenant — server actions", () => {
     expect(model).not.toBeNull();
   });
 
-  it("updateFinishLevel: la cuenta A no puede editar un acabado de la cuenta B", async () => {
+  it("updateCatalogNode: la cuenta A no puede editar un nodo del catálogo de la cuenta B", async () => {
     asTenantA();
     await expect(
-      updateFinishLevel(
+      updateCatalogNode(
         tenantB.development.id,
-        tenantB.finishLevel.id,
+        tenantB.catalogOption.id,
         formData({ name: "Hackeado", priceDelta: "0" }),
       ),
     ).rejects.toBeInstanceOf(TenantAccessError);
 
-    const finishLevel = await prisma.finishLevel.findUniqueOrThrow({
-      where: { id: tenantB.finishLevel.id },
+    const node = await prisma.catalogNode.findUniqueOrThrow({
+      where: { id: tenantB.catalogOption.id },
     });
-    expect(finishLevel.name).toBe(tenantB.finishLevel.name);
+    expect(node.name).toBe(tenantB.catalogOption.name);
   });
 
   it("updatePromotion: la cuenta A no puede editar una promoción de la cuenta B", async () => {
@@ -165,16 +165,18 @@ describe("aislamiento multi-tenant — server actions", () => {
   it("control positivo: la cuenta A SÍ puede editar sus propios recursos", async () => {
     asTenantA();
     await expect(
-      updateFinishLevel(
+      updateCatalogNode(
         tenantA.development.id,
-        tenantA.finishLevel.id,
-        formData({ name: "Acabado editado por su dueño", description: "", priceDelta: "20000" }),
+        tenantA.catalogOption.id,
+        formData({ name: "Opción editada por su dueño", description: "Nueva", priceDelta: "20000" }),
       ),
     ).rejects.toThrow("NEXT_REDIRECT (mock)"); // llega hasta el redirect() final = éxito
 
-    const finishLevel = await prisma.finishLevel.findUniqueOrThrow({
-      where: { id: tenantA.finishLevel.id },
+    const node = await prisma.catalogNode.findUniqueOrThrow({
+      where: { id: tenantA.catalogOption.id },
     });
-    expect(finishLevel.name).toBe("Acabado editado por su dueño");
+    expect(node.name).toBe("Opción editada por su dueño");
+    expect(node.description).toBe("Nueva");
+    expect(node.priceDelta.toNumber()).toBe(20000);
   });
 });

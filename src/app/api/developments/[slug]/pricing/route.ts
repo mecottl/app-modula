@@ -6,6 +6,7 @@ import { checkRateLimit, getClientIp, tooManyRequests } from "@/lib/rateLimit";
 
 const bodySchema = z.object({
   modelId: z.string().min(1),
+  optionIds: z.array(z.string().min(1)).default([]),
   finishOptionIds: z.array(z.string().min(1)).default([]),
   extraIds: z.array(z.string().min(1)).default([]),
   promoCode: z.string().min(1).max(40).optional(),
@@ -50,6 +51,7 @@ export async function POST(
     const breakdown = await calculateQuotePrice({
       developmentId: development.id,
       modelId: parsed.data.modelId,
+      optionIds: parsed.data.optionIds,
       finishOptionIds: parsed.data.finishOptionIds,
       extraIds: parsed.data.extraIds,
       promoCode: parsed.data.promoCode,

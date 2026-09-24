@@ -10,7 +10,7 @@ function formatMoney(value: string | number, currency: string) {
  * el total: usa el ya guardado en la cotización (fijado al momento de
  * cotizar, con cualquier promoción ya aplicada por el motor de precio) para
  * no mostrar un número distinto al que vio el comprador. Los precios de
- * modelo/acabado/extras se muestran solo como referencia informativa y
+ * modelo y opciones se muestran solo como referencia informativa y
  * pueden no sumar exactamente el total si el catálogo cambió después.
  */
 export async function generateQuotePdf(params: {
@@ -20,8 +20,7 @@ export async function generateQuotePdf(params: {
   quoteId: string;
   modelName: string;
   modelPrice: string;
-  finishOptions: { name: string; price: string }[];
-  extras: { name: string; price: string }[];
+  options: { label: string; price: string }[];
   total: string;
   customerName: string;
   customerEmail: string;
@@ -57,6 +56,18 @@ export async function generateQuotePdf(params: {
     page.drawText(value, { x: pageWidth - margin - width, y: y + size + 8, size, font: f });
   }
 
+  // Los caminos del árbol ("Acabados › Puertas › Tipo › Tzalam") pueden ser
+  // largos: se recortan con "…" para no pisar la columna del precio.
+  function fitLabel(value: string, size: number) {
+    const maxWidth = pageWidth - margin * 2 - 110;
+    if (font.widthOfTextAtSize(value, size) <= maxWidth) return value;
+    let trimmed = value;
+    while (trimmed.length > 1 && font.widthOfTextAtSize(`${trimmed}…`, size) > maxWidth) {
+      trimmed = trimmed.slice(0, -1);
+    }
+    return `${trimmed}…`;
+  }
+
   text(params.developmentName, { size: 18, bold: true, gap: 26 });
   text("Comprobante de cotización", { size: 12, color: [0.4, 0.4, 0.4], gap: 22 });
 
@@ -79,14 +90,13 @@ export async function generateQuotePdf(params: {
   text(params.modelName, { size: 11, gap: 18 });
   rightText(formatMoney(params.modelPrice, params.currency));
 
-  for (const option of params.finishOptions) {
-    text(option.name, { size: 11, gap: 18 });
-    rightText(`+${formatMoney(option.price, params.currency)}`);
+  if (params.options.length) {
+    y -= 6;
+    text("Opciones elegidas", { size: 11, bold: true, gap: 18 });
   }
-
-  for (const extra of params.extras) {
-    text(extra.name, { size: 11, gap: 18 });
-    rightText(`+${formatMoney(extra.price, params.currency)}`);
+  for (const option of params.options) {
+    text(fitLabel(option.label, 11), { size: 11, gap: 18 });
+    rightText(`+${formatMoney(option.price, params.currency)}`);
   }
 
   y -= 8;

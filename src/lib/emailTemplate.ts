@@ -1,3 +1,13 @@
+/** Escapa texto de usuario antes de interpolarlo en HTML de correo. */
+export function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 /**
  * Layout HTML compartido para los correos transaccionales (issue #65)
  * — header con la marca, cuerpo, pie de página. Inline styles porque

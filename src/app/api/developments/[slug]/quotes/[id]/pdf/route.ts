@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { describeOptions, quoteOptionIds } from "@/lib/catalog";
 import { prisma } from "@/lib/prisma";
 import { resolvePublicDevelopment } from "@/lib/publicAccess";
 import { generateQuotePdf } from "@/lib/quotePdf";
@@ -34,12 +35,9 @@ export async function GET(
     return NextResponse.json({ error: "Cotización no encontrada" }, { status: 404 });
   }
 
-  const [model, finishOptions, extras] = await Promise.all([
+  const [model, options] = await Promise.all([
     prisma.model.findUnique({ where: { id: quote.modelId } }),
-    quote.finishOptionIds.length
-      ? prisma.finishLevel.findMany({ where: { id: { in: quote.finishOptionIds } } })
-      : [],
-    quote.extraIds.length ? prisma.extra.findMany({ where: { id: { in: quote.extraIds } } }) : [],
+    describeOptions(development.id, quoteOptionIds(quote)),
   ]);
 
   if (!model) {
@@ -53,8 +51,7 @@ export async function GET(
     quoteId: quote.id,
     modelName: model.name,
     modelPrice: model.basePrice.toFixed(2),
-    finishOptions: finishOptions.map((f) => ({ name: f.name, price: f.priceDelta.toFixed(2) })),
-    extras: extras.map((e) => ({ name: e.name, price: e.priceDelta.toFixed(2) })),
+    options: options.map((o) => ({ label: o.label, price: o.priceDelta })),
     total: quote.total.toFixed(2),
     customerName: quote.customerName,
     customerEmail: quote.customerEmail,

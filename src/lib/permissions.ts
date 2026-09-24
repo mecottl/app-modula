@@ -3,7 +3,7 @@ export const PERMISSIONS = [
   {
     key: "catalog.write",
     label: "Editar catálogo",
-    description: "General, marca, modelos, acabados, extras y promociones.",
+    description: "General, marca, modelos, categorías y promociones.",
   },
   {
     key: "quotes.manage",

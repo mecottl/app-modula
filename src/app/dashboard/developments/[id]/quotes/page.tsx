@@ -1,5 +1,6 @@
 import { QuoteStatus } from "@prisma/client";
 import { requireDevelopmentForSession } from "@/lib/tenant";
+import { describeOptions, quoteOptionIds } from "@/lib/catalog";
 import { prisma } from "@/lib/prisma";
 import { updateQuoteStatus, deleteQuoteData } from "@/lib/actions/quotes";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -32,15 +33,16 @@ export default async function QuotesPage({
 
   const validStatus = status && isQuoteStatus(status) ? status : undefined;
 
-  const [quotes, finishOptions] = await Promise.all([
-    prisma.quote.findMany({
-      where: { developmentId: id, ...(validStatus ? { status: validStatus } : {}) },
-      include: { model: true },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.finishLevel.findMany({ where: { developmentId: id } }),
-  ]);
-  const finishNameById = new Map(finishOptions.map((f) => [f.id, f.name]));
+  const quotes = await prisma.quote.findMany({
+    where: { developmentId: id, ...(validStatus ? { status: validStatus } : {}) },
+    include: { model: true },
+    orderBy: { createdAt: "desc" },
+  });
+  const described = await describeOptions(id, [...new Set(quotes.flatMap(quoteOptionIds))]);
+  const labelById = new Map(described.map((o) => [o.id, o.label]));
+
+  const optionLabels = (q: { finishOptionIds: string[]; extraIds: string[] }) =>
+    quoteOptionIds(q).flatMap((oid) => labelById.get(oid) ?? []);
 
   const exportHref = `/api/dashboard/developments/${id}/quotes/export${
     validStatus ? `?status=${validStatus}` : ""
@@ -75,12 +77,11 @@ export default async function QuotesPage({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="font-medium">
-                  {quote.model.name}
-                  {quote.finishOptionIds.length
-                    ? ` · ${quote.finishOptionIds.map((fid) => finishNameById.get(fid) ?? fid).join(", ")}`
-                    : ""}{" "}
-                  · {formatMoney(quote.total.toString(), development.currency)}
+                  {quote.model.name} · {formatMoney(quote.total.toString(), development.currency)}
                 </p>
+                {optionLabels(quote).length > 0 && (
+                  <p className="text-sm text-muted-foreground">{optionLabels(quote).join("; ")}</p>
+                )}
                 <p className="text-sm text-muted-foreground">
                   {quote.customerName} · {quote.customerEmail}
                   {quote.customerPhone ? ` · ${quote.customerPhone}` : ""}

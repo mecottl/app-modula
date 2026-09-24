@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { QuoteStatus } from "@prisma/client";
+import { describeOptions, quoteOptionIds } from "@/lib/catalog";
 import { prisma } from "@/lib/prisma";
 import { requireDevelopmentForSession, TenantAccessError } from "@/lib/tenant";
 
@@ -11,8 +12,7 @@ function csvEscape(value: string): string {
 const COLUMNS = [
   "fecha",
   "modelo",
-  "acabados",
-  "extras",
+  "opciones",
   "total",
   "nombre_cliente",
   "correo",
@@ -50,19 +50,16 @@ export async function GET(
     orderBy: { createdAt: "desc" },
   });
 
-  const [extrasByDevelopment, finishOptionsByDevelopment] = await Promise.all([
-    prisma.extra.findMany({ where: { developmentId: id } }),
-    prisma.finishLevel.findMany({ where: { developmentId: id } }),
-  ]);
-  const extraNameById = new Map(extrasByDevelopment.map((e) => [e.id, e.name]));
-  const finishNameById = new Map(finishOptionsByDevelopment.map((f) => [f.id, f.name]));
+  const described = await describeOptions(id, [...new Set(quotes.flatMap(quoteOptionIds))]);
+  const labelById = new Map(described.map((o) => [o.id, o.label]));
 
   const rows = quotes.map((q) =>
     [
       q.createdAt.toISOString(),
       q.model.name,
-      q.finishOptionIds.map((fid) => finishNameById.get(fid) ?? fid).join("; "),
-      q.extraIds.map((eid) => extraNameById.get(eid) ?? eid).join("; "),
+      quoteOptionIds(q)
+        .flatMap((oid) => labelById.get(oid) ?? [])
+        .join("; "),
       q.total.toString(),
       q.customerName,
       q.customerEmail,

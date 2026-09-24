@@ -30,13 +30,12 @@ export default async function GeneralPage({
   const action = updateDevelopmentGeneral.bind(null, id);
   const advancedAction = updateDevelopmentAdvanced.bind(null, id);
 
-  const [activeModels, finishCategories, extras] = await Promise.all([
+  const [activeModels, catalogNodes] = await Promise.all([
     prisma.model.count({ where: { developmentId: id, active: true } }),
-    prisma.finishCategory.count({ where: { developmentId: id } }),
-    prisma.extra.count({ where: { developmentId: id } }),
+    prisma.catalogNode.count({ where: { developmentId: id } }),
   ]);
   const hasModel = activeModels > 0;
-  const hasFinishesOrExtras = finishCategories > 0 || extras > 0;
+  const hasCategories = catalogNodes > 0;
   const isPublished = development.status === "PUBLICADO";
 
   const steps = [
@@ -47,10 +46,10 @@ export default async function GeneralPage({
       href: `/dashboard/developments/${id}/models`,
     },
     {
-      label: "Acabados y extras (opcional)",
-      description: "Ofrece variantes de precio, pero no son obligatorios para publicar.",
-      done: hasFinishesOrExtras,
-      href: `/dashboard/developments/${id}/finishes`,
+      label: "Categorías (opcional)",
+      description: "Acabados, extras y lo que quieras ofrecer con variantes de precio; no son obligatorias para publicar.",
+      done: hasCategories,
+      href: `/dashboard/developments/${id}/categories`,
     },
     {
       label: "Publica",
@@ -197,7 +196,7 @@ export default async function GeneralPage({
             <div>
               <h3 className="text-sm font-medium text-destructive">Zona de peligro</h3>
               <p className="mt-1 text-xs text-muted-foreground">
-                Elimina este desarrollo por completo: catálogo, acabados, extras, promociones y
+                Elimina este desarrollo por completo: catálogo, categorías, promociones y
                 todas las cotizaciones ya recibidas. No se puede deshacer.
               </p>
             </div>

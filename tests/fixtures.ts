@@ -4,7 +4,7 @@ import { DEFAULT_ROLE_SEEDS } from "@/lib/permissions";
 
 /**
  * Crea un tenant de prueba completo y aislado (cuenta + desarrollo +
- * modelo + acabado + promoción + cotización) para las pruebas de
+ * modelo + sección/opción de catálogo + promoción + cotización) para las pruebas de
  * aislamiento multi-tenant. Cada llamada usa nombres únicos (`label`)
  * para poder correr varios archivos de prueba en paralelo sin chocar.
  */
@@ -47,15 +47,15 @@ export async function createTestTenant(label: string) {
     },
   });
 
-  const finishCategory = await prisma.finishCategory.create({
-    data: { developmentId: development.id, name: `[test] Categoría ${label}`, selectionMode: "UNICA" },
+  const catalogRoot = await prisma.catalogNode.create({
+    data: { developmentId: development.id, name: `[test] Sección ${label}`, selectionMode: "UNICA" },
   });
 
-  const finishLevel = await prisma.finishLevel.create({
+  const catalogOption = await prisma.catalogNode.create({
     data: {
       developmentId: development.id,
-      finishCategoryId: finishCategory.id,
-      name: `[test] Acabado ${label}`,
+      parentId: catalogRoot.id,
+      name: `[test] Opción ${label}`,
       priceDelta: 10_000,
     },
   });
@@ -84,12 +84,12 @@ export async function createTestTenant(label: string) {
     },
   });
 
-  return { account, member, development, model, finishCategory, finishLevel, promotion, quote };
+  return { account, member, development, model, catalogRoot, catalogOption, promotion, quote };
 }
 
 export async function deleteTestTenant(accountId: string) {
   // onDelete: Cascade en Account -> developments/members y en
-  // Development -> models/finishLevels/promotions/quotes/etc. se
+  // Development -> models/catalogNodes/promotions/quotes/etc. se
   // encarga del resto.
   await prisma.account.delete({ where: { id: accountId } }).catch(() => {
     // ya pudo haber sido borrado por otra prueba del mismo archivo

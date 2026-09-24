@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/tenant";
 import { logger } from "@/lib/logger";
 import { captureException } from "@/lib/errorReporting";
-import { renderEmailHtml } from "@/lib/emailTemplate";
+import { escapeHtml, renderEmailHtml } from "@/lib/emailTemplate";
 
 class MembersAccessError extends Error {}
 
@@ -60,10 +60,10 @@ async function sendInviteEmail(email: string, name: string, tempPassword: string
       text,
       html: renderEmailHtml({
         bodyHtml: `
-          <p style="margin:0 0 12px;font-size:16px;font-weight:600;">Hola ${name},</p>
+          <p style="margin:0 0 12px;font-size:16px;font-weight:600;">Hola ${escapeHtml(name)},</p>
           <p style="margin:0 0 12px;">Ya tienes acceso al dashboard de MODULA.</p>
-          <p style="margin:0 0 4px;">Correo: ${email}</p>
-          <p style="margin:0 0 12px;">Contraseña temporal: <strong>${tempPassword}</strong></p>
+          <p style="margin:0 0 4px;">Correo: ${escapeHtml(email)}</p>
+          <p style="margin:0 0 12px;">Contraseña temporal: <strong>${escapeHtml(tempPassword)}</strong></p>
           <p style="margin:0;">Inicia sesión y cámbiala en cuanto puedas.</p>
         `,
         ctaLabel: "Iniciar sesión",

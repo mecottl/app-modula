@@ -1,14 +1,15 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { buildCatalogTree, findPath, isVisibleForModel } from "@/lib/catalogTree";
 
 export class PricingError extends Error {
   constructor(
     message: string,
     public readonly code:
       | "MODEL_NOT_FOUND"
-      | "FINISH_OPTION_NOT_FOUND"
-      | "FINISH_CATEGORY_SINGLE_SELECT"
-      | "EXTRA_NOT_APPLICABLE"
+      | "OPTION_NOT_FOUND"
+      | "OPTION_SINGLE_SELECT"
+      | "OPTION_NOT_APPLICABLE"
       | "PROMO_CODE_INVALID",
   ) {
     super(message);
@@ -18,31 +19,45 @@ export class PricingError extends Error {
 
 export interface PriceBreakdown {
   basePrice: string;
-  finishesDelta: string;
-  extrasDelta: string;
+  /** Suma de todas las opciones elegidas del catálogo. */
+  optionsDelta: string;
+  /** La misma suma desglosada por categoría raíz (solo las que suman algo distinto de 0). */
+  sections: { name: string; delta: string }[];
   promotionsDiscount: string;
   total: string;
   appliedPromotions: { id: string; name: string; discount: string }[];
 }
 
 /**
- * Calcula el precio total de una configuración (modelo + acabados por
- * categoría + extras) aplicando automáticamente las promociones vigentes
- * del desarrollo.
+ * Calcula el precio total de una configuración (modelo + opciones del
+ * árbol de catálogo) aplicando el código de promoción si lo hay.
  *
  * Siempre acota la consulta por `developmentId` (aislamiento multi-tenant,
- * ver README.md sección 9.1): un modelo/acabado/extra de otro desarrollo
+ * ver README.md sección 9.1): un modelo u opción de otro desarrollo
  * nunca puede colarse en el cálculo.
+ *
+ * `optionIds` son los ids de opciones elegidas (hojas no raíz del árbol).
+ * `finishOptionIds` / `extraIds` se siguen aceptando y se fusionan, para
+ * no romper a quien todavía llame a la API con el formato anterior.
  */
 export async function calculateQuotePrice(params: {
   developmentId: string;
   modelId: string;
+  optionIds?: string[];
   finishOptionIds?: string[];
   extraIds?: string[];
   promoCode?: string | null;
   at?: Date;
 }): Promise<PriceBreakdown> {
-  const { developmentId, modelId, finishOptionIds = [], extraIds = [], promoCode, at = new Date() } = params;
+  const {
+    developmentId,
+    modelId,
+    optionIds = [],
+    finishOptionIds = [],
+    extraIds = [],
+    promoCode,
+    at = new Date(),
+  } = params;
 
   const model = await prisma.model.findFirst({
     where: { id: modelId, developmentId, active: true },
@@ -51,62 +66,43 @@ export async function calculateQuotePrice(params: {
     throw new PricingError("Modelo no encontrado en este desarrollo", "MODEL_NOT_FOUND");
   }
 
-  const uniqueFinishOptionIds = [...new Set(finishOptionIds)];
-  const finishOptions = uniqueFinishOptionIds.length
-    ? await prisma.finishLevel.findMany({
-        where: { id: { in: uniqueFinishOptionIds }, developmentId },
-        include: { category: true },
-      })
-    : [];
-  if (finishOptions.length !== uniqueFinishOptionIds.length) {
-    throw new PricingError(
-      "Una o más opciones de acabado no existen en este desarrollo",
-      "FINISH_OPTION_NOT_FOUND",
-    );
-  }
-  const optionsByCategory = new Map<string, typeof finishOptions>();
-  for (const option of finishOptions) {
-    const list = optionsByCategory.get(option.finishCategoryId) ?? [];
-    list.push(option);
-    optionsByCategory.set(option.finishCategoryId, list);
-  }
-  for (const options of optionsByCategory.values()) {
-    if (options[0].category.selectionMode === "UNICA" && options.length > 1) {
-      throw new PricingError(
-        `"${options[0].category.name}" solo permite elegir una opción`,
-        "FINISH_CATEGORY_SINGLE_SELECT",
-      );
+  const selectedIds = [...new Set([...optionIds, ...finishOptionIds, ...extraIds])];
+  let optionsDelta = new Prisma.Decimal(0);
+  const sectionDeltas = new Map<string, Prisma.Decimal>();
+  if (selectedIds.length) {
+    const rows = await prisma.catalogNode.findMany({
+      where: { developmentId },
+      include: { modelLinks: { select: { modelId: true } } },
+    });
+    const tree = buildCatalogTree(rows);
+    const priceById = new Map(rows.map((r) => [r.id, r.priceDelta]));
+    const pickedPerParent = new Map<string, number>();
+
+    for (const id of selectedIds) {
+      const path = findPath(tree, id);
+      const node = path?.[path.length - 1];
+      // Solo se eligen hojas que no son raíz: las categorías y subcategorías son secciones.
+      if (!path || !node || path.length < 2 || node.children.length > 0) {
+        throw new PricingError("Una o más opciones no existen en este desarrollo", "OPTION_NOT_FOUND");
+      }
+      if (path.some((n) => !isVisibleForModel(n, modelId))) {
+        throw new PricingError("Una o más opciones no aplican a este modelo", "OPTION_NOT_APPLICABLE");
+      }
+      const parent = path[path.length - 2];
+      const picked = (pickedPerParent.get(parent.id) ?? 0) + 1;
+      pickedPerParent.set(parent.id, picked);
+      if (parent.selectionMode === "UNICA" && picked > 1) {
+        throw new PricingError(`"${parent.name}" solo permite elegir una opción`, "OPTION_SINGLE_SELECT");
+      }
+
+      const price = priceById.get(id) ?? new Prisma.Decimal(0);
+      optionsDelta = optionsDelta.add(price);
+      sectionDeltas.set(path[0].name, (sectionDeltas.get(path[0].name) ?? new Prisma.Decimal(0)).add(price));
     }
   }
 
-  const uniqueExtraIds = [...new Set(extraIds)];
-  const extras = uniqueExtraIds.length
-    ? await prisma.extra.findMany({
-        where: {
-          id: { in: uniqueExtraIds },
-          developmentId,
-          modelLinks: { some: { modelId } },
-        },
-      })
-    : [];
-  if (extras.length !== uniqueExtraIds.length) {
-    throw new PricingError(
-      "Uno o más extras no existen o no aplican a este modelo",
-      "EXTRA_NOT_APPLICABLE",
-    );
-  }
-
   const basePrice = model.basePrice;
-  const finishesDelta = finishOptions.reduce(
-    (sum, option) => sum.add(option.priceDelta),
-    new Prisma.Decimal(0),
-  );
-  const extrasDelta = extras.reduce(
-    (sum, extra) => sum.add(extra.priceDelta),
-    new Prisma.Decimal(0),
-  );
-
-  const subtotal = basePrice.add(finishesDelta).add(extrasDelta);
+  const subtotal = basePrice.add(optionsDelta);
 
   // Las promociones ya NO se aplican solas por estar vigentes en fecha
   // (issue "promociones con código, no automáticas"): el comprador debe
@@ -137,8 +133,10 @@ export async function calculateQuotePrice(params: {
 
   return {
     basePrice: basePrice.toFixed(2),
-    finishesDelta: finishesDelta.toFixed(2),
-    extrasDelta: extrasDelta.toFixed(2),
+    optionsDelta: optionsDelta.toFixed(2),
+    sections: [...sectionDeltas]
+      .filter(([, delta]) => !delta.isZero())
+      .map(([name, delta]) => ({ name, delta: delta.toFixed(2) })),
     promotionsDiscount: promotionsDiscount.toFixed(2),
     total: total.toFixed(2),
     appliedPromotions,

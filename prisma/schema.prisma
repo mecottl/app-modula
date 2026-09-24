@@ -191,9 +191,7 @@ model Development {
 
   account             Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
   models              Model[]
-  finishCategories    FinishCategory[]
-  finishLevels        FinishLevel[]
-  extras              Extra[]
+  catalogNodes        CatalogNode[]
   promotions          Promotion[]
   integrationSettings IntegrationSettings?
   quotes              Quote[]
@@ -218,81 +216,60 @@ model Model {
   updatedAt     DateTime @updatedAt
 
   development Development  @relation(fields: [developmentId], references: [id], onDelete: Cascade)
-  extraLinks  ExtraModel[]
+  nodeLinks   CatalogNodeModel[]
   quotes      Quote[]
 
   @@index([developmentId])
   @@map("models")
 }
 
-/// Categoría de acabado dentro de un desarrollo (ej. "Fachada
-/// principal", "Carpintería"). El desarrollador decide por categoría si
-/// el comprador puede elegir una sola opción o varias (issue #58).
-model FinishCategory {
-  id            String              @id @default(cuid())
-  developmentId String
-  name          String
-  selectionMode FinishSelectionMode @default(UNICA)
-  order         Int                 @default(0)
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-
-  development Development   @relation(fields: [developmentId], references: [id], onDelete: Cascade)
-  options     FinishLevel[]
-
-  @@index([developmentId])
-  @@map("finish_categories")
-}
-
-/// Opción de acabado dentro de una categoría (ej. "A"/"B" dentro de
-/// "Fachada principal"), con delta de precio.
-model FinishLevel {
-  id               String   @id @default(cuid())
+/// Nodo del catálogo de opciones de un desarrollo: un árbol de hasta 5
+/// niveles (MAX_CATALOG_DEPTH en src/lib/planLimits.ts) que reemplaza a
+/// las antiguas "categorías de acabado" y "extras".
+///  - Raíz (parentId null): categoría, siempre una sección, nunca se
+///    elige ni cobra por sí misma.
+///  - Con hijos: subcategoría; `selectionMode` dice cómo elige el
+///    comprador entre sus opciones directas (UNICA/MULTIPLE).
+///  - Sin hijos y no raíz: opción elegible, con `priceDelta`.
+/// `restrictToModels` + `modelLinks`: si es true, el nodo (y todo lo que
+/// cuelga de él) solo se ofrece a esos modelos; es un flag explícito
+/// (no "sin filas = todos") para que borrar un modelo no publique el
+/// nodo a todos los demás por accidente.
+model CatalogNode {
+  id               String              @id @default(cuid())
   developmentId    String
-  finishCategoryId String
+  parentId         String?
   name             String
   description      String?
-  priceDelta       Decimal  @db.Decimal(14, 2) @default(0)
-  imageUrls        String[] @default([])
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  priceDelta       Decimal             @default(0) @db.Decimal(14, 2)
+  imageUrls        String[]            @default([])
+  selectionMode    FinishSelectionMode @default(UNICA)
+  order            Int                 @default(0)
+  restrictToModels Boolean             @default(false)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
-  development Development    @relation(fields: [developmentId], references: [id], onDelete: Cascade)
-  category    FinishCategory @relation(fields: [finishCategoryId], references: [id], onDelete: Cascade)
-
-  @@index([developmentId])
-  @@index([finishCategoryId])
-  @@map("finish_levels")
-}
-
-/// Extra opcional, con delta de precio y modelos a los que aplica (N a N).
-model Extra {
-  id            String   @id @default(cuid())
-  developmentId String
-  name          String
-  description   String?
-  priceDelta    Decimal  @db.Decimal(14, 2) @default(0)
-  imageUrls     String[] @default([])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  development Development  @relation(fields: [developmentId], references: [id], onDelete: Cascade)
-  modelLinks  ExtraModel[]
+  development Development        @relation(fields: [developmentId], references: [id], onDelete: Cascade)
+  parent      CatalogNode?        @relation("CatalogTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children    CatalogNode[]       @relation("CatalogTree")
+  modelLinks  CatalogNodeModel[]
 
   @@index([developmentId])
-  @@map("extras")
+  @@index([parentId])
+  @@map("catalog_nodes")
 }
 
-/// Tabla puente N a N entre Extra y Model.
-model ExtraModel {
-  extraId String
+/// Tabla puente N a N entre CatalogNode y Model (modelos a los que aplica
+/// un nodo con `restrictToModels`).
+model CatalogNodeModel {
+  nodeId  String
   modelId String
 
-  extra Extra @relation(fields: [extraId], references: [id], onDelete: Cascade)
-  model Model @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  node  CatalogNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  model Model       @relation(fields: [modelId], references: [id], onDelete: Cascade)
 
-  @@id([extraId, modelId])
-  @@map("extra_model")
+  @@id([nodeId, modelId])
+  @@map("catalog_node_model")
 }
 
 /// Promoción/regla de precio con vigencia.

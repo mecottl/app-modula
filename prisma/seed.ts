@@ -52,28 +52,30 @@ async function main() {
     },
   });
 
-  const finishCategory = await prisma.finishCategory.create({
-    data: {
-      developmentId: development.id,
-      name: "Acabado general",
-      selectionMode: "UNICA",
-    },
+  const finishRoot = await prisma.catalogNode.create({
+    data: { developmentId: development.id, name: "Acabado general", selectionMode: "UNICA" },
   });
 
-  const finishLevel = await prisma.finishLevel.create({
+  const finishLevel = await prisma.catalogNode.create({
     data: {
       developmentId: development.id,
-      finishCategoryId: finishCategory.id,
+      parentId: finishRoot.id,
       name: "Acabados Premium",
       priceDelta: 150000,
     },
   });
 
-  const extra = await prisma.extra.create({
+  const extrasRoot = await prisma.catalogNode.create({
+    data: { developmentId: development.id, name: "Extras", selectionMode: "MULTIPLE", order: 1 },
+  });
+
+  const extra = await prisma.catalogNode.create({
     data: {
       developmentId: development.id,
+      parentId: extrasRoot.id,
       name: "Cocina integral",
       priceDelta: 60000,
+      restrictToModels: true,
       modelLinks: { create: { modelId: model.id } },
     },
   });

@@ -6,7 +6,7 @@ import { Typewriter } from "@/components/ui/typewriter";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { logger } from "@/lib/logger";
 import { captureException } from "@/lib/errorReporting";
-import { renderEmailHtml } from "@/lib/emailTemplate";
+import { escapeHtml, renderEmailHtml } from "@/lib/emailTemplate";
 
 export const dynamic = "force-dynamic";
 
@@ -52,10 +52,10 @@ export default async function DemoPage({
           html: renderEmailHtml({
             bodyHtml: `
               <p style="margin:0 0 12px;font-size:16px;font-weight:600;">Nueva solicitud de demo</p>
-              <p style="margin:0 0 4px;">Nombre: ${name}</p>
-              <p style="margin:0 0 4px;">Correo: ${email}</p>
-              ${company ? `<p style="margin:0 0 4px;">Empresa: ${company}</p>` : ""}
-              ${message ? `<p style="margin:12px 0 0;">${message}</p>` : ""}
+              <p style="margin:0 0 4px;">Nombre: ${escapeHtml(name)}</p>
+              <p style="margin:0 0 4px;">Correo: ${escapeHtml(email)}</p>
+              ${company ? `<p style="margin:0 0 4px;">Empresa: ${escapeHtml(company)}</p>` : ""}
+              ${message ? `<p style="margin:12px 0 0;">${escapeHtml(message)}</p>` : ""}
             `,
           }),
         });

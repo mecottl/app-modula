@@ -52,8 +52,9 @@ se dispone de la contraseña de la base de datos desde este entorno):
 - Cuenta "Desarrolladora Demo" (plan Básico)
 - Usuario del dashboard: `admin@demo.com` / `demo1234`
 - Desarrollo `los-encinos` (publicado), con un modelo ("Modelo Roble",
-  $1,850,000), un nivel de acabado ("Acabados Premium", +$150,000), un
-  extra ("Cocina integral", +$60,000) y una promoción de lanzamiento
+  $1,850,000), una categoría "Acabado general" con la opción "Acabados Premium"
+  (+$150,000), una categoría "Extras" con la opción "Cocina integral"
+  (+$60,000, solo para ese modelo) y una promoción de lanzamiento
   vigente (5%).
 
 Si en algún momento reseteas la base de datos, `npm run db:seed`
@@ -73,7 +74,7 @@ npm run dev
 ```bash
 curl -X POST http://localhost:3000/api/developments/los-encinos/pricing \
   -H "Content-Type: application/json" \
-  -d '{"modelId":"<id del modelo Roble>","extraIds":[]}'
+  -d '{"modelId":"<id del modelo Roble>","optionIds":[]}'
 ```
 
 ## 5. Pruebas automatizadas

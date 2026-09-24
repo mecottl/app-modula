@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { describeOptions, quoteOptionIds } from "@/lib/catalog";
 import { prisma } from "@/lib/prisma";
 import { resolvePublicDevelopment } from "@/lib/publicAccess";
 import { formatMoney } from "@/lib/money";
@@ -30,14 +31,9 @@ export default async function QuoteViewPage({
   });
   if (!quote) notFound();
 
-  const [model, finishOptions, extras] = await Promise.all([
+  const [model, options] = await Promise.all([
     prisma.model.findUnique({ where: { id: quote.modelId } }),
-    quote.finishOptionIds.length
-      ? prisma.finishLevel.findMany({ where: { id: { in: quote.finishOptionIds } } })
-      : Promise.resolve([]),
-    quote.extraIds.length
-      ? prisma.extra.findMany({ where: { id: { in: quote.extraIds } } })
-      : Promise.resolve([]),
+    describeOptions(development.id, quoteOptionIds(quote)),
   ]);
 
   const previewQs = isPreview ? "?preview=1" : "";
@@ -61,16 +57,10 @@ export default async function QuoteViewPage({
           <span>{model?.name ?? "Modelo ya no disponible"}</span>
           <span>{model ? formatMoney(model.basePrice.toString(), development.currency) : "—"}</span>
         </div>
-        {finishOptions.map((f) => (
-          <div key={f.id} className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>{f.name}</span>
-            <span>+{formatMoney(f.priceDelta.toString(), development.currency)}</span>
-          </div>
-        ))}
-        {extras.map((e) => (
-          <div key={e.id} className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>{e.name}</span>
-            <span>+{formatMoney(e.priceDelta.toString(), development.currency)}</span>
+        {options.map((o) => (
+          <div key={o.id} className="flex items-center justify-between gap-4 text-sm text-muted-foreground">
+            <span>{o.label}</span>
+            <span className="shrink-0">+{formatMoney(o.priceDelta, development.currency)}</span>
           </div>
         ))}
         <div className="mt-2 flex items-center justify-between border-t border-border pt-3 font-medium">

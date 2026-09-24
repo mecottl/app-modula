@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
  * Cliente de Supabase Storage con la service role key (bypassa RLS) —
  * separado de Prisma, que es quien maneja la base de datos en el resto
  * del proyecto. Solo se usa server-side para subir archivos (logo del
- * desarrollo y, desde issue #47, imágenes de Model/FinishLevel/Extra).
+ * desarrollo y, desde issue #47, imágenes de Model/CatalogNode).
  */
 const supabaseUrl = process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -48,7 +48,7 @@ export async function uploadDevelopmentImage(developmentId: string, file: File):
 }
 
 /**
- * Imagen de un elemento del catálogo (Model/FinishLevel/Extra) — issue
+ * Imagen de un elemento del catálogo (Model/CatalogNode) — issue
  * #47 "subir renders/imágenes por modelo, acabado y extra". A
  * diferencia del logo (una sola imagen que se reemplaza), cada entidad
  * guarda un arreglo de URLs (`imageUrls`), así que el archivo se sube
@@ -56,7 +56,7 @@ export async function uploadDevelopmentImage(developmentId: string, file: File):
  */
 export async function uploadCatalogImage(
   developmentId: string,
-  category: "models" | "finishes" | "extras",
+  category: "models" | "nodes",
   entityId: string,
   file: File,
 ): Promise<string> {

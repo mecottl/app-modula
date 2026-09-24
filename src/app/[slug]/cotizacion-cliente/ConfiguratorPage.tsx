@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { loadCatalogTree } from "@/lib/catalog";
 import type { Development } from "@prisma/client";
 import { ConfiguratorWizard } from "./ConfiguratorWizard";
 
@@ -16,21 +17,12 @@ export async function ConfiguratorPage({
   development: Development;
   preview: boolean;
 }) {
-  const [models, finishCategories, extras] = await Promise.all([
+  const [models, catalog] = await Promise.all([
     prisma.model.findMany({
       where: { developmentId: development.id, active: true },
       orderBy: { basePrice: "asc" },
     }),
-    prisma.finishCategory.findMany({
-      where: { developmentId: development.id },
-      include: { options: { orderBy: { priceDelta: "asc" } } },
-      orderBy: { order: "asc" },
-    }),
-    prisma.extra.findMany({
-      where: { developmentId: development.id },
-      include: { modelLinks: true },
-      orderBy: { name: "asc" },
-    }),
+    loadCatalogTree(development.id),
   ]);
 
   return (
@@ -60,26 +52,7 @@ export async function ConfiguratorPage({
           basePrice: m.basePrice.toNumber(),
           imageUrls: m.imageUrls,
         }))}
-        finishCategories={finishCategories.map((c) => ({
-          id: c.id,
-          name: c.name,
-          selectionMode: c.selectionMode,
-          options: c.options.map((f) => ({
-            id: f.id,
-            name: f.name,
-            description: f.description,
-            priceDelta: f.priceDelta.toNumber(),
-            imageUrls: f.imageUrls,
-          })),
-        }))}
-        extras={extras.map((e) => ({
-          id: e.id,
-          name: e.name,
-          description: e.description,
-          priceDelta: e.priceDelta.toNumber(),
-          modelIds: e.modelLinks.map((l) => l.modelId),
-          imageUrls: e.imageUrls,
-        }))}
+        catalog={catalog}
       />
     </main>
   );

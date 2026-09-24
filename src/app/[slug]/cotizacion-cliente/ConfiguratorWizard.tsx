@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, ImageIcon, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn, getContrastText } from "@/lib/utils";
 import { formatMoney } from "@/lib/money";
+import { findPath, pruneForModel, type CatalogNodeDTO } from "@/lib/catalogTree";
 
 type ModelDTO = {
   id: string;
@@ -16,43 +17,35 @@ type ModelDTO = {
   imageUrls: string[];
 };
 
-type FinishOptionDTO = {
-  id: string;
-  name: string;
-  description: string | null;
-  priceDelta: number;
-  imageUrls: string[];
-};
-
-type FinishCategoryDTO = {
-  id: string;
-  name: string;
-  selectionMode: "UNICA" | "MULTIPLE";
-  options: FinishOptionDTO[];
-};
-
-type ExtraDTO = {
-  id: string;
-  name: string;
-  description: string | null;
-  priceDelta: number;
-  modelIds: string[];
-  imageUrls: string[];
-};
-
 type Breakdown = {
   basePrice: string;
-  finishesDelta: string;
-  extrasDelta: string;
+  optionsDelta: string;
+  sections: { name: string; delta: string }[];
   promotionsDiscount: string;
   total: string;
   appliedPromotions: { id: string; name: string; discount: string }[];
 };
 
+function signedMoney(value: number | string, currency: string) {
+  const n = Number(value);
+  return `${n < 0 ? "-" : "+"}${formatMoney(Math.abs(n), currency)}`;
+}
+
+/** Opciones elegibles (hojas no raíz) de un árbol ya filtrado por modelo, por id. */
+function optionMap(roots: CatalogNodeDTO[]) {
+  const map = new Map<string, CatalogNodeDTO>();
+  const walk = (node: CatalogNodeDTO) => {
+    if (node.children.length === 0) map.set(node.id, node);
+    else node.children.forEach(walk);
+  };
+  roots.forEach((root) => root.children.forEach(walk));
+  return map;
+}
+
 /**
  * Configurador estilo Tesla (issue "copiarle la distribución a Tesla"):
  * ya no es un asistente por pasos — todas las secciones (modelo,
- * acabado, extras, contacto) están en un solo panel con scroll a la
+ * categorías, contacto) están en un solo panel con scroll a la
  * derecha, la imagen grande a la izquierda se queda fija y cambia según
  * lo que se va eligiendo, y una barra inferior fija muestra el resumen
  * + precio + botón de enviar en todo momento.
@@ -69,8 +62,7 @@ export function ConfiguratorWizard({
   primaryColor,
   accentColor,
   models,
-  finishCategories,
-  extras,
+  catalog,
 }: {
   slug: string;
   preview: boolean;
@@ -83,12 +75,10 @@ export function ConfiguratorWizard({
   primaryColor?: string | null;
   accentColor: string | null;
   models: ModelDTO[];
-  finishCategories: FinishCategoryDTO[];
-  extras: ExtraDTO[];
+  catalog: CatalogNodeDTO[];
 }) {
   const [modelId, setModelId] = useState<string>(models[0]?.id ?? "");
-  const [finishOptionIds, setFinishOptionIds] = useState<string[]>([]);
-  const [extraIds, setExtraIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [breakdown, setBreakdown] = useState<Breakdown | null>(null);
   const [priceError, setPriceError] = useState<string | null>(null);
   const [loadingPrice, setLoadingPrice] = useState(false);
@@ -106,50 +96,47 @@ export function ConfiguratorWizard({
   const [confirmedTotal, setConfirmedTotal] = useState<string | null>(null);
   const [confirmedQuoteId, setConfirmedQuoteId] = useState<string | null>(null);
 
-  const applicableExtras = useMemo(
-    () => extras.filter((e) => e.modelIds.includes(modelId)),
-    [extras, modelId],
-  );
+  // El árbol que ve el comprador: solo lo que aplica al modelo elegido
+  // (la restricción por modelo de un nodo cubre todo lo que cuelga de él).
+  const visibleCatalog = useMemo(() => pruneForModel(catalog, modelId), [catalog, modelId]);
+  const visibleOptions = useMemo(() => optionMap(visibleCatalog), [visibleCatalog]);
 
   const selectedModel = useMemo(() => models.find((m) => m.id === modelId) ?? null, [models, modelId]);
-  const selectedFinishOptions = useMemo(
-    () =>
-      finishCategories.flatMap((category) =>
-        category.options.filter((option) => finishOptionIds.includes(option.id)),
-      ),
-    [finishCategories, finishOptionIds],
+  // Lo que de verdad se cotiza: la selección solo cuenta si sigue vigente para el modelo.
+  const effectiveIds = useMemo(
+    () => selectedIds.filter((id) => visibleOptions.has(id)),
+    [selectedIds, visibleOptions],
   );
-  const selectedExtras = useMemo(
-    () => applicableExtras.filter((e) => extraIds.includes(e.id)),
-    [applicableExtras, extraIds],
+  const selectedOptions = useMemo(
+    () => effectiveIds.map((id) => visibleOptions.get(id)!),
+    [effectiveIds, visibleOptions],
   );
 
-  function toggleFinishOption(category: FinishCategoryDTO, optionId: string) {
-    setFinishOptionIds((prev) => {
-      if (category.selectionMode === "MULTIPLE") {
+  function toggleOption(parent: CatalogNodeDTO, optionId: string) {
+    setSelectedIds((prev) => {
+      if (parent.selectionMode === "MULTIPLE") {
         return prev.includes(optionId) ? prev.filter((id) => id !== optionId) : [...prev, optionId];
       }
-      // Selección única: elegir otra opción de la misma categoría
-      // reemplaza la anterior; volver a tocar la ya elegida la quita
-      // (permite dejar la categoría sin selección, como el "Estándar"
-      // implícito de antes).
-      const categoryOptionIds = category.options.map((o) => o.id);
-      const withoutCategory = prev.filter((id) => !categoryOptionIds.includes(id));
-      return prev.includes(optionId) ? withoutCategory : [...withoutCategory, optionId];
+      // Selección única: elegir otra opción del mismo nivel reemplaza la
+      // anterior; volver a tocar la ya elegida la quita (permite dejar el
+      // nivel sin selección). Solo compiten las opciones directas: las
+      // subcategorías hermanas tienen su propia selección.
+      const siblingOptionIds = parent.children.filter((c) => c.children.length === 0).map((c) => c.id);
+      const withoutSiblings = prev.filter((id) => !siblingOptionIds.includes(id));
+      return prev.includes(optionId) ? withoutSiblings : [...withoutSiblings, optionId];
     });
   }
 
-  // La primera opción de acabado elegida (en orden de categoría) que
-  // tenga fotos propias pisa las del modelo; sin eso, se ven las del
-  // modelo base. Varias fotos se navegan como un carrusel, igual que
-  // las fotos del vehículo en Tesla.
-  const firstFinishWithImages = selectedFinishOptions.find((o) => o.imageUrls.length > 0);
-  const mainImages = firstFinishWithImages?.imageUrls ?? selectedModel?.imageUrls ?? [];
+  // La primera opción elegida que tenga fotos propias pisa las del modelo;
+  // sin eso, se ven las del modelo base. Varias fotos se navegan como un
+  // carrusel, igual que las fotos del vehículo en Tesla.
+  const firstWithImages = selectedOptions.find((o) => o.imageUrls.length > 0);
+  const mainImages = firstWithImages?.imageUrls ?? selectedModel?.imageUrls ?? [];
 
-  // Reinicia el índice del carrusel al cambiar de modelo/acabados, sin
+  // Reinicia el índice del carrusel al cambiar de modelo/opciones, sin
   // un efecto aparte: se detecta el cambio de clave durante el render
   // (patrón "ajustar estado cuando cambia una prop" de React).
-  const imageSetKey = `${modelId}:${finishOptionIds.join(",")}`;
+  const imageSetKey = `${modelId}:${effectiveIds.join(",")}`;
   const [prevImageSetKey, setPrevImageSetKey] = useState(imageSetKey);
   if (prevImageSetKey !== imageSetKey) {
     setPrevImageSetKey(imageSetKey);
@@ -197,8 +184,7 @@ export function ConfiguratorWizard({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         modelId,
-        finishOptionIds,
-        extraIds: extraIds.filter((id) => applicableExtras.some((e) => e.id === id)),
+        optionIds: effectiveIds,
         promoCode: appliedPromoCode || undefined,
       }),
       signal: controller.signal,
@@ -221,7 +207,7 @@ export function ConfiguratorWizard({
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, modelId, finishOptionIds, extraIds, applicableExtras.length, appliedPromoCode]);
+  }, [slug, modelId, effectiveIds, appliedPromoCode]);
 
   async function submitQuote() {
     setSubmitting(true);
@@ -232,8 +218,7 @@ export function ConfiguratorWizard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           modelId,
-          finishOptionIds,
-          extraIds: extraIds.filter((id) => applicableExtras.some((e) => e.id === id)),
+          optionIds: effectiveIds,
           promoCode: appliedPromoCode || undefined,
           customerName,
           customerEmail,
@@ -290,10 +275,14 @@ export function ConfiguratorWizard({
     );
   }
 
+  // "Puertas: Tzalam" en vez de solo "Tzalam": el nombre de una hoja solo
+  // no dice a qué corresponde ("Con", "Sin"...).
   const summaryParts = [
     selectedModel?.name,
-    ...selectedFinishOptions.map((o) => o.name),
-    selectedExtras.length > 0 ? `${selectedExtras.length} extra${selectedExtras.length > 1 ? "s" : ""}` : null,
+    ...effectiveIds.map((id) => {
+      const path = findPath(visibleCatalog, id);
+      return path && path.length > 1 ? `${path[path.length - 2].name}: ${path[path.length - 1].name}` : null;
+    }),
   ].filter(Boolean);
 
   // El widget embebido (Plan B) no tiene su propio scroll: el iframe se
@@ -401,10 +390,7 @@ export function ConfiguratorWizard({
                 description={model.description ?? undefined}
                 price={formatMoney(model.basePrice, currency)}
                 selected={modelId === model.id}
-                onSelect={() => {
-                  setModelId(model.id);
-                  setExtraIds([]);
-                }}
+                onSelect={() => setModelId(model.id)}
               />
             ))}
             {models.length === 0 && (
@@ -412,50 +398,20 @@ export function ConfiguratorWizard({
             )}
           </section>
 
-          {finishCategories.map((category) => (
+          {visibleCatalog.map((category) => (
             <FinishCategoryAccordion key={category.id} name={category.name} defaultOpen>
-              {category.options.map((option) => (
-                <OptionRow
-                  key={option.id}
-                  color={primary}
-                  image={option.imageUrls[0]}
-                  title={option.name}
-                  description={option.description ?? undefined}
-                  price={`+${formatMoney(option.priceDelta, currency)}`}
-                  selected={finishOptionIds.includes(option.id)}
-                  multi={category.selectionMode === "MULTIPLE"}
-                  onSelect={() => toggleFinishOption(category, option.id)}
-                />
-              ))}
-              {category.options.length === 0 && (
+              <CatalogChildren
+                parent={category}
+                color={primary}
+                currency={currency}
+                selectedIds={effectiveIds}
+                onToggle={toggleOption}
+              />
+              {category.children.length === 0 && (
                 <p className="text-sm text-muted-foreground">Sin opciones en esta categoría.</p>
               )}
             </FinishCategoryAccordion>
           ))}
-
-          <section className="flex flex-col gap-2">
-            <h2 className="text-sm font-medium text-muted-foreground">Extras</h2>
-            {applicableExtras.map((extra) => (
-              <OptionRow
-                key={extra.id}
-                color={primary}
-                image={extra.imageUrls[0]}
-                title={extra.name}
-                description={extra.description ?? undefined}
-                price={`+${formatMoney(extra.priceDelta, currency)}`}
-                selected={extraIds.includes(extra.id)}
-                multi
-                onSelect={() =>
-                  setExtraIds((prev) =>
-                    prev.includes(extra.id) ? prev.filter((id) => id !== extra.id) : [...prev, extra.id],
-                  )
-                }
-              />
-            ))}
-            {applicableExtras.length === 0 && (
-              <p className="text-sm text-muted-foreground">Sin extras disponibles para este modelo.</p>
-            )}
-          </section>
 
           <section aria-live="polite" className="flex flex-col gap-3 rounded-xl border border-border p-4">
             <h2 className="text-sm font-medium text-muted-foreground">Precio estimado</h2>
@@ -463,12 +419,11 @@ export function ConfiguratorWizard({
             {!loadingPrice && breakdown && (
               <ul className="flex flex-col gap-0.5 text-xs text-muted-foreground">
                 <li>Base: {formatMoney(breakdown.basePrice, currency)}</li>
-                {Number(breakdown.finishesDelta) !== 0 && (
-                  <li>Acabados: +{formatMoney(breakdown.finishesDelta, currency)}</li>
-                )}
-                {Number(breakdown.extrasDelta) !== 0 && (
-                  <li>Extras: +{formatMoney(breakdown.extrasDelta, currency)}</li>
-                )}
+                {breakdown.sections.map((section) => (
+                  <li key={section.name}>
+                    {section.name}: {signedMoney(section.delta, currency)}
+                  </li>
+                ))}
                 {breakdown.appliedPromotions.map((p) => (
                   <li key={p.id} className="text-green-500">
                     {p.name}: -{formatMoney(p.discount, currency)}
@@ -614,6 +569,65 @@ export function ConfiguratorWizard({
         </div>
       </footer>
     </div>
+  );
+}
+
+/**
+ * Hijos de un nodo: las opciones elegibles (hojas) se muestran como
+ * radio/checkbox según el `selectionMode` del padre, y las subcategorías
+ * (nodos con hijos) como una sub-sección anidada con su propia selección.
+ */
+function CatalogChildren({
+  parent,
+  color,
+  currency,
+  selectedIds,
+  onToggle,
+}: {
+  parent: CatalogNodeDTO;
+  color: string;
+  currency: string;
+  selectedIds: string[];
+  onToggle: (parent: CatalogNodeDTO, optionId: string) => void;
+}) {
+  const hasOptions = parent.children.some((c) => c.children.length === 0);
+  return (
+    <>
+      {hasOptions && (
+        <p className="text-xs text-muted-foreground">
+          {parent.selectionMode === "UNICA" ? "Elige una opción" : "Elige las que quieras"}
+        </p>
+      )}
+      {parent.children.map((child) =>
+        child.children.length === 0 ? (
+          <OptionRow
+            key={child.id}
+            color={color}
+            image={child.imageUrls[0]}
+            title={child.name}
+            description={child.description ?? undefined}
+            price={child.priceDelta !== 0 ? signedMoney(child.priceDelta, currency) : undefined}
+            selected={selectedIds.includes(child.id)}
+            multi={parent.selectionMode === "MULTIPLE"}
+            onSelect={() => onToggle(parent, child.id)}
+          />
+        ) : (
+          <div key={child.id} className="flex flex-col gap-2 border-l border-border pl-3">
+            <div>
+              <p className="text-sm font-medium">{child.name}</p>
+              {child.description && <p className="text-xs text-muted-foreground">{child.description}</p>}
+            </div>
+            <CatalogChildren
+              parent={child}
+              color={color}
+              currency={currency}
+              selectedIds={selectedIds}
+              onToggle={onToggle}
+            />
+          </div>
+        ),
+      )}
+    </>
   );
 }
 

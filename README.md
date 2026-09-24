@@ -102,7 +102,7 @@ Basado en la jerarquía de configuración ya definida, agrupada en tres áreas:
 |---|---|---|
 | General y marca | Nombre, descripción, estado (borrador/publicado), moneda, logo, colores, texto del CTA | A y B |
 | Catálogo | Alta/edición/baja de modelos: nombre, m², recámaras, precio base, estado activo | A y B |
-| Acabados y extras | Niveles de acabado con delta de precio; extras con delta y modelos a los que aplican | A y B |
+| Categorías | Árbol de hasta 5 niveles (categorías > subcategorías > opciones); elige una o varias por nivel; delta de precio solo en las opciones; restricción opcional por modelo | A y B |
 | Reglas de precio | Promociones con vigencia (fecha inicio/fin), descuento por forma de pago | A y B |
 | **Integración** | Snippet de instalación, entorno (vista previa/producción), dominios autorizados, token del proyecto | **Solo B** |
 
@@ -123,7 +123,7 @@ Basado en la jerarquía de configuración ya definida, agrupada en tres áreas:
 - Renderiza en `nosotros.com/[slug]/cotizacion-cliente`.
 - Solo accesible si el desarrollo está en estado "Publicado".
 - Aplica la marca configurada (logo, colores, texto del CTA).
-- Flujo: selección de modelo → selección de nivel de acabado → selección de extras → precio total en vivo → formulario de contacto → confirmación.
+- Flujo: selección de modelo → selección de opciones por categoría → precio total en vivo → formulario de contacto → confirmación.
 - Debe funcionar correctamente en dispositivos móviles como flujo principal (la mayoría del tráfico de un enlace compartido en redes o WhatsApp llega desde celular).
 
 ### 6.3 Widget embebible — Plan B
@@ -136,7 +136,7 @@ Basado en la jerarquía de configuración ya definida, agrupada en tres áreas:
 
 ### 6.4 Sistema de cotizaciones (leads)
 
-- Cada envío del formulario de cotización debe registrar: fecha, datos de contacto, modelo, nivel de acabado, extras seleccionados, precio total calculado en el momento, y plan de origen (A o B).
+- Cada envío del formulario de cotización debe registrar: fecha, datos de contacto, modelo, opciones seleccionadas, precio total calculado en el momento, y plan de origen (A o B).
 - Debe notificar por correo a la desarrolladora de forma inmediata.
 - Debe permitir exportar a CSV y, opcionalmente, enviar a un webhook configurado (para integraciones futuras con CRMs sin construir integraciones nativas una por una).
 
@@ -163,13 +163,12 @@ Basado en la jerarquía de configuración ya definida, agrupada en tres áreas:
 |---|---|---|
 | `accounts` | id, nombre, plan (básico/profesional), estado de facturación | 1 cuenta → N desarrollos |
 | `developments` | id, account_id, nombre, slug, descripción, estado (borrador/publicado), moneda, logo, color_primario, color_acento, texto_cta | 1 desarrollo → N modelos |
-| `models` | id, development_id, nombre, descripción, m², recámaras, precio_base, activo | 1 modelo → N extras aplicables |
-| `finish_levels` | id, development_id, nombre, descripción, delta_precio | — |
-| `extras` | id, development_id, nombre, descripción, delta_precio | N a N con `models` vía `extra_model` |
-| `extra_model` | extra_id, model_id | tabla puente |
+| `models` | id, development_id, nombre, descripción, m², recámaras, precio_base, activo | 1 modelo → N nodos de catálogo aplicables |
+| `catalog_nodes` | id, development_id, parent_id, nombre, descripción, delta_precio, modo_selección (única/múltiple), orden, restringir_a_modelos | árbol autorreferenciado (máx. 5 niveles); raíz = categoría, hoja no raíz = opción con precio |
+| `catalog_node_model` | node_id, model_id | tabla puente N a N con `models` (aplica al nodo y a todo su subárbol) |
 | `promotions` | id, development_id, nombre, tipo (%/fijo), valor, fecha_inicio, fecha_fin, activo | — |
 | `integration_settings` | id, development_id, modo (widget/hospedada), entorno, token, dominios_autorizados[] | 1 a 1 con `developments` |
-| `quotes` | id, development_id, modelo, nivel_acabado, extras[], total, nombre_cliente, correo, teléfono, estado, plan_origen, fecha | — |
+| `quotes` | id, development_id, modelo, ids de opciones elegidas (`finish_option_ids`; `extra_ids` queda vacío en cotizaciones nuevas), total, nombre_cliente, correo, teléfono, estado, plan_origen, fecha | — |
 | `members` | id, account_id, nombre, correo, rol | — |
 
 Este modelo es deliberadamente el mismo sin importar si el desarrollo se sirve por Plan A o Plan B — la tabla `integration_settings` es la única que introduce diferencias específicas del plan (dominios autorizados, token), consistente con el principio de arquitectura de la sección 5.

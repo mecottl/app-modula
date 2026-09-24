@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 
-type FakeSession = { user: { id: string; accountId: string; role: string } } | null;
+type FakeSession = { user: { id: string; accountId: string; tokenVersion: number } } | null;
 
 // `auth` de NextAuth está sobrecargado (uso normal vs. middleware), lo que
 // choca con TypeScript al mockear su valor de retorno directamente. Se
@@ -16,8 +16,8 @@ import {
 } from "@/lib/tenant";
 import { createTestTenant, deleteTestTenant } from "./fixtures";
 
-function sessionFor(accountId: string, memberId: string, role = "ADMINISTRADOR"): FakeSession {
-  return { user: { id: memberId, accountId, role } };
+function sessionFor(accountId: string, memberId: string): FakeSession {
+  return { user: { id: memberId, accountId, tokenVersion: 0 } };
 }
 
 describe("aislamiento multi-tenant — src/lib/tenant.ts", () => {
